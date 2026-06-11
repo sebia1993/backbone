@@ -250,6 +250,25 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             self.assertFalse(result.ok)
             self.assertTrue(any("Checksum sidecar package mismatch" in error for error in result.errors))
 
+    def test_sidecar_date_mismatch_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.14_20260612_source.zip"
+            _write_zip(package, _source_entries())
+            sidecar = write_package_checksum(package, "0.8.14", generated_at="2026-06-12T10:00:00+09:00")
+            sidecar.write_text(
+                sidecar.read_text(encoding="utf-8").replace(
+                    "Date stamp = 20260612",
+                    "Date stamp = 20260611",
+                ),
+                encoding="utf-8",
+            )
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("Checksum sidecar date mismatch" in error for error in result.errors))
+
     def test_manifest_version_mismatch_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             dist = Path(tmp)
