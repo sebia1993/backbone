@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.6 - 2026-06-11
+
+- Added shared sensitive-string redaction for GUI logs, snapshot metadata, and comparison report exports.
+- Masks common password, secret, token, authorization header, URL credential, Cisco typed secret, and SNMP community string patterns.
+- Preserves per-command raw output files for operational evidence while redacting human-facing report artifacts.
+- Added regression tests for redaction helpers, connection error sanitizing, and report output masking.
+
 ## v0.7.5 - 2026-06-11
 
 - Added offline sample validation generation from the dashboard and comparison screens.

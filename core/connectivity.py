@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from .models import CommandResult, Device
+from .redaction import redact_sensitive_text
 
 
 DEVICE_CONNECTIVITY_COMMAND_ID = "device_connectivity"
@@ -68,7 +69,7 @@ def normalize_connection_reason(reason: str) -> str:
 
 
 def sanitize_connection_error(message: str) -> str:
-    text = " ".join((message or "").split())
+    text = " ".join(redact_sensitive_text(message or "").split())
     if len(text) > 300:
         return text[:297] + "..."
     return text

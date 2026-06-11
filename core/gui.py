@@ -14,6 +14,7 @@ from .diff_engine import DiffEngine
 from .models import Device, DiffItem, DiffLine, DiffSummary
 from .mock_validation import create_mock_validation_artifacts
 from .paths import resource_root, runtime_root
+from .redaction import redact_sensitive_text
 from .reporter import ReportWriter, change_type_label, summary_label
 from .snapshot import SnapshotStore
 from .version import APP_NAME, APP_VERSION
@@ -776,10 +777,10 @@ class BackboneStateTrackerApp(tk.Tk):
             f"- 위치: {BackboneStateTrackerApp._format_line_location(line)}\n"
             f"- 유형: {change_type_label(line.kind)}\n\n"
             "변경값\n"
-            f"기준: {line.base_text or '-'}\n"
-            f"비교: {line.target_text or '-'}\n\n"
+            f"기준: {redact_sensitive_text(line.base_text) or '-'}\n"
+            f"비교: {redact_sensitive_text(line.target_text) or '-'}\n\n"
             "추적 포인트\n"
-            f"- 명령 원문: {item.command}\n"
+            f"- 명령 원문: {redact_sensitive_text(item.command)}\n"
             f"- 분류: {item.category}\n"
             f"- 기준 원본: {item.base_raw_file or '-'}\n"
             f"- 비교 원본: {item.target_raw_file or '-'}\n"
@@ -803,12 +804,12 @@ class BackboneStateTrackerApp(tk.Tk):
     @staticmethod
     def _format_line_preview(line: DiffLine) -> str:
         if line.kind == "changed":
-            return f"{line.base_text} → {line.target_text}"
+            return f"{redact_sensitive_text(line.base_text)} → {redact_sensitive_text(line.target_text)}"
         if line.kind == "added":
-            return f"추가: {line.target_text}"
+            return f"추가: {redact_sensitive_text(line.target_text)}"
         if line.kind == "removed":
-            return f"삭제: {line.base_text}"
-        return line.target_text or line.base_text
+            return f"삭제: {redact_sensitive_text(line.base_text)}"
+        return redact_sensitive_text(line.target_text or line.base_text)
 
     @staticmethod
     def _severity_guidance(severity: str) -> str:
@@ -1271,7 +1272,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.after(0, lambda: self.log(message))
 
     def log(self, message: str) -> None:
-        self.log_text.insert("end", message + "\n")
+        self.log_text.insert("end", redact_sensitive_text(message) + "\n")
         self.log_text.see("end")
 
 

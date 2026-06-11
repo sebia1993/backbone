@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .models import CommandResult, Device, Snapshot
+from .redaction import redact_payload, redact_sensitive_text
 from .version import APP_NAME, APP_VERSION
 
 
@@ -54,17 +55,17 @@ class SnapshotStore:
                 raw_path = device_dir / raw_name
                 raw_path.write_text(result.output or "", encoding="utf-8")
                 result.raw_file = str(raw_path.relative_to(snapshot_dir))
-                metadata = result.to_metadata()
+                metadata = redact_payload(result.to_metadata())
                 metadata["sha256"] = hashlib.sha256((result.output or "").encode("utf-8")).hexdigest()
                 metadata_results.append(metadata)
 
                 combined_lines.extend(
                     [
-                        f"=== {result.command_id} | {result.command} ===",
+                        f"=== {result.command_id} | {redact_sensitive_text(result.command)} ===",
                         f"success: {result.success}",
                         f"started_at: {result.started_at}",
                         f"ended_at: {result.ended_at}",
-                        f"error: {result.error_message}",
+                        f"error: {redact_sensitive_text(result.error_message)}",
                         "",
                         result.output or "",
                         "",

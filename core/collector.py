@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Optional
 
-from .connectivity import make_connectivity_result
+from .connectivity import make_connectivity_result, sanitize_connection_error
 from .models import CommandResult, CommandSpec, Device
 
 
@@ -66,7 +66,7 @@ class SnapshotCollector:
                         result.success = True
                     except Exception as exc:
                         result.success = False
-                        result.error_message = str(exc)
+                        result.error_message = sanitize_connection_error(str(exc))
                         if not command.allow_failure:
                             self.progress(f"[{device.name}] required command failed: {command.id}")
                     finally:
