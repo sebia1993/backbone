@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 릴리스 반입 체크리스트 v0.8.12</title>
+  <title>Backbone State Tracker 릴리스 반입 체크리스트 v0.8.13</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -18,7 +18,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 릴리스 반입 체크리스트</h1>
-  <p>문서 버전: v0.8.12<br>작성일: 2026-06-12<br>대상: 사외 개발 ZIP을 사내 환경으로 반입해 검증하는 운영자와 인수자</p>
+  <p>문서 버전: v0.8.13<br>작성일: 2026-06-12<br>대상: 사외 개발 ZIP을 사내 환경으로 반입해 검증하는 운영자와 인수자</p>
 
   <h2>1. 핵심 확인</h2>
   <div class="core">
@@ -30,24 +30,25 @@
       <li>ZIP 내부에 <code>config/devices.yaml</code>, <code>outputs/</code>, <code>raw/</code>, <code>.git/</code>, <code>build/</code>, 캐시 파일이 있으면 반입하지 않습니다.</li>
       <li>ZIP 내부 파일은 <code>backbone_state_tracker/</code> 루트 아래에 있어야 하며 절대 경로, 드라이브 경로, <code>..</code> 이동 경로가 있으면 반입하지 않습니다.</li>
       <li>ZIP 내부에 같은 경로가 두 번 이상 들어간 중복 엔트리가 있으면 반입하지 않습니다.</li>
+      <li><code>release_manifest.txt</code>에 같은 <code>Package</code> 레코드가 두 번 이상 있으면 반입하지 않습니다.</li>
     </ul>
   </div>
 
   <h2>2. 파일 세트 확인</h2>
-  <pre><code>backbone_state_tracker_v0.8.12_YYYYMMDD_source.zip
-backbone_state_tracker_v0.8.12_YYYYMMDD_source.zip.sha256.txt
-backbone_state_tracker_v0.8.12_YYYYMMDD_windows_exe.zip
-backbone_state_tracker_v0.8.12_YYYYMMDD_windows_exe.zip.sha256.txt
-backbone_state_tracker_v0.8.12_YYYYMMDD_release_manifest.txt
-backbone_state_tracker_v0.8.12_YYYYMMDD_verify_release_package.ps1
+  <pre><code>backbone_state_tracker_v0.8.13_YYYYMMDD_source.zip
+backbone_state_tracker_v0.8.13_YYYYMMDD_source.zip.sha256.txt
+backbone_state_tracker_v0.8.13_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.13_YYYYMMDD_windows_exe.zip.sha256.txt
+backbone_state_tracker_v0.8.13_YYYYMMDD_release_manifest.txt
+backbone_state_tracker_v0.8.13_YYYYMMDD_verify_release_package.ps1
 CURRENT_RELEASE.txt</code></pre>
   <p>소스 ZIP만 전달하는 경우에는 Windows 실행 파일이 없습니다. 현장 운영자가 바로 실행해야 하는 배포물은 Windows EXE ZIP입니다.</p>
 
   <h2>3. 무결성 확인</h2>
-  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.12_YYYYMMDD_windows_exe.zip</code></pre>
-  <p>출력된 SHA256 값이 같은 이름의 <code>.sha256.txt</code> 또는 <code>*_release_manifest.txt</code>에 기록된 값과 일치해야 합니다. 검증기는 ZIP 파일명 버전, <code>.sha256.txt</code>의 대상 ZIP 이름과 <code>Version</code>, <code>*_release_manifest.txt</code>의 <code>Version</code>, <code>Date stamp</code>, 해당 패키지 <code>Size</code>/<code>SHA256</code> 레코드, ZIP 내부 경로 안전성, 중복 엔트리 여부도 함께 비교합니다.</p>
-  <pre><code>python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.12_YYYYMMDD_windows_exe.zip --require-manifest</code></pre>
-  <pre><code>powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.12_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.12_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
+  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.13_YYYYMMDD_windows_exe.zip</code></pre>
+  <p>출력된 SHA256 값이 같은 이름의 <code>.sha256.txt</code> 또는 <code>*_release_manifest.txt</code>에 기록된 값과 일치해야 합니다. 검증기는 ZIP 파일명 버전, <code>.sha256.txt</code>의 대상 ZIP 이름과 <code>Version</code>, <code>*_release_manifest.txt</code>의 <code>Version</code>, <code>Date stamp</code>, 해당 패키지 <code>Size</code>/<code>SHA256</code> 레코드, ZIP 내부 경로 안전성, ZIP/manifest 중복 엔트리 여부도 함께 비교합니다.</p>
+  <pre><code>python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.13_YYYYMMDD_windows_exe.zip --require-manifest</code></pre>
+  <pre><code>powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.13_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.13_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
   <p>정상 결과는 <code>Verification OK</code>입니다.</p>
 
   <h2>4. ZIP 내부 확인</h2>
@@ -77,6 +78,7 @@ CURRENT_RELEASE.txt</code></pre>
     <li><code>Unsafe ZIP entry found</code>가 나오면 ZIP 내부에 절대 경로, 드라이브 경로, 빈 경로 조각, <code>..</code> 이동 경로가 섞인 것입니다.</li>
     <li><code>Unexpected ZIP root entry found</code>가 나오면 <code>backbone_state_tracker/</code> 루트 밖의 파일이 섞인 것입니다.</li>
     <li><code>Duplicate ZIP entry found</code>가 나오면 같은 내부 경로가 두 번 이상 들어간 ZIP입니다.</li>
+    <li><code>Duplicate release manifest package record found</code>가 나오면 manifest에 같은 패키지 레코드가 두 번 이상 기록된 것입니다.</li>
     <li><code>version mismatch</code> 또는 <code>date mismatch</code>가 나오면 ZIP, <code>.sha256.txt</code>, <code>release_manifest.txt</code> 중 서로 다른 버전 파일이 섞인 것입니다.</li>
     <li><code>package mismatch</code>, <code>package size mismatch</code>, <code>package SHA256 mismatch</code>가 나오면 sidecar 또는 manifest의 해당 패키지 레코드가 ZIP과 맞지 않는 것입니다.</li>
     <li>EXE ZIP이 메일에 업로드되지 않으면 사내 승인된 파일 반입 경로를 사용합니다.</li>

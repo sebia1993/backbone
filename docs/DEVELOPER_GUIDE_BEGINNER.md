@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.12
+문서 버전: v0.8.13
 작성일: 2026-06-12
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -32,7 +32,7 @@
 - `tools/build_release.ps1`: 소스 ZIP 생성 스크립트입니다.
 - `tools/build_windows_exe.ps1`: Windows EXE ZIP 생성 스크립트입니다.
 - `tools/write_release_manifest.py`: 배포 ZIP의 SHA256 체크섬과 릴리스 매니페스트를 생성합니다.
-- `tools/verify_release_package.py`: 배포 ZIP의 해시, 필수 파일, 금지 경로, ZIP 루트/경로 안전성, 중복 엔트리를 검증합니다.
+- `tools/verify_release_package.py`: 배포 ZIP의 해시, 필수 파일, 금지 경로, ZIP 루트/경로 안전성, ZIP/manifest 중복 엔트리를 검증합니다.
 - `tools/verify_release_package.ps1`: 소스 폴더 없이 PowerShell만으로 배포 ZIP을 같은 기준으로 검증합니다.
 
 ## 3. 개발 환경 준비
@@ -86,6 +86,7 @@ v0.8.9부터 Python/PowerShell 패키지 검증기는 ZIP 파일명 버전과 si
 v0.8.10부터 Python/PowerShell 패키지 검증기는 sidecar의 대상 ZIP 이름과 manifest의 해당 패키지 `Size`/`SHA256` 레코드가 실제 ZIP과 일치하는지 확인합니다.
 v0.8.11부터 Python/PowerShell 패키지 검증기는 ZIP 내부 엔트리가 `backbone_state_tracker/` 루트 안에 있고 절대 경로, 드라이브 경로, 빈 경로 조각, `..` 이동 조각을 쓰지 않는지 확인합니다.
 v0.8.12부터 Python/PowerShell 패키지 검증기는 같은 ZIP 내부 경로가 두 번 이상 들어간 중복 엔트리를 실패 처리합니다.
+v0.8.13부터 Python/PowerShell 패키지 검증기는 `release_manifest.txt` 안의 같은 `Package` 레코드가 두 번 이상 있으면 실패 처리합니다.
 
 ## 5. UI 유지보수 기준
 
@@ -112,7 +113,7 @@ UI를 수정할 때는 `core/gui.py`의 수집/비교 메서드 계약을 깨지
 5. 테스트와 smoke-check를 실행합니다.
 6. 소스 ZIP과 Windows EXE ZIP을 생성합니다.
 7. `dist/`의 ZIP, `.sha256.txt`, `release_manifest.txt`, `CURRENT_RELEASE.txt`, `latest/`를 확인합니다.
-8. `python .\tools\verify_release_package.py .\dist\<package>.zip --require-manifest`로 배포 ZIP을 검증합니다. 파일명, sidecar, manifest의 버전/날짜/패키지 레코드, ZIP 내부 경로 안전성, 중복 엔트리 여부가 맞는지도 확인합니다.
+8. `python .\tools\verify_release_package.py .\dist\<package>.zip --require-manifest`로 배포 ZIP을 검증합니다. 파일명, sidecar, manifest의 버전/날짜/패키지 레코드, ZIP 내부 경로 안전성, ZIP/manifest 중복 엔트리 여부가 맞는지도 확인합니다.
 9. `powershell -ExecutionPolicy Bypass -File .\dist\<version>_verify_release_package.ps1 -Package .\dist\<package>.zip -RequireManifest`로 독립 PowerShell 검증도 확인합니다.
 10. Git 브랜치, 커밋, 태그를 남깁니다.
 
@@ -132,7 +133,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 
 결과물은 `dist/` 폴더에 생성됩니다.
 각 ZIP에는 `PACKAGE_INFO.txt`가 포함되고, ZIP 밖에는 같은 이름의 `.sha256.txt` 파일과 버전 단위 `release_manifest.txt`가 함께 생성됩니다.
-빌드 스크립트는 ZIP 생성 후 `tools/verify_release_package.py`를 자동 실행하므로 필수 파일 누락이나 `config/devices.yaml`, `outputs/`, `raw/` 같은 금지 경로가 포함되면 실패합니다. 또한 ZIP 내부 파일이 `backbone_state_tracker/` 루트 밖에 있거나 절대 경로, 드라이브 경로, `..` 이동 경로를 쓰거나 같은 경로가 중복되면 실패합니다.
+빌드 스크립트는 ZIP 생성 후 `tools/verify_release_package.py`를 자동 실행하므로 필수 파일 누락이나 `config/devices.yaml`, `outputs/`, `raw/` 같은 금지 경로가 포함되면 실패합니다. 또한 ZIP 내부 파일이 `backbone_state_tracker/` 루트 밖에 있거나 절대 경로, 드라이브 경로, `..` 이동 경로를 쓰거나 같은 경로가 중복되면 실패합니다. `release_manifest.txt`의 같은 `Package` 레코드 중복도 실패합니다.
 또한 `dist/`에는 버전명이 포함된 `*_verify_release_package.ps1` 스크립트가 생성되어, 소스 폴더 없이 ZIP과 sidecar 파일만 전달된 환경에서도 검증할 수 있습니다.
 빌드 후 `dist/latest/`와 `dist/CURRENT_RELEASE.txt`는 현재 버전의 반입 대상 파일 목록으로 갱신됩니다.
 

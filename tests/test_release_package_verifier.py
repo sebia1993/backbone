@@ -375,6 +375,44 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             self.assertFalse(result.ok)
             self.assertTrue(any("Release manifest package size mismatch" in error for error in result.errors))
 
+    def test_duplicate_manifest_package_record_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.13_20260612_source.zip"
+            _write_zip(package, _source_entries())
+            write_package_checksum(package, "0.8.13", generated_at="2026-06-12T10:00:00+09:00")
+            (dist / "backbone_state_tracker_v0.8.13_20260612_release_manifest.txt").write_text(
+                "\n".join(
+                    [
+                        "Backbone State Tracker Release Manifest",
+                        "Project = backbone_state_tracker",
+                        "Version = v0.8.13",
+                        "Date stamp = 20260612",
+                        "Generated = 2026-06-12T10:01:00+09:00",
+                        "",
+                        "Packages",
+                        f"- Package: {package.name}",
+                        f"  Size: {package.stat().st_size} bytes",
+                        f"  SHA256: {file_sha256(package)}",
+                        f"- Package: {package.name}",
+                        f"  Size: {package.stat().st_size} bytes",
+                        f"  SHA256: {file_sha256(package)}",
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            result = verify_release_package(package, require_manifest=True)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(
+                any(
+                    f"Duplicate release manifest package record found: {package.name}" in error
+                    for error in result.errors
+                )
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
