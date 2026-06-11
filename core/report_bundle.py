@@ -18,6 +18,8 @@ REPORT_FILE_NAMES = (
 GUIDE_FILE_NAMES = (
     "USER_GUIDE.md",
     "USER_GUIDE.html",
+    "COMMAND_GUIDE.md",
+    "COMMAND_GUIDE.html",
     "VERSION_HISTORY.md",
     "VERSION_HISTORY.html",
 )
@@ -71,7 +73,7 @@ def build_bundle_readme(report_dir: Path) -> str:
         f"Generated from: {report_dir.name}\n\n"
         "Contents:\n"
         "- reports/: redacted HTML/XLSX/CSV/JSON comparison outputs when available\n"
-        "- docs/: operator guide and version history when available\n\n"
+        "- docs/: operator, command, and version guides when available\n\n"
         "Safety notes:\n"
         "- This bundle intentionally excludes snapshot raw output folders.\n"
         "- Report files mask obvious password, secret, token, authorization, and SNMP community values.\n"

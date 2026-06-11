@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.3</title>
+  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.4</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -17,7 +17,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p>문서 버전: v0.8.3<br>작성일: 2026-06-11<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
+  <p>문서 버전: v0.8.4<br>작성일: 2026-06-11<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
 
   <h2>1. 프로젝트 목적</h2>
   <p>백본 3/4호기의 작업 전후 상태를 수집하고 특정 시점끼리 비교해 변경점을 추적하는 Windows GUI 프로그램입니다. 장비 설정 변경이 아니라 읽기 전용 점검과 리포트 생성을 목표로 합니다.</p>
@@ -39,6 +39,7 @@
     <li><code>core/workflow_wizard.py</code>: 대시보드 작업 진행 마법사의 단계 상태 계산</li>
     <li><code>core/version.py</code>: 프로그램 버전 정보</li>
     <li><code>config/commands.yaml</code>: 읽기 전용 점검 명령</li>
+    <li><code>docs/COMMAND_GUIDE.md</code>, <code>docs/COMMAND_GUIDE.html</code>: 운영자용 명령어 의미와 확인 포인트</li>
     <li><code>tests/</code>: 단위 테스트</li>
     <li><code>tools/</code>: ZIP과 EXE 배포 스크립트</li>
     <li><code>tools/write_release_manifest.py</code>: 배포 ZIP의 SHA256 체크섬과 릴리스 매니페스트 생성</li>
@@ -72,6 +73,7 @@ python app.py --smoke-check</code></pre>
   <p>v0.8.1부터 <code>tools/verify_release_package.py</code>가 배포 ZIP의 sidecar 해시, manifest 기록, 필수 파일, 금지 파일 포함 여부를 검증합니다. 관련 테스트는 <code>tests/test_release_package_verifier.py</code>입니다.</p>
   <p>v0.8.2부터 <code>tools/verify_release_package.ps1</code>가 버전명 포함 PowerShell 검증 스크립트로 <code>dist/</code>에 함께 생성됩니다. 이 스크립트는 Python 환경 없이 반입된 ZIP, <code>.sha256.txt</code>, <code>release_manifest.txt</code>를 검증합니다.</p>
   <p>v0.8.3부터 수집/비교/샘플 검증 중복 실행을 GUI 진입점에서 차단합니다. 관련 회귀 테스트는 <code>tests/test_gui_formatting.py</code>의 busy guard 테스트입니다.</p>
+  <p>v0.8.4부터 <code>docs/COMMAND_GUIDE.md</code>와 <code>docs/COMMAND_GUIDE.html</code>이 배포 필수 문서에 포함됩니다. 패키지 검증 기준도 두 파일을 확인합니다.</p>
 
   <h2>5. UI 유지보수 기준</h2>
   <ul>

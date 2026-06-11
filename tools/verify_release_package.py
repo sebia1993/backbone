@@ -24,6 +24,8 @@ COMMON_REQUIRED = {
     "backbone_state_tracker/config/devices.example.yaml",
     "backbone_state_tracker/docs/USER_GUIDE.md",
     "backbone_state_tracker/docs/USER_GUIDE.html",
+    "backbone_state_tracker/docs/COMMAND_GUIDE.md",
+    "backbone_state_tracker/docs/COMMAND_GUIDE.html",
     "backbone_state_tracker/docs/DEVELOPER_GUIDE_BEGINNER.md",
     "backbone_state_tracker/docs/DEVELOPER_GUIDE_BEGINNER.html",
     "backbone_state_tracker/docs/VERSION_HISTORY.md",

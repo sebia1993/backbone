@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.4 - 2026-06-11
+
+- Added `docs/COMMAND_GUIDE.md` and `docs/COMMAND_GUIDE.html` with Korean explanations for each bundled HPE/Comware read-only check command.
+- Documented normal criteria and follow-up points for hardware, interface, LACP, VLAN, STP, OSPF, resource, and log checks.
+- Added the command guide files to Python and PowerShell release package verification requirements.
+- Updated user, developer, and version history guides to reference the command guide.
+
 ## v0.8.3 - 2026-06-11
 
 - Added an operation busy guard so collection, manual comparison, and sample validation cannot be started again while a collection or comparison is already running.

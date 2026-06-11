@@ -129,6 +129,8 @@ class ReportWriterTests(unittest.TestCase):
                     "reports/diff_summary.xlsx" in names or "reports/diff_summary.csv" in names
                 )
                 self.assertIn("docs/USER_GUIDE.md", names)
+                self.assertIn("docs/COMMAND_GUIDE.md", names)
+                self.assertIn("docs/COMMAND_GUIDE.html", names)
                 self.assertFalse(any("/raw/" in name or name.startswith("raw/") for name in names))
                 self.assertFalse(any(name.endswith("devices.yaml") for name in names))
                 self.assertFalse(any(name.endswith(".exe") for name in names))
