@@ -50,7 +50,7 @@ function Test-ExcludedPath {
     $parts = $normalized -split "\\"
 
     foreach ($part in $parts) {
-        if ($part -in @(".git", "outputs", "dist", "__pycache__", ".venv", "venv", ".pytest_cache")) {
+        if ($part -in @(".git", "outputs", "dist", "build", "__pycache__", ".venv", "venv", ".pytest_cache")) {
             return $true
         }
     }
@@ -60,6 +60,10 @@ function Test-ExcludedPath {
     }
 
     if (-not $IsDirectory -and $normalized -like "*.pyc") {
+        return $true
+    }
+
+    if (-not $IsDirectory -and $normalized -like "*.spec") {
         return $true
     }
 

@@ -19,7 +19,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p><strong>버전:</strong> v0.2.1<br><strong>대상:</strong> Python 초급 개발자 또는 내부 유지보수 담당자</p>
+  <p><strong>버전:</strong> v0.3.0<br><strong>대상:</strong> Python 초급 개발자 또는 내부 유지보수 담당자</p>
 
   <h2>1. 프로젝트 구조</h2>
   <pre>backbone_state_tracker\
@@ -36,6 +36,7 @@
     models.py
     reporter.py
     snapshot.py
+    paths.py
     version.py
   docs\
   tests\
@@ -48,6 +49,7 @@
       <tr><td><code>app.py</code></td><td>GUI 실행 진입점</td></tr>
       <tr><td><code>core/gui.py</code></td><td>Tkinter 기반 화면과 버튼 동작</td></tr>
       <tr><td><code>core/collector.py</code></td><td>Netmiko SSH 접속 및 명령 실행</td></tr>
+      <tr><td><code>core/paths.py</code></td><td>소스 실행과 EXE 실행의 경로 기준 분리</td></tr>
       <tr><td><code>core/snapshot.py</code></td><td>스냅샷 폴더와 원본 출력 저장</td></tr>
       <tr><td><code>core/diff_engine.py</code></td><td>기준/대상 스냅샷 비교</td></tr>
       <tr><td><code>core/reporter.py</code></td><td>HTML, XLSX, JSON 리포트 생성</td></tr>
@@ -94,8 +96,11 @@ notepad core\version.py
 $env:PYTHONPATH = (Split-Path (Get-Location) -Parent)
 python -m unittest discover -s tests
 
-# ZIP 생성
-powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1</pre>
+# 소스 ZIP 생성
+powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
+
+# Windows 실행파일 ZIP 생성
+powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1</pre>
 
   <h2>7. Git 운영 방식</h2>
   <pre>git checkout main

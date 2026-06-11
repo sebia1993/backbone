@@ -1,6 +1,6 @@
 # Backbone State Tracker 버전별 변경내용
 
-문서 버전: v0.2.1  
+문서 버전: v0.3.0  
 작성일: 2026-06-11  
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
@@ -14,11 +14,32 @@
 
 | 버전 | 날짜 | 핵심 변경 |
 | --- | --- | --- |
+| v0.3.0 | 2026-06-11 | Windows 실행파일 ZIP 배포 추가 |
 | v0.2.1 | 2026-06-11 | 버전별 변경내용 문서 추가 |
 | v0.2.0 | 2026-06-11 | Git 기록, ZIP 배포, 사용자/개발자 가이드 추가 |
 | v0.1.0 | 2026-06-11 | 백본 상태 수집/비교 도구 최초 구현 |
 
-## 3. v0.2.1 변경내용
+## 3. v0.3.0 변경내용
+
+### 추가
+
+- `tools/build_windows_exe.ps1` 추가
+- `BackboneStateTracker.exe`를 포함한 Windows 실행파일 ZIP 생성 기능 추가
+- 소스 실행과 EXE 실행의 경로 기준을 분리하는 `core/paths.py` 추가
+- `app.py --smoke-check` 검증 옵션 추가
+
+### 변경
+
+- 프로그램 버전 표기를 `v0.3.0`으로 갱신
+- 사용자/개발자/버전 히스토리 문서에 실행파일 ZIP 설명 추가
+
+### 운영 영향
+
+- Python 설치 없이도 실행파일 패키지에서 `BackboneStateTracker.exe`를 실행할 수 있습니다.
+- 실행파일 옆의 `config/`와 `outputs/` 폴더를 기준으로 동작합니다.
+- 메일 보안 정책은 `.exe` 포함 ZIP을 차단할 수 있으므로 승인된 파일 반입 절차가 필요할 수 있습니다.
+
+## 4. v0.2.1 변경내용
 
 ### 추가
 
@@ -37,7 +58,7 @@
 - ZIP 배포 파일명은 `backbone_state_tracker_v0.2.1_YYYYMMDD_source.zip` 형식으로 생성됩니다.
 - 새 문서는 ZIP에 자동 포함됩니다.
 
-## 4. v0.2.0 변경내용
+## 5. v0.2.0 변경내용
 
 ### 추가
 
@@ -62,7 +83,7 @@
 - ZIP에는 `.git`, `outputs`, `dist`, `config/devices.yaml`, 캐시 파일이 포함되지 않습니다.
 - 실제 장비 접속 정보와 수집 결과물이 배포 파일에 섞일 가능성을 낮췄습니다.
 
-## 5. v0.1.0 변경내용
+## 6. v0.1.0 변경내용
 
 ### 추가
 
@@ -82,12 +103,12 @@
 - OSPF, LACP, interface, log 등 주요 상태 변화 추적이 가능합니다.
 - 장비 설정 변경 명령은 포함하지 않았습니다.
 
-## 6. 버전 확인 방법
+## 7. 버전 확인 방법
 
 GUI 상단 제목에서 현재 버전을 확인할 수 있습니다.
 
 ```text
-Backbone State Tracker v0.2.1
+Backbone State Tracker v0.3.0
 ```
 
 소스 기준으로는 아래 파일을 확인합니다.
@@ -96,22 +117,24 @@ Backbone State Tracker v0.2.1
 core/version.py
 ```
 
-## 7. 릴리즈 ZIP 생성 기준
+## 8. 릴리즈 ZIP 생성 기준
 
 릴리즈 ZIP은 아래 명령으로 생성합니다.
 
 ```powershell
 cd "D:\Codex Project\Network\backbone_state_tracker"
 powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
+powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 ```
 
 ZIP 파일명 예시:
 
 ```text
-dist\backbone_state_tracker_v0.2.1_20260611_source.zip
+dist\backbone_state_tracker_v0.3.0_20260611_source.zip
+dist\backbone_state_tracker_v0.3.0_20260611_windows_exe.zip
 ```
 
-## 8. 반입 전 확인사항
+## 9. 반입 전 확인사항
 
 - ZIP 파일명에 의도한 버전이 포함되어 있는지 확인합니다.
 - `docs/` 폴더에 사용자 가이드, 개발자 가이드, 버전별 변경내용 문서가 모두 있는지 확인합니다.

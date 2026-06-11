@@ -1,6 +1,6 @@
 # Backbone State Tracker 사용자 가이드
 
-버전: v0.2.1  
+버전: v0.3.0  
 대상: 백본 3호기 / 백본 4호기 상태 수집 및 비교 담당자
 
 ## 1. 목적
@@ -10,26 +10,32 @@ Backbone State Tracker는 백본 3/4호기에서 읽기 전용 점검 명령을 
 
 이 도구는 장비 설정을 변경하지 않습니다. `display` 계열 상태 확인 명령만 실행합니다.
 
-## 2. 설치
+## 2. 패키지 종류
+
+| 패키지 | 실행파일 포함 | 용도 |
+| --- | --- | --- |
+| `source.zip` | 아니오 | Python이 설치된 PC에서 소스 기준 실행/수정 |
+| `windows_exe.zip` | 예 | `BackboneStateTracker.exe`로 바로 실행 |
+
+메일 시스템은 `.exe`, `.py`, `.ps1`이 들어 있는 ZIP을 차단할 수 있습니다.
+메일 업로드가 막히면 사내 승인된 파일 반입/전송 절차를 사용해야 합니다.
+
+## 3. 설치
 
 1. ZIP 파일을 사내 PC의 원하는 위치에 압축 해제합니다.
-2. PowerShell을 열고 프로젝트 폴더로 이동합니다.
+2. `windows_exe.zip`이면 `BackboneStateTracker.exe`를 실행합니다.
+3. `source.zip`이면 PowerShell을 열고 프로젝트 폴더로 이동합니다.
 
 ```powershell
 cd "D:\NetworkTools\backbone_state_tracker"
-```
-
-3. 필요한 Python 패키지를 설치합니다.
-
-```powershell
 python -m pip install -r requirements.txt
-```
-
-## 3. 실행
-
-```powershell
 python app.py
 ```
+
+## 4. 실행
+
+실행파일 패키지는 `BackboneStateTracker.exe`를 실행합니다.
+소스 패키지는 `python app.py`로 실행합니다.
 
 실행 후 GUI에서 다음 값을 입력합니다.
 
@@ -41,14 +47,14 @@ python app.py
 | Snapshot label | `pre`, `bb3_off`, `post_restore` 같은 수집 시점 이름 |
 | Device | 백본 3호기와 4호기 이름, IP, SSH 포트, Netmiko device type |
 
-## 4. 장비 정보 저장
+## 5. 장비 정보 저장
 
 화면에서 장비 정보를 입력한 뒤 `Save Devices`를 누르면
 `config/devices.yaml`에 저장됩니다.
 
 주의: 이 파일에는 내부 IP나 호스트명이 들어갈 수 있으므로 ZIP 배포 파일에는 포함되지 않습니다.
 
-## 5. 스냅샷 수집
+## 6. 스냅샷 수집
 
 1. 장비 정보와 계정 정보를 입력합니다.
 2. `Snapshot label`에 수집 시점 이름을 입력합니다.
@@ -63,7 +69,7 @@ outputs\snapshots\YYYYMMDD_HHMMSS_스냅샷명\
 
 각 스냅샷에는 장비별 원본 명령 출력과 `snapshot.json` 메타데이터가 저장됩니다.
 
-## 6. 스냅샷 비교
+## 7. 스냅샷 비교
 
 1. `Refresh`를 눌러 스냅샷 목록을 갱신합니다.
 2. Baseline에 기준 스냅샷을 선택합니다.
@@ -84,7 +90,7 @@ outputs\snapshots\<target>\comparisons\vs_<baseline>\
 | diff_summary.xlsx | 엑셀 요약 리포트 |
 | diff_manifest.json | 자동화/추적용 원본 비교 데이터 |
 
-## 7. 리포트 해석
+## 8. 리포트 해석
 
 | 등급 | 의미 | 예시 |
 | --- | --- | --- |
@@ -93,7 +99,7 @@ outputs\snapshots\<target>\comparisons\vs_<baseline>\
 | Info | 참고용 출력 변화 | 단순 출력 차이 |
 | Unchanged | 의미 있는 변경 없음 | 기준과 대상 출력 동일 |
 
-## 8. 작업 시 권장 흐름
+## 9. 작업 시 권장 흐름
 
 1. 작업 전: `pre` 스냅샷 수집
 2. 백본 3호기 OFF 중: `bb3_off` 스냅샷 수집
@@ -102,14 +108,15 @@ outputs\snapshots\<target>\comparisons\vs_<baseline>\
 5. `pre`와 `post_restore` 비교
 6. Critical/Warning 항목을 먼저 확인
 
-## 9. 보안 주의사항
+## 10. 보안 주의사항
 
 - 암호는 프로그램 실행 중에만 사용하며 파일로 저장하지 않습니다.
 - `config/devices.yaml`은 내부 IP/호스트명을 포함할 수 있으므로 외부 공유 전 확인해야 합니다.
 - `outputs/`에는 장비 상태 출력이 포함되므로 외부 반출 대상에서 제외하는 것이 좋습니다.
 - ZIP 릴리즈 스크립트는 `.git`, `outputs/`, `config/devices.yaml`을 자동 제외합니다.
+- 실행파일 ZIP은 메일 보안 정책에서 차단될 수 있습니다.
 
-## 10. 문제 해결
+## 11. 문제 해결
 
 | 증상 | 확인 사항 |
 | --- | --- |
