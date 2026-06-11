@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.7.8 - 2026-06-11
+
+- Added severity filtering and free-text search to the GUI comparison detail list.
+- Search covers device, command, category, judgment, line location, and before/after changed values.
+- Keeps search on redacted display values so masked secrets are not exposed through filtering.
+- Added visible filtered-row counts and a filter reset action.
+- Added GUI formatting tests for severity filtering, multi-term search, and redacted search behavior.
+
 ## v0.7.7 - 2026-06-11
 
 - Added an automatically generated shared report ZIP for each snapshot comparison.
