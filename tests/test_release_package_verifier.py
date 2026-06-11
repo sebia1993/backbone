@@ -33,6 +33,8 @@ def _common_entries() -> dict[str, str]:
         "backbone_state_tracker/docs/DEVELOPER_GUIDE_BEGINNER.html": "dev html",
         "backbone_state_tracker/docs/VERSION_HISTORY.md": "history md",
         "backbone_state_tracker/docs/VERSION_HISTORY.html": "history html",
+        "backbone_state_tracker/docs/RELEASE_CHECKLIST.md": "release checklist md",
+        "backbone_state_tracker/docs/RELEASE_CHECKLIST.html": "release checklist html",
     }
 
 
@@ -119,6 +121,22 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             self.assertFalse(result.ok)
             self.assertTrue(
                 any("backbone_state_tracker_v0.8.1_20260611_release_manifest.txt" in error for error in result.errors)
+            )
+
+    def test_missing_release_checklist_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.8_20260612_source.zip"
+            entries = _source_entries()
+            del entries["backbone_state_tracker/docs/RELEASE_CHECKLIST.md"]
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.8", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(
+                any("backbone_state_tracker/docs/RELEASE_CHECKLIST.md" in error for error in result.errors)
             )
 
 
