@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.2
+문서 버전: v0.8.3
 작성일: 2026-06-11
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -73,6 +73,7 @@ v0.7.9부터 `core/preflight.py`가 실제 장비 접속 전에 장비/명령 �
 v0.8.0부터 `tools/write_release_manifest.py`가 소스 ZIP과 Windows EXE ZIP의 SHA256 체크섬 파일 및 버전 단위 릴리스 매니페스트를 생성합니다. 관련 테스트는 `tests/test_release_manifest.py`입니다.
 v0.8.1부터 `tools/verify_release_package.py`가 배포 ZIP의 sidecar 해시, manifest 기록, 필수 파일, 금지 파일 포함 여부를 검증합니다. 관련 테스트는 `tests/test_release_package_verifier.py`입니다.
 v0.8.2부터 `tools/verify_release_package.ps1`가 버전명 포함 PowerShell 검증 스크립트로 `dist/`에 함께 생성됩니다. 이 스크립트는 Python 환경 없이 반입된 ZIP, `.sha256.txt`, `release_manifest.txt`를 검증합니다.
+v0.8.3부터 수집/비교/샘플 검증 중복 실행을 GUI 진입점에서 차단합니다. 관련 회귀 테스트는 `tests/test_gui_formatting.py`의 busy guard 테스트입니다.
 
 ## 5. UI 유지보수 기준
 
@@ -96,7 +97,7 @@ UI를 수정할 때는 `core/gui.py`의 수집/비교 메서드 계약을 깨지
 4. 사용자 가이드와 개발자 가이드가 새 기능을 설명하는지 확인합니다.
 5. 테스트와 smoke-check를 실행합니다.
 6. 소스 ZIP과 Windows EXE ZIP을 생성합니다.
-7. `dist/`의 ZIP, `.sha256.txt`, `release_manifest.txt`를 확인합니다.
+7. `dist/`의 ZIP, `.sha256.txt`, `release_manifest.txt`, `CURRENT_RELEASE.txt`, `latest/`를 확인합니다.
 8. `python .\tools\verify_release_package.py .\dist\<package>.zip --require-manifest`로 배포 ZIP을 검증합니다.
 9. `powershell -ExecutionPolicy Bypass -File .\dist\<version>_verify_release_package.ps1 -Package .\dist\<package>.zip -RequireManifest`로 독립 PowerShell 검증도 확인합니다.
 10. Git 브랜치, 커밋, 태그를 남깁니다.
@@ -119,6 +120,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 각 ZIP에는 `PACKAGE_INFO.txt`가 포함되고, ZIP 밖에는 같은 이름의 `.sha256.txt` 파일과 버전 단위 `release_manifest.txt`가 함께 생성됩니다.
 빌드 스크립트는 ZIP 생성 후 `tools/verify_release_package.py`를 자동 실행하므로 필수 파일 누락이나 `config/devices.yaml`, `outputs/`, `raw/` 같은 금지 경로가 포함되면 실패합니다.
 또한 `dist/`에는 버전명이 포함된 `*_verify_release_package.ps1` 스크립트가 생성되어, 소스 폴더 없이 ZIP과 sidecar 파일만 전달된 환경에서도 검증할 수 있습니다.
+빌드 후 `dist/latest/`와 `dist/CURRENT_RELEASE.txt`는 현재 버전의 반입 대상 파일 목록으로 갱신됩니다.
 
 ## 8. 보안 원칙
 

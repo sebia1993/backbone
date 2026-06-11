@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.3 - 2026-06-11
+
+- Added an operation busy guard so collection, manual comparison, and sample validation cannot be started again while a collection or comparison is already running.
+- Disabled collection/comparison/sample action buttons during active operations to reduce accidental duplicate SSH sessions and duplicate reports.
+- Build scripts now refresh `dist\latest\` and `dist\CURRENT_RELEASE.txt` so operators can identify the latest transfer-ready release files when older ZIPs remain in `dist\`.
+- Added a GUI regression test for the busy guard.
+
 ## v0.8.2 - 2026-06-11
 
 - Added standalone PowerShell release ZIP verification with `tools/verify_release_package.ps1`.
