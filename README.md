@@ -1,6 +1,6 @@
 # Backbone State Tracker
 
-Version: `v0.7.1`
+Version: `v0.7.2`
 
 Windows GUI utility for collecting read-only status snapshots from backbone 3
 and 4, then comparing snapshots to track operational changes during maintenance.
@@ -11,6 +11,7 @@ and 4, then comparing snapshots to track operational changes during maintenance.
 - Runs read-only display/check commands from `config/commands.yaml`.
 - Saves command outputs as timestamped snapshots.
 - Compares snapshots by device and command.
+- Tracks per-device connectivity so an unreachable backbone is reported as a single Critical comparison item.
 - Automatically compares `백본3 OFF 중`, `복구 후`, and custom snapshots against the latest `작업 전` snapshot.
 - Writes HTML, XLSX, and JSON comparison reports.
 - Provides a Korean bright-console UI with left navigation, dashboard metrics, collection, compare, settings, and log screens.
@@ -71,7 +72,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 The generated ZIP is written to `dist\` as:
 
 ```text
-backbone_state_tracker_v0.7.1_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.7.2_YYYYMMDD_windows_exe.zip
 ```
 
 Corporate mail systems may block ZIP files containing `.exe`, `.py`, or `.ps1`

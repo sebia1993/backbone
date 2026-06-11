@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.7.2 - 2026-06-11
+
+- Added per-device `device_connectivity` snapshot records for SSH connection success and failure.
+- Reports unreachable devices as a single Critical comparison item instead of many missing command rows.
+- Suppresses normal command added/removed noise when one side of the comparison is unreachable.
+- Preserves compatibility with older snapshots by inferring connectivity from existing command results or legacy connection failures.
+- Added tests for device unreachable, device restored, and still-unreachable comparison scenarios.
+
 ## v0.7.1 - 2026-06-11
 
 - Redesigned HTML comparison detail rows into a compact inline format: change type, line mapping, and `before → after` content.

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import datetime
 from typing import Optional
 
+from .connectivity import make_connectivity_result
 from .models import CommandResult, CommandSpec, Device
 
 
@@ -51,6 +51,7 @@ class SnapshotCollector:
                     banner_timeout=self.timeout,
                     fast_cli=False,
                 )
+                device_results.append(make_connectivity_result(device, True))
                 for command in commands:
                     result = CommandResult.started(device, command)
                     self.progress(f"[{device.name}] run: {command.command}")
@@ -71,13 +72,13 @@ class SnapshotCollector:
                     finally:
                         device_results.append(result.finish())
             except NetMikoAuthenticationException as exc:
-                device_results.append(self._connection_failure(device, "authentication", str(exc)))
+                device_results.append(make_connectivity_result(device, False, "authentication", str(exc)))
                 self.progress(f"[{device.name}] authentication failed")
             except NetMikoTimeoutException as exc:
-                device_results.append(self._connection_failure(device, "timeout", str(exc)))
+                device_results.append(make_connectivity_result(device, False, "timeout", str(exc)))
                 self.progress(f"[{device.name}] connection timeout")
             except Exception as exc:
-                device_results.append(self._connection_failure(device, "connection", str(exc)))
+                device_results.append(make_connectivity_result(device, False, "connection", str(exc)))
                 self.progress(f"[{device.name}] connection failed")
             finally:
                 if connection is not None:
@@ -87,21 +88,3 @@ class SnapshotCollector:
                         pass
 
         return all_results
-
-    @staticmethod
-    def _connection_failure(device: Device, category: str, message: str) -> CommandResult:
-        started_at = datetime.now().isoformat(timespec="seconds")
-        return CommandResult(
-            device_name=device.name,
-            host=device.host,
-            command_id=f"{category}_failed",
-            command="connect",
-            description="Device connection failure",
-            category="connection",
-            phase="check",
-            success=False,
-            error_message=message,
-            started_at=started_at,
-            ended_at=started_at,
-        )
-

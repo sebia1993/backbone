@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.7.1
+문서 버전: v0.7.2
 작성일: 2026-06-11
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -13,6 +13,7 @@
 - `app.py`: 프로그램 시작점입니다.
 - `core/gui.py`: Tkinter GUI 화면과 사용자 이벤트 처리입니다.
 - `core/collector.py`: Netmiko 기반 SSH 명령 수집입니다.
+- `core/connectivity.py`: 장비별 접속 상태 내부 결과를 생성합니다.
 - `core/snapshot.py`: 스냅샷 저장과 로드입니다.
 - `core/diff_engine.py`: 스냅샷 비교 엔진입니다.
 - `core/reporter.py`: HTML, XLSX, JSON 리포트 생성입니다.
@@ -54,6 +55,7 @@ python app.py --smoke-check
 
 v0.6.0부터 비교 결과는 `DiffItem.diff` 원본 unified diff와 함께 `changed_lines`, `change_count`, `change_preview`를 저장합니다. 리포트나 GUI를 수정할 때는 두 표현이 모두 유지되는지 확인합니다.
 v0.7.1부터 HTML 리포트의 변경 상세는 `유형`, `라인`, `변경 내용` 3열 구조입니다. GUI와 XLSX는 기존 분리 필드를 유지하므로 HTML 가독성 수정이 다른 출력 형식을 깨지 않는지 테스트로 확인합니다.
+v0.7.2부터 모든 수집은 장비별 `device_connectivity` 결과를 포함합니다. 이 항목은 `config/commands.yaml`에 넣는 사용자 점검 명령이 아니라, 접속 성공/실패를 비교군에 넣기 위한 내부 결과입니다. 장비가 접속 불가이면 비교 엔진은 일반 명령 누락 노이즈를 숨기고 `device_connectivity` 한 건을 Critical로 표시합니다.
 
 ## 5. UI 유지보수 기준
 

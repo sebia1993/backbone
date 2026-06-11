@@ -5,7 +5,14 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from .models import CommandResult, DiffItem, DiffLine, DiffSummary
+from .connectivity import (
+    DEVICE_CONNECTIVITY_COMMAND_ID,
+    is_connectivity_result,
+    is_legacy_connection_failure,
+    legacy_failure_reason,
+    make_connectivity_result_for_device,
+)
+from .models import CommandResult, DiffItem, DiffLine, DiffSummary, Snapshot
 from .snapshot import SnapshotStore, read_text_lossless
 
 
@@ -46,14 +53,27 @@ class DiffEngine:
     def compare(self, base_dir: Path, target_dir: Path) -> DiffSummary:
         base = SnapshotStore.load_snapshot(base_dir)
         target = SnapshotStore.load_snapshot(target_dir)
-        base_results = self._index_results(base.results)
-        target_results = self._index_results(target.results)
+        base_results = self._index_results(self._results_with_connectivity(base))
+        target_results = self._index_results(self._results_with_connectivity(target))
+        base_unreachable_devices = self._unreachable_devices(base_results)
+        target_unreachable_devices = self._unreachable_devices(target_results)
         keys = sorted(set(base_results) | set(target_results))
         items: list[DiffItem] = []
 
         for key in keys:
+            device_name, command_id = key
             base_result = base_results.get(key)
             target_result = target_results.get(key)
+
+            if self._should_suppress_missing_due_to_unreachable(
+                device_name,
+                command_id,
+                base_result,
+                target_result,
+                base_unreachable_devices,
+                target_unreachable_devices,
+            ):
+                continue
 
             if base_result and base_result.phase == "setup":
                 continue
@@ -62,6 +82,10 @@ class DiffEngine:
 
             if base_result is None or target_result is None:
                 items.append(self._missing_item(base_dir, target_dir, key, base_result, target_result))
+                continue
+
+            if command_id == DEVICE_CONNECTIVITY_COMMAND_ID:
+                items.append(self._connectivity_item(base_dir, target_dir, base_result, target_result))
                 continue
 
             base_text = self._read_result_output(base_dir, base_result)
@@ -132,11 +156,176 @@ class DiffEngine:
     @staticmethod
     def _read_result_output(snapshot_dir: Path, result: CommandResult) -> str:
         if not result.raw_file:
-            return ""
+            return result.output
         raw_path = snapshot_dir / result.raw_file
         if not raw_path.exists():
-            return ""
+            return result.output
         return read_text_lossless(raw_path)
+
+    def _results_with_connectivity(self, snapshot: Snapshot) -> list[CommandResult]:
+        results = [result for result in snapshot.results if not is_legacy_connection_failure(result)]
+        devices = self._enabled_device_map(snapshot)
+        existing_connectivity = {result.device_name for result in results if is_connectivity_result(result)}
+
+        for device_name, host in devices.items():
+            if device_name in existing_connectivity:
+                continue
+
+            legacy_failure = next(
+                (
+                    result
+                    for result in snapshot.results
+                    if result.device_name == device_name and is_legacy_connection_failure(result)
+                ),
+                None,
+            )
+            if legacy_failure is not None:
+                results.append(
+                    make_connectivity_result_for_device(
+                        device_name=device_name,
+                        host=legacy_failure.host or host,
+                        success=False,
+                        reason=legacy_failure_reason(legacy_failure),
+                        error_message=legacy_failure.error_message,
+                        started_at=legacy_failure.started_at,
+                        ended_at=legacy_failure.ended_at,
+                    )
+                )
+                continue
+
+            reachable_result = next(
+                (
+                    result
+                    for result in snapshot.results
+                    if result.device_name == device_name and self._is_reachable_command_result(result)
+                ),
+                None,
+            )
+            if reachable_result is not None:
+                results.append(
+                    make_connectivity_result_for_device(
+                        device_name=device_name,
+                        host=reachable_result.host or host,
+                        success=True,
+                        started_at=reachable_result.started_at,
+                        ended_at=reachable_result.ended_at,
+                    )
+                )
+
+        return results
+
+    @staticmethod
+    def _enabled_device_map(snapshot: Snapshot) -> dict[str, str]:
+        devices: dict[str, str] = {}
+        for payload in snapshot.devices:
+            if not bool(payload.get("enabled", True)):
+                continue
+            name = str(payload.get("name") or payload.get("host") or "").strip()
+            if name:
+                devices[name] = str(payload.get("host") or "").strip()
+
+        for result in snapshot.results:
+            if result.device_name and result.device_name not in devices:
+                devices[result.device_name] = result.host
+        return devices
+
+    @staticmethod
+    def _is_reachable_command_result(result: CommandResult) -> bool:
+        return (
+            result.phase != "setup"
+            and not is_connectivity_result(result)
+            and not is_legacy_connection_failure(result)
+        )
+
+    @staticmethod
+    def _unreachable_devices(results: dict[tuple[str, str], CommandResult]) -> set[str]:
+        return {
+            device_name
+            for (device_name, command_id), result in results.items()
+            if command_id == DEVICE_CONNECTIVITY_COMMAND_ID and not result.success
+        }
+
+    @staticmethod
+    def _should_suppress_missing_due_to_unreachable(
+        device_name: str,
+        command_id: str,
+        base_result: CommandResult | None,
+        target_result: CommandResult | None,
+        base_unreachable_devices: set[str],
+        target_unreachable_devices: set[str],
+    ) -> bool:
+        if command_id == DEVICE_CONNECTIVITY_COMMAND_ID:
+            return False
+        if target_result is None and device_name in target_unreachable_devices:
+            return True
+        if base_result is None and device_name in base_unreachable_devices:
+            return True
+        return False
+
+    def _connectivity_item(
+        self,
+        base_dir: Path,
+        target_dir: Path,
+        base_result: CommandResult,
+        target_result: CommandResult,
+    ) -> DiffItem:
+        base_text = self._read_result_output(base_dir, base_result)
+        target_text = self._read_result_output(target_dir, target_result)
+        base_lines = normalize_output_lines(base_text, command_id=base_result.command_id)
+        target_lines = normalize_output_lines(target_text, command_id=target_result.command_id)
+        base_normalized = "\n".join(line for _, line in base_lines).strip()
+        target_normalized = "\n".join(line for _, line in target_lines).strip()
+
+        if base_result.success and target_result.success and base_normalized == target_normalized:
+            return DiffItem(
+                device_name=target_result.device_name,
+                command_id=target_result.command_id,
+                command=target_result.command,
+                category=target_result.category,
+                severity="Unchanged",
+                status="unchanged",
+                summary="No meaningful change detected.",
+                base_raw_file=base_result.raw_file,
+                target_raw_file=target_result.raw_file,
+            )
+
+        diff_text = "\n".join(
+            difflib.unified_diff(
+                base_normalized.splitlines(),
+                target_normalized.splitlines(),
+                fromfile=f"base/{base_result.device_name}/{base_result.command_id}",
+                tofile=f"target/{target_result.device_name}/{target_result.command_id}",
+                lineterm="",
+            )
+        )
+        changed_lines = build_changed_lines(base_lines, target_lines)
+        if not changed_lines:
+            changed_lines = [
+                DiffLine(
+                    kind="changed",
+                    base_line_no=1,
+                    target_line_no=1,
+                    base_text=base_normalized or "-",
+                    target_text=target_normalized or "-",
+                )
+            ]
+        change_count, changed_lines, change_preview = summarize_changed_lines(changed_lines)
+        severity, summary = classify_connectivity_change(base_result, target_result)
+        return DiffItem(
+            device_name=target_result.device_name,
+            command_id=target_result.command_id,
+            command=target_result.command,
+            category=target_result.category,
+            severity=severity,
+            status="changed",
+            summary=summary,
+            diff=diff_text,
+            base_raw_file=base_result.raw_file,
+            target_raw_file=target_result.raw_file,
+            changed_lines=changed_lines,
+            change_count=change_count,
+            change_preview=change_preview,
+        )
 
     def _missing_item(
         self,
@@ -293,6 +482,14 @@ def format_diff_line_preview(line: DiffLine) -> str:
     if line.kind == "removed":
         return f"삭제: {line.base_text}"
     return line.target_text or line.base_text
+
+
+def classify_connectivity_change(base_result: CommandResult, target_result: CommandResult) -> tuple[str, str]:
+    if not target_result.success:
+        return "Critical", "Target device connection failed."
+    if not base_result.success and target_result.success:
+        return "Info", "Target device connection restored."
+    return "Info", "Output changed."
 
 
 def classify_change(result: CommandResult, added_lines: list[str], diff_text: str) -> tuple[str, str]:
