@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 사용자 가이드 v0.7.7</title>
+  <title>Backbone State Tracker 사용자 가이드 v0.7.8</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -16,7 +16,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 사용자 가이드</h1>
-  <p>문서 버전: v0.7.7<br>작성일: 2026-06-11<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
+  <p>문서 버전: v0.7.8<br>작성일: 2026-06-11<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
   <h2>1. 핵심 운영 포인트</h2>
   <div class="core">
@@ -64,7 +64,7 @@
   <h3>상태 수집</h3>
   <p><code>작업 전</code>, <code>백본3 OFF 중</code>, <code>복구 후</code>, <code>사용자 지정</code> 단계 중 하나를 선택합니다.</p>
   <h3>비교 결과</h3>
-  <p>기준 스냅샷과 비교 스냅샷을 직접 선택해 다시 비교합니다. 최근 변경 상세 목록은 등급, 장비, 명령, 판단, 유형, 라인, 변경 내용을 표시합니다. 변경 행을 선택하면 핵심 판단, 변경 전/후 값, 원본 파일 위치, 등급별 운영 메모를 확인할 수 있습니다. 접속 불가 장비는 일반 명령 누락을 여러 건으로 나열하지 않고 <code>device_connectivity</code> 긴급 항목 한 줄로 표시합니다.</p>
+  <p>기준 스냅샷과 비교 스냅샷을 직접 선택해 다시 비교합니다. 최근 변경 상세 목록은 등급, 장비, 명령, 판단, 유형, 라인, 변경 내용을 표시합니다. <code>등급</code> 필터와 <code>검색</code> 입력으로 긴급/주의 항목, 특정 장비, 명령, 인터페이스, 변경값만 좁혀 볼 수 있습니다. 검색은 표시되는 마스킹 값 기준으로 동작하므로 비밀값 원문은 검색 결과에 노출되지 않습니다. 변경 행을 선택하면 핵심 판단, 변경 전/후 값, 원본 파일 위치, 등급별 운영 메모를 확인할 수 있습니다. 접속 불가 장비는 일반 명령 누락을 여러 건으로 나열하지 않고 <code>device_connectivity</code> 긴급 항목 한 줄로 표시합니다.</p>
   <h3>장비 설정</h3>
   <p>백본 3/4호기 접속 정보와 SSH 계정을 입력합니다. 암호는 저장하지 않습니다.</p>
   <h3>작업 로그</h3>
@@ -83,7 +83,7 @@
   <h2>6. 리포트 확인</h2>
   <p><code>최근 리포트</code>는 HTML 리포트를 열고, <code>공유 ZIP</code>은 현재 실행 세션에서 마지막으로 생성된 공유용 ZIP을 엽니다. 사내 반입이나 메일 첨부에는 공유 ZIP을 우선 사용합니다.</p>
   <p>HTML 리포트는 명령별 변경 상세 테이블과 원본 unified diff를 함께 제공합니다. HTML, XLSX, JSON manifest에는 명백한 비밀값이 <code>***</code>로 표시됩니다. 장비명, IP, 인터페이스, VLAN, 라우팅 값처럼 비교 추적에 필요한 운영 식별자는 자동 마스킹하지 않습니다. 공유 ZIP에는 <code>reports/</code> 아래의 리포트 파일과 <code>docs/</code> 아래의 사용자 문서가 들어갑니다. <code>raw/</code>, <code>config/devices.yaml</code>, 실행파일은 포함하지 않습니다. HTML 변경 상세는 <code>유형</code>, <code>라인</code>, <code>변경 내용</code> 구조이며 변경 행은 <code>기존값 → 신규값</code>, 추가 행은 <code>추가: 신규값</code>, 삭제 행은 <code>삭제: 기존값</code>으로 표시됩니다. 장비 접속 실패는 <code>reachable → unreachable: timeout</code>처럼 접속 상태 변경으로 표시됩니다. 긴 명령 출력은 변경 상세 영역의 가로 스크롤로 확인합니다.</p>
-  <p>GUI의 <code>라인</code> 값은 <code>기준 라인 → 비교 라인</code> 형태입니다. 예를 들어 <code>2 → 2</code>는 같은 행의 값이 바뀐 경우이고, <code>- → 4</code>는 비교 스냅샷에 추가된 행입니다. XLSX 리포트의 <code>diff_detail</code> 시트는 장비, 명령, 변경 유형, 기준 라인, 비교 라인, 변경 전/후 값을 행 단위로 제공합니다.</p>
+  <p>GUI의 <code>라인</code> 값은 <code>기준 라인 → 비교 라인</code> 형태입니다. 예를 들어 <code>2 → 2</code>는 같은 행의 값이 바뀐 경우이고, <code>- → 4</code>는 비교 스냅샷에 추가된 행입니다. GUI 비교 상세의 <code>초기화</code> 버튼은 등급 필터와 검색어를 모두 지우고 전체 변경 행을 다시 표시합니다. XLSX 리포트의 <code>diff_detail</code> 시트는 장비, 명령, 변경 유형, 기준 라인, 비교 라인, 변경 전/후 값을 행 단위로 제공합니다.</p>
 
   <h2>7. 주의 사항</h2>
   <ul>

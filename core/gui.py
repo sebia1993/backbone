@@ -75,6 +75,13 @@ SEVERITY_META = {
     "Info": ("정보", PALETTE["info"], PALETTE["info_soft"]),
     "Unchanged": ("변경없음", PALETTE["accent_dark"], PALETTE["accent_soft"]),
 }
+SEVERITY_FILTERS = {
+    "전체": "",
+    "긴급": "Critical",
+    "주의": "Warning",
+    "정보": "Info",
+    "변경없음": "Unchanged",
+}
 
 
 class BackboneStateTrackerApp(tk.Tk):
@@ -118,6 +125,9 @@ class BackboneStateTrackerApp(tk.Tk):
         self.latest_snapshot_var = tk.StringVar(value="-")
         self.latest_report_var = tk.StringVar(value="-")
         self.latest_share_bundle_var = tk.StringVar(value="-")
+        self.diff_severity_filter_var = tk.StringVar(value="전체")
+        self.diff_search_var = tk.StringVar()
+        self.diff_filter_status_var = tk.StringVar(value="필터: -")
         self.status_chip_var = tk.StringVar(value="대기")
         self.wizard_title_var = tk.StringVar(value="작업 진행")
         self.wizard_message_var = tk.StringVar(value="작업 흐름을 확인하세요.")
@@ -678,9 +688,35 @@ class BackboneStateTrackerApp(tk.Tk):
         detail.rowconfigure(1, weight=1)
         detail_body = tk.Frame(detail, bg=PALETTE["surface"], padx=16, pady=16)
         detail_body.grid(row=1, column=0, sticky="nsew")
-        detail_body.rowconfigure(0, weight=1)
+        detail_body.rowconfigure(0, weight=0)
         detail_body.rowconfigure(1, weight=1)
+        detail_body.rowconfigure(2, weight=1)
         detail_body.columnconfigure(0, weight=1)
+
+        filter_bar = tk.Frame(detail_body, bg=PALETTE["surface"])
+        filter_bar.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 10))
+        filter_bar.columnconfigure(3, weight=1)
+        tk.Label(filter_bar, text="등급", bg=PALETTE["surface"], fg=PALETTE["muted"]).grid(row=0, column=0, sticky="w")
+        severity_filter = ttk.Combobox(
+            filter_bar,
+            textvariable=self.diff_severity_filter_var,
+            values=list(SEVERITY_FILTERS.keys()),
+            width=10,
+            state="readonly",
+        )
+        severity_filter.grid(row=0, column=1, sticky="w", padx=(8, 16))
+        severity_filter.bind("<<ComboboxSelected>>", self._on_diff_filter_changed)
+        tk.Label(filter_bar, text="검색", bg=PALETTE["surface"], fg=PALETTE["muted"]).grid(row=0, column=2, sticky="w")
+        search_entry = ttk.Entry(filter_bar, textvariable=self.diff_search_var)
+        search_entry.grid(row=0, column=3, sticky="ew", padx=(8, 8))
+        search_entry.bind("<KeyRelease>", self._on_diff_filter_changed)
+        ttk.Button(filter_bar, text="초기화", style="Secondary.TButton", command=self.reset_diff_filters).grid(row=0, column=4, sticky="e")
+        tk.Label(filter_bar, textvariable=self.diff_filter_status_var, bg=PALETTE["surface"], fg=PALETTE["muted"]).grid(
+            row=0,
+            column=5,
+            sticky="e",
+            padx=(12, 0),
+        )
 
         columns = ("severity", "device", "command", "impact", "kind", "line", "preview")
         self.diff_tree = ttk.Treeview(detail_body, columns=columns, show="headings", height=8, selectmode="browse")
@@ -698,9 +734,9 @@ class BackboneStateTrackerApp(tk.Tk):
             self.diff_tree.column(column, width=width, minwidth=50, stretch=column == "preview")
         for severity, (_label, accent, soft) in SEVERITY_META.items():
             self.diff_tree.tag_configure(f"severity_{severity}", foreground=accent, background=soft)
-        self.diff_tree.grid(row=0, column=0, sticky="nsew")
+        self.diff_tree.grid(row=1, column=0, sticky="nsew")
         tree_scroll = ttk.Scrollbar(detail_body, orient="vertical", command=self.diff_tree.yview)
-        tree_scroll.grid(row=0, column=1, sticky="ns")
+        tree_scroll.grid(row=1, column=1, sticky="ns")
         self.diff_tree.configure(yscrollcommand=tree_scroll.set)
         self.diff_tree.bind("<<TreeviewSelect>>", self._on_diff_detail_selected)
 
@@ -715,24 +751,35 @@ class BackboneStateTrackerApp(tk.Tk):
             pady=10,
             font=("Consolas", 10),
         )
-        self.diff_detail_text.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(10, 0))
+        self.diff_detail_text.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(10, 0))
         self._set_diff_detail_text("비교 완료 후 변경된 라인을 선택하면 변경 전/후 값이 여기에 표시됩니다.")
 
     def _update_diff_details(self, summary: DiffSummary | None) -> None:
         self.last_diff_summary = summary
+        self._render_diff_details()
+
+    def _render_diff_details(self) -> None:
         if not hasattr(self, "diff_tree"):
             return
         self.diff_tree.delete(*self.diff_tree.get_children())
         self.diff_detail_rows = []
+        summary = self.last_diff_summary
         if summary is None:
+            self.diff_filter_status_var.set("필터: -")
             self._set_diff_detail_text("비교 완료 후 변경된 라인을 선택하면 변경 전/후 값이 여기에 표시됩니다.")
             return
 
+        total_rows = 0
+        severity_filter = self._selected_diff_severity_filter()
+        query = self.diff_search_var.get().strip()
         for item in summary.items:
             if item.status == "unchanged":
                 continue
             for line in item.changed_lines:
                 if line.kind == "context":
+                    continue
+                total_rows += 1
+                if not self._diff_row_matches_filter(item, line, severity_filter, query):
                     continue
                 row_index = len(self.diff_detail_rows)
                 self.diff_detail_rows.append((item, line))
@@ -752,10 +799,50 @@ class BackboneStateTrackerApp(tk.Tk):
                     tags=(f"severity_{item.severity}",),
                 )
 
+        self.diff_filter_status_var.set(f"표시: {len(self.diff_detail_rows)} / {total_rows}")
         if self.diff_detail_rows:
             self._set_diff_detail_text("위 목록에서 변경 행을 선택하면 기준/비교 값을 확인할 수 있습니다.")
+        elif total_rows:
+            self._set_diff_detail_text("현재 필터 조건에 맞는 변경 행이 없습니다.")
         else:
             self._set_diff_detail_text("표시할 행 단위 변경 상세가 없습니다. 전체 원본 diff는 HTML 리포트에서 확인하세요.")
+
+    def _on_diff_filter_changed(self, _event: tk.Event | None = None) -> None:
+        self._render_diff_details()
+
+    def reset_diff_filters(self) -> None:
+        self.diff_severity_filter_var.set("전체")
+        self.diff_search_var.set("")
+        self._render_diff_details()
+
+    def _selected_diff_severity_filter(self) -> str:
+        return SEVERITY_FILTERS.get(self.diff_severity_filter_var.get(), "")
+
+    @staticmethod
+    def _diff_row_matches_filter(item: DiffItem, line: DiffLine, severity_filter: str, query: str) -> bool:
+        if severity_filter and item.severity != severity_filter:
+            return False
+        terms = [term for term in query.lower().split() if term]
+        if not terms:
+            return True
+        haystack = " ".join(
+            [
+                item.severity,
+                severity_to_korean(item.severity),
+                item.status,
+                item.device_name,
+                item.command_id,
+                redact_sensitive_text(item.command),
+                item.category,
+                summary_label(item),
+                change_type_label(line.kind),
+                BackboneStateTrackerApp._format_line_location(line),
+                BackboneStateTrackerApp._format_line_preview(line),
+                redact_sensitive_text(line.base_text),
+                redact_sensitive_text(line.target_text),
+            ]
+        ).lower()
+        return all(term in haystack for term in terms)
 
     def _on_diff_detail_selected(self, _event: tk.Event) -> None:
         selected = self.diff_tree.selection()
