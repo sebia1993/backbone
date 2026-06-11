@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.7 - 2026-06-11
+
+- Replaced hardcoded local developer paths in README and beginner developer guide with portable `<folder-that-contains-backbone_state_tracker>` examples.
+- Documented that local workspace paths should not be written into operator/developer guides.
+- Updated release manifest and package verifier tools so build output keeps the invoked workspace path instead of resolving junctions to a developer-only canonical path.
+- Added a documentation regression test to block developer-specific absolute workspace paths from README and packaged guides.
+- No runtime collection, comparison, or report behavior changed.
+
 ## v0.8.6 - 2026-06-11
 
 - Added comparison-detail actions to open the selected row's base raw output and target raw output directly from the GUI.

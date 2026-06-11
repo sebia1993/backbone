@@ -1,6 +1,6 @@
 # Backbone State Tracker
 
-Version: `v0.8.6`
+Version: `v0.8.7`
 
 Windows GUI utility for collecting read-only status snapshots from backbone 3
 and 4, then comparing snapshots to track operational changes during maintenance.
@@ -34,10 +34,13 @@ and 4, then comparing snapshots to track operational changes during maintenance.
 ## Quick Start
 
 ```powershell
-cd "D:\Codex Project\Network\backbone_state_tracker"
+cd "<folder-that-contains-backbone_state_tracker>\backbone_state_tracker"
 python -m pip install -r requirements.txt
 python app.py
 ```
+
+Replace `<folder-that-contains-backbone_state_tracker>` with the folder where the
+project or transferred ZIP was extracted.
 
 Use the GUI to enter backbone 3/4 device IPs, SSH username, password, and the
 maintenance stage. Passwords are never saved to configuration or report files.
@@ -55,7 +58,7 @@ maintenance stage. Passwords are never saved to configuration or report files.
 ## Test
 
 ```powershell
-cd "D:\Codex Project\Network\backbone_state_tracker"
+cd "<folder-that-contains-backbone_state_tracker>\backbone_state_tracker"
 $env:PYTHONPATH=(Split-Path (Get-Location) -Parent)
 python -m unittest discover -s tests
 python app.py --smoke-check
@@ -66,7 +69,7 @@ python app.py --smoke-check
 Source ZIP only. This does not include a Windows `.exe`.
 
 ```powershell
-cd "D:\Codex Project\Network\backbone_state_tracker"
+cd "<folder-that-contains-backbone_state_tracker>\backbone_state_tracker"
 powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
 ```
 
@@ -82,14 +85,14 @@ version artifacts so older ZIP files in `dist\` are easier to avoid.
 This package includes `BackboneStateTracker.exe` plus config examples and guides.
 
 ```powershell
-cd "D:\Codex Project\Network\backbone_state_tracker"
+cd "<folder-that-contains-backbone_state_tracker>\backbone_state_tracker"
 powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 ```
 
 The generated ZIP is written to `dist\` as:
 
 ```text
-backbone_state_tracker_v0.8.6_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.7_YYYYMMDD_windows_exe.zip
 ```
 
 The ZIP also includes `PACKAGE_INFO.txt` and `RUN_FIRST.txt`. A matching
@@ -97,15 +100,15 @@ The ZIP also includes `PACKAGE_INFO.txt` and `RUN_FIRST.txt`. A matching
 `dist\`. After moving a ZIP into the internal environment, verify it with:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.6_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.6_YYYYMMDD_windows_exe.zip --require-manifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.7_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.7_YYYYMMDD_windows_exe.zip --require-manifest
 ```
 
 If only the release files were transferred, use the standalone PowerShell helper
 that is written next to the ZIP files:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.6_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.6_YYYYMMDD_windows_exe.zip -RequireManifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.7_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.7_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 Corporate mail systems may block ZIP files containing `.exe`, `.py`, or `.ps1`

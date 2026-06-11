@@ -103,6 +103,7 @@ $sourceRequired = $commonRequired + @(
     "backbone_state_tracker/tools/write_release_manifest.py",
     "backbone_state_tracker/tools/verify_release_package.py",
     "backbone_state_tracker/tools/verify_release_package.ps1",
+    "backbone_state_tracker/tests/test_documentation.py",
     "backbone_state_tracker/tests/test_release_manifest.py",
     "backbone_state_tracker/tests/test_release_package_verifier.py"
 )

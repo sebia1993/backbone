@@ -40,6 +40,7 @@ SOURCE_REQUIRED = COMMON_REQUIRED | {
     "backbone_state_tracker/tools/write_release_manifest.py",
     "backbone_state_tracker/tools/verify_release_package.py",
     "backbone_state_tracker/tools/verify_release_package.ps1",
+    "backbone_state_tracker/tests/test_documentation.py",
     "backbone_state_tracker/tests/test_release_manifest.py",
     "backbone_state_tracker/tests/test_release_package_verifier.py",
 }
@@ -135,7 +136,7 @@ def verify_release_package(
     package_type: str | None = None,
     require_manifest: bool = False,
 ) -> VerificationResult:
-    package_path = package_path.resolve()
+    package_path = Path(package_path)
     resolved_type = package_type or infer_package_type(package_path)
     errors: list[str] = []
     warnings: list[str] = []
