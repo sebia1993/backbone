@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from zipfile import ZipFile
 
 from backbone_state_tracker.core.diff_engine import DiffEngine
 from backbone_state_tracker.core.models import CommandResult, Device
@@ -107,6 +108,38 @@ class ReportWriterTests(unittest.TestCase):
             target_raw = target / "raw" / "backbone4" / "interface_brief.txt"
             self.assertIn("OldSecret", base_raw.read_text(encoding="utf-8"))
             self.assertIn("NewSecret", target_raw.read_text(encoding="utf-8"))
+
+    def test_share_bundle_contains_redacted_reports_and_excludes_raw_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(root, "base", "password=OldSecret\nGE1/0/1 UP")
+            target = self._snapshot(root, "target", "password=NewSecret\nGE1/0/1 DOWN")
+            summary = DiffEngine().compare(base, target)
+
+            paths = ReportWriter().write_reports(summary)
+
+            self.assertIn("share_zip", paths)
+            self.assertTrue(paths["share_zip"].exists())
+            with ZipFile(paths["share_zip"]) as archive:
+                names = archive.namelist()
+                self.assertIn("README_SHARED_REPORT.txt", names)
+                self.assertIn("reports/diff_report.html", names)
+                self.assertIn("reports/diff_manifest.json", names)
+                self.assertTrue(
+                    "reports/diff_summary.xlsx" in names or "reports/diff_summary.csv" in names
+                )
+                self.assertIn("docs/USER_GUIDE.md", names)
+                self.assertFalse(any("/raw/" in name or name.startswith("raw/") for name in names))
+                self.assertFalse(any(name.endswith("devices.yaml") for name in names))
+                self.assertFalse(any(name.endswith(".exe") for name in names))
+                payload = "\n".join(
+                    archive.read(name).decode("utf-8", errors="ignore")
+                    for name in names
+                    if name.endswith((".txt", ".html", ".json", ".md", ".csv"))
+                )
+            self.assertNotIn("OldSecret", payload)
+            self.assertNotIn("NewSecret", payload)
+            self.assertIn("***", payload)
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .models import DiffItem, DiffLine, DiffSummary
 from .redaction import redact_payload, redact_sensitive_text
+from .report_bundle import create_share_report_bundle
 from .snapshot import sanitize_filename
 from .version import APP_NAME, APP_VERSION
 from .workflow import severity_to_korean, status_to_korean
@@ -53,12 +54,14 @@ class ReportWriter:
         written_xlsx = self._write_xlsx(xlsx_path, summary)
         if not written_xlsx:
             self._write_csv(csv_path, summary)
+        share_zip_path = create_share_report_bundle(report_dir)
 
         paths = {"html": html_path, "json": manifest_path}
         if written_xlsx:
             paths["xlsx"] = xlsx_path
         else:
             paths["csv"] = csv_path
+        paths["share_zip"] = share_zip_path
         return paths
 
     @staticmethod

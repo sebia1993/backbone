@@ -15,6 +15,7 @@ from .models import Device, DiffItem, DiffLine, DiffSummary
 from .mock_validation import create_mock_validation_artifacts
 from .paths import resource_root, runtime_root
 from .redaction import redact_sensitive_text
+from .report_bundle import create_share_report_bundle
 from .reporter import ReportWriter, change_type_label, summary_label
 from .snapshot import SnapshotStore
 from .version import APP_NAME, APP_VERSION
@@ -86,6 +87,7 @@ class BackboneStateTrackerApp(tk.Tk):
 
         self.snapshot_store = SnapshotStore(OUTPUT_DIR)
         self.latest_report: Path | None = None
+        self.latest_share_bundle: Path | None = None
         self.device_rows: list[dict[str, tk.Variable]] = []
         self.pages: dict[str, tk.Frame] = {}
         self.nav_buttons: dict[str, tk.Button] = {}
@@ -115,6 +117,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.target_display_var = tk.StringVar(value="-")
         self.latest_snapshot_var = tk.StringVar(value="-")
         self.latest_report_var = tk.StringVar(value="-")
+        self.latest_share_bundle_var = tk.StringVar(value="-")
         self.status_chip_var = tk.StringVar(value="대기")
         self.wizard_title_var = tk.StringVar(value="작업 진행")
         self.wizard_message_var = tk.StringVar(value="작업 흐름을 확인하세요.")
@@ -407,12 +410,14 @@ class BackboneStateTrackerApp(tk.Tk):
 
         self._summary_row(summary_body, 0, "최근 스냅샷", self.latest_snapshot_var)
         self._summary_row(summary_body, 1, "최근 리포트", self.latest_report_var)
-        self._summary_row(summary_body, 2, "비교 상태", self.compare_status_var)
+        self._summary_row(summary_body, 2, "최근 공유 ZIP", self.latest_share_bundle_var)
+        self._summary_row(summary_body, 3, "비교 상태", self.compare_status_var)
 
         quick = tk.Frame(summary_body, bg=PALETTE["surface"])
-        quick.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(14, 0))
+        quick.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(14, 0))
         ttk.Button(quick, text="스냅샷 새로고침", style="Secondary.TButton", command=self.refresh_snapshots).pack(side="left")
         ttk.Button(quick, text="최근 리포트", style="Secondary.TButton", command=self.open_last_report).pack(side="left", padx=(8, 0))
+        ttk.Button(quick, text="공유 ZIP", style="Secondary.TButton", command=self.open_last_share_bundle).pack(side="left", padx=(8, 0))
         ttk.Button(quick, text="결과 폴더", style="Secondary.TButton", command=self.open_outputs).pack(side="left", padx=(8, 0))
         ttk.Button(quick, text="샘플 검증 생성", style="Secondary.TButton", command=self.create_mock_validation).pack(
             side="left",
@@ -656,6 +661,7 @@ class BackboneStateTrackerApp(tk.Tk):
         ttk.Button(actions, text="선택 항목 비교", style="Primary.TButton", command=self.compare_selected).pack(side="left")
         ttk.Button(actions, text="샘플 검증 생성", style="Secondary.TButton", command=self.create_mock_validation).pack(side="left", padx=(8, 0))
         ttk.Button(actions, text="최근 리포트", style="Secondary.TButton", command=self.open_last_report).pack(side="left", padx=(8, 0))
+        ttk.Button(actions, text="공유 ZIP", style="Secondary.TButton", command=self.open_last_share_bundle).pack(side="left", padx=(8, 0))
         ttk.Button(actions, text="결과 폴더", style="Secondary.TButton", command=self.open_outputs).pack(side="left", padx=(8, 0))
         tk.Label(actions, textvariable=self.compare_status_var, bg=PALETTE["surface"], fg=PALETTE["muted"]).pack(side="left", padx=(16, 0))
 
@@ -1099,14 +1105,16 @@ class BackboneStateTrackerApp(tk.Tk):
         counts = summary.counts
         self.thread_log(f"자동 비교 완료: {self._format_counts(counts)}")
         self.thread_log(f"HTML 리포트: {paths['html']}")
+        self.thread_log(f"공유 ZIP: {paths['share_zip']}")
         self.after(
             0,
-            lambda summary=summary, html_path=paths["html"]: self._select_compared_snapshots(
+            lambda summary=summary, html_path=paths["html"], share_zip_path=paths["share_zip"]: self._select_compared_snapshots(
                 baseline_dir.name,
                 target_dir.name,
                 "자동 비교 완료",
                 summary,
                 html_path,
+                share_zip_path,
             ),
         )
 
@@ -1117,6 +1125,7 @@ class BackboneStateTrackerApp(tk.Tk):
         status: str,
         summary: DiffSummary | None = None,
         report_path: Path | None = None,
+        share_bundle_path: Path | None = None,
     ) -> None:
         self.refresh_snapshots(log_message=False)
         self.baseline_var.set(baseline_name)
@@ -1129,6 +1138,9 @@ class BackboneStateTrackerApp(tk.Tk):
         if report_path is not None:
             self.latest_report = report_path
             self.latest_report_var.set(report_path.name)
+        if share_bundle_path is not None:
+            self.latest_share_bundle = share_bundle_path
+            self.latest_share_bundle_var.set(share_bundle_path.name)
         self._update_dashboard_metrics()
 
     def refresh_snapshots(self, log_message: bool = True) -> None:
@@ -1171,9 +1183,14 @@ class BackboneStateTrackerApp(tk.Tk):
                 counts = summary.counts
                 self.thread_log(f"수동 비교 완료: {self._format_counts(counts)}")
                 self.thread_log(f"HTML 리포트: {paths['html']}")
+                self.thread_log(f"공유 ZIP: {paths['share_zip']}")
                 self.after(
                     0,
-                    lambda summary=summary, html_path=paths["html"]: self._finish_manual_compare(summary, html_path),
+                    lambda summary=summary, html_path=paths["html"], share_zip_path=paths["share_zip"]: self._finish_manual_compare(
+                        summary,
+                        html_path,
+                        share_zip_path,
+                    ),
                 )
             except Exception:
                 self.thread_log(traceback.format_exc())
@@ -1198,19 +1215,24 @@ class BackboneStateTrackerApp(tk.Tk):
         self.log(f"샘플 OFF 비교 리포트: {result.off_report}")
         self.log(f"샘플 복구 비교 리포트: {result.restore_report}")
         self.log(f"샘플 OFF 대비 복구 비교 리포트: {result.restore_from_off_report}")
+        self.log(f"샘플 OFF 공유 ZIP: {result.off_share_zip}")
         self._select_compared_snapshots(
             result.pre_snapshot.name,
             result.off_snapshot.name,
             "샘플 검증 생성 완료",
             result.off_summary,
             result.off_report,
+            result.off_share_zip,
         )
         self.latest_snapshot_var.set(result.restore_snapshot.name)
         self.show_page("compare")
 
-    def _finish_manual_compare(self, summary: DiffSummary, report_path: Path) -> None:
+    def _finish_manual_compare(self, summary: DiffSummary, report_path: Path, share_bundle_path: Path | None = None) -> None:
         self.latest_report = report_path
         self.latest_report_var.set(report_path.name)
+        if share_bundle_path is not None:
+            self.latest_share_bundle = share_bundle_path
+            self.latest_share_bundle_var.set(share_bundle_path.name)
         self.compare_status_var.set("선택 항목 비교 완료")
         self.status_chip_var.set("비교 완료")
         self.workflow_busy = False
@@ -1234,6 +1256,8 @@ class BackboneStateTrackerApp(tk.Tk):
         self.target_display_var.set(self.target_var.get() or "-")
         if self.latest_report and self.latest_report.exists():
             self.latest_report_var.set(self.latest_report.name)
+        if self.latest_share_bundle and self.latest_share_bundle.exists():
+            self.latest_share_bundle_var.set(self.latest_share_bundle.name)
         self._refresh_wizard()
 
     @staticmethod
@@ -1256,6 +1280,20 @@ class BackboneStateTrackerApp(tk.Tk):
             os.startfile(self.latest_report)
             return
         messagebox.showinfo("리포트 없음", "현재 실행 세션에서 생성된 비교 리포트가 없습니다.")
+
+    def open_last_share_bundle(self) -> None:
+        if self.latest_share_bundle and self.latest_share_bundle.exists():
+            os.startfile(self.latest_share_bundle)
+            return
+        if self.latest_report and self.latest_report.exists():
+            try:
+                self.latest_share_bundle = create_share_report_bundle(self.latest_report.parent)
+                self.latest_share_bundle_var.set(self.latest_share_bundle.name)
+                os.startfile(self.latest_share_bundle)
+                return
+            except Exception:
+                self.log(traceback.format_exc())
+        messagebox.showinfo("공유 ZIP 없음", "먼저 비교 리포트를 생성한 뒤 공유 ZIP을 열 수 있습니다.")
 
     def open_outputs(self) -> None:
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
