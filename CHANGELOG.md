@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.2 - 2026-06-11
+
+- Added standalone PowerShell release ZIP verification with `tools/verify_release_package.ps1`.
+- Build scripts now copy a versioned `*_verify_release_package.ps1` helper into `dist\` for environments that only receive release ZIP files.
+- Source ZIP verification now requires the PowerShell verifier script to be present in the source package.
+- Updated release guides with the Python verifier and standalone PowerShell verifier options.
+
 ## v0.8.1 - 2026-06-11
 
 - Added `tools/verify_release_package.py` to validate release ZIP checksum sidecars, manifest entries, required contents, and forbidden sensitive/build paths.

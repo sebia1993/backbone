@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.1
+문서 버전: v0.8.2
 작성일: 2026-06-11
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -31,6 +31,7 @@
 - `tools/build_windows_exe.ps1`: Windows EXE ZIP 생성 스크립트입니다.
 - `tools/write_release_manifest.py`: 배포 ZIP의 SHA256 체크섬과 릴리스 매니페스트를 생성합니다.
 - `tools/verify_release_package.py`: 배포 ZIP의 해시, 필수 파일, 금지 경로 포함 여부를 검증합니다.
+- `tools/verify_release_package.ps1`: 소스 폴더 없이 PowerShell만으로 배포 ZIP을 검증합니다.
 
 ## 3. 개발 환경 준비
 
@@ -71,6 +72,7 @@ v0.7.8부터 GUI 비교 상세 목록에 등급 필터와 검색 입력이 있�
 v0.7.9부터 `core/preflight.py`가 실제 장비 접속 전에 장비/명령 설정을 로컬에서 검증합니다. 오류는 수집을 차단하고, 주의는 운영자가 확인 후 진행할 수 있습니다. 관련 테스트는 `tests/test_preflight.py`입니다.
 v0.8.0부터 `tools/write_release_manifest.py`가 소스 ZIP과 Windows EXE ZIP의 SHA256 체크섬 파일 및 버전 단위 릴리스 매니페스트를 생성합니다. 관련 테스트는 `tests/test_release_manifest.py`입니다.
 v0.8.1부터 `tools/verify_release_package.py`가 배포 ZIP의 sidecar 해시, manifest 기록, 필수 파일, 금지 파일 포함 여부를 검증합니다. 관련 테스트는 `tests/test_release_package_verifier.py`입니다.
+v0.8.2부터 `tools/verify_release_package.ps1`가 버전명 포함 PowerShell 검증 스크립트로 `dist/`에 함께 생성됩니다. 이 스크립트는 Python 환경 없이 반입된 ZIP, `.sha256.txt`, `release_manifest.txt`를 검증합니다.
 
 ## 5. UI 유지보수 기준
 
@@ -96,7 +98,8 @@ UI를 수정할 때는 `core/gui.py`의 수집/비교 메서드 계약을 깨지
 6. 소스 ZIP과 Windows EXE ZIP을 생성합니다.
 7. `dist/`의 ZIP, `.sha256.txt`, `release_manifest.txt`를 확인합니다.
 8. `python .\tools\verify_release_package.py .\dist\<package>.zip --require-manifest`로 배포 ZIP을 검증합니다.
-9. Git 브랜치, 커밋, 태그를 남깁니다.
+9. `powershell -ExecutionPolicy Bypass -File .\dist\<version>_verify_release_package.ps1 -Package .\dist\<package>.zip -RequireManifest`로 독립 PowerShell 검증도 확인합니다.
+10. Git 브랜치, 커밋, 태그를 남깁니다.
 
 ## 7. 배포 파일 생성
 
@@ -115,6 +118,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 결과물은 `dist/` 폴더에 생성됩니다.
 각 ZIP에는 `PACKAGE_INFO.txt`가 포함되고, ZIP 밖에는 같은 이름의 `.sha256.txt` 파일과 버전 단위 `release_manifest.txt`가 함께 생성됩니다.
 빌드 스크립트는 ZIP 생성 후 `tools/verify_release_package.py`를 자동 실행하므로 필수 파일 누락이나 `config/devices.yaml`, `outputs/`, `raw/` 같은 금지 경로가 포함되면 실패합니다.
+또한 `dist/`에는 버전명이 포함된 `*_verify_release_package.ps1` 스크립트가 생성되어, 소스 폴더 없이 ZIP과 sidecar 파일만 전달된 환경에서도 검증할 수 있습니다.
 
 ## 8. 보안 원칙
 

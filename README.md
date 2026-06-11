@@ -1,6 +1,6 @@
 # Backbone State Tracker
 
-Version: `v0.8.1`
+Version: `v0.8.2`
 
 Windows GUI utility for collecting read-only status snapshots from backbone 3
 and 4, then comparing snapshots to track operational changes during maintenance.
@@ -19,7 +19,7 @@ and 4, then comparing snapshots to track operational changes during maintenance.
 - Automatically compares `백본3 OFF 중`, `복구 후`, and custom snapshots against the latest `작업 전` snapshot.
 - Writes HTML, XLSX, and JSON comparison reports.
 - Creates a shared report ZIP with redacted reports and guides, excluding snapshot raw output folders.
-- Writes SHA256 checksum sidecars, a release manifest, `PACKAGE_INFO.txt`, and runs release ZIP content verification.
+- Writes SHA256 checksum sidecars, a release manifest, `PACKAGE_INFO.txt`, and Python/PowerShell release ZIP content verification.
 - Provides a Korean bright-console UI with left navigation, dashboard metrics, collection, compare, settings, and log screens.
 - Shows line-level snapshot differences so operators can see the exact before/after output that changed.
 - Filters and searches GUI comparison detail rows by severity, device, command, judgment, line, and changed values.
@@ -82,7 +82,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 The generated ZIP is written to `dist\` as:
 
 ```text
-backbone_state_tracker_v0.8.1_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.2_YYYYMMDD_windows_exe.zip
 ```
 
 The ZIP also includes `PACKAGE_INFO.txt` and `RUN_FIRST.txt`. A matching
@@ -90,8 +90,15 @@ The ZIP also includes `PACKAGE_INFO.txt` and `RUN_FIRST.txt`. A matching
 `dist\`. After moving a ZIP into the internal environment, verify it with:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.1_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.1_YYYYMMDD_windows_exe.zip --require-manifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.2_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.2_YYYYMMDD_windows_exe.zip --require-manifest
+```
+
+If only the release files were transferred, use the standalone PowerShell helper
+that is written next to the ZIP files:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.2_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.2_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 Corporate mail systems may block ZIP files containing `.exe`, `.py`, or `.ps1`
