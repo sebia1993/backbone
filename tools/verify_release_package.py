@@ -16,6 +16,9 @@ SHA256_LINE = re.compile(r"^SHA256 \((?P<name>.+)\) = (?P<sha256>[0-9a-f]{64})$"
 SIZE_LINE = re.compile(r"^Size = (?P<size>\d+) bytes$", re.MULTILINE)
 VERSION_LINE = re.compile(r"^Version = (?P<version>v?\d+\.\d+\.\d+)$", re.MULTILINE)
 DATE_STAMP_LINE = re.compile(r"^Date stamp = (?P<date>\d{8})$", re.MULTILINE)
+MANIFEST_PACKAGE_LINE = re.compile(r"^- Package: (?P<name>.+)$")
+MANIFEST_SIZE_LINE = re.compile(r"^  Size: (?P<size>\d+) bytes$")
+MANIFEST_SHA_LINE = re.compile(r"^  SHA256: (?P<sha256>[0-9a-f]{64})$")
 PACKAGE_PREFIX = re.compile(
     r"^(?P<prefix>.+_v(?P<version>\d+\.\d+\.\d+)_(?P<date>\d{8}))_(source|windows_exe)\.zip$"
 )
@@ -104,15 +107,16 @@ def package_identity(package_path: Path) -> tuple[str, str] | None:
     return version_label(match.group("version")), match.group("date")
 
 
-def parse_checksum_sidecar(sidecar_path: Path) -> tuple[str | None, int | None, str | None, list[str]]:
+def parse_checksum_sidecar(sidecar_path: Path) -> tuple[str | None, str | None, int | None, str | None, list[str]]:
     errors: list[str] = []
     if not sidecar_path.is_file():
-        return None, None, None, [f"Missing checksum sidecar: {sidecar_path.name}"]
+        return None, None, None, None, [f"Missing checksum sidecar: {sidecar_path.name}"]
 
     text = sidecar_path.read_text(encoding="utf-8")
     sha_match = SHA256_LINE.search(text)
     size_match = SIZE_LINE.search(text)
     version_match = VERSION_LINE.search(text)
+    sidecar_package_name = sha_match.group("name") if sha_match else None
     expected_sha = sha_match.group("sha256") if sha_match else None
     expected_size = int(size_match.group("size")) if size_match else None
     expected_version = version_label(version_match.group("version")) if version_match else None
@@ -122,7 +126,28 @@ def parse_checksum_sidecar(sidecar_path: Path) -> tuple[str | None, int | None, 
         errors.append(f"Checksum sidecar does not contain a Size line: {sidecar_path.name}")
     if expected_version is None:
         errors.append(f"Checksum sidecar does not contain a Version line: {sidecar_path.name}")
-    return expected_sha, expected_size, expected_version, errors
+    return sidecar_package_name, expected_sha, expected_size, expected_version, errors
+
+
+def parse_manifest_package_records(manifest_text: str) -> dict[str, dict[str, str | int]]:
+    records: dict[str, dict[str, str | int]] = {}
+    current_name: str | None = None
+    for line in manifest_text.splitlines():
+        package_match = MANIFEST_PACKAGE_LINE.match(line)
+        if package_match:
+            current_name = package_match.group("name")
+            records[current_name] = {}
+            continue
+        if current_name is None:
+            continue
+        size_match = MANIFEST_SIZE_LINE.match(line)
+        if size_match:
+            records[current_name]["size_bytes"] = int(size_match.group("size"))
+            continue
+        sha_match = MANIFEST_SHA_LINE.match(line)
+        if sha_match:
+            records[current_name]["sha256"] = sha_match.group("sha256")
+    return records
 
 
 def normalized_zip_names(package_path: Path) -> tuple[set[str], list[str]]:
@@ -175,8 +200,14 @@ def verify_release_package(
     expected_date = identity[1] if identity else None
 
     sidecar_path = package_path.with_name(f"{package_path.name}.sha256.txt")
-    expected_sha, expected_size, sidecar_version, sidecar_errors = parse_checksum_sidecar(sidecar_path)
+    sidecar_package_name, expected_sha, expected_size, sidecar_version, sidecar_errors = parse_checksum_sidecar(
+        sidecar_path
+    )
     errors.extend(sidecar_errors)
+    if sidecar_package_name is not None and sidecar_package_name != package_path.name:
+        errors.append(
+            f"Checksum sidecar package mismatch: expected {package_path.name}, sidecar {sidecar_package_name}"
+        )
     if expected_version is not None and sidecar_version is not None and sidecar_version != expected_version:
         errors.append(
             f"Checksum sidecar version mismatch for {package_path.name}: "
@@ -218,10 +249,6 @@ def verify_release_package(
             warnings.append(message)
     else:
         manifest_text = manifest_path.read_text(encoding="utf-8")
-        if package_path.name not in manifest_text:
-            errors.append(f"Release manifest does not list package: {package_path.name}")
-        if expected_sha is not None and expected_sha not in manifest_text:
-            errors.append(f"Release manifest does not list package SHA256: {expected_sha}")
         if expected_version is not None:
             manifest_version_match = VERSION_LINE.search(manifest_text)
             manifest_version = (
@@ -243,6 +270,27 @@ def verify_release_package(
                 errors.append(
                     f"Release manifest date mismatch for {package_path.name}: "
                     f"expected {expected_date}, manifest {manifest_date}"
+                )
+        package_records = parse_manifest_package_records(manifest_text)
+        package_record = package_records.get(package_path.name)
+        if package_record is None:
+            errors.append(f"Release manifest does not list package record: {package_path.name}")
+        else:
+            manifest_size = package_record.get("size_bytes")
+            manifest_sha = package_record.get("sha256")
+            if manifest_size is None:
+                errors.append(f"Release manifest package record does not list size: {package_path.name}")
+            elif manifest_size != actual_size:
+                errors.append(
+                    f"Release manifest package size mismatch for {package_path.name}: "
+                    f"expected {actual_size}, manifest {manifest_size}"
+                )
+            if manifest_sha is None:
+                errors.append(f"Release manifest package record does not list SHA256: {package_path.name}")
+            elif manifest_sha != actual_sha:
+                errors.append(
+                    f"Release manifest package SHA256 mismatch for {package_path.name}: "
+                    f"expected {actual_sha}, manifest {manifest_sha}"
                 )
 
     return VerificationResult(
