@@ -183,4 +183,8 @@ if ($LASTEXITCODE -ne 0) {
     throw "Release package verification failed with exit code $LASTEXITCODE"
 }
 
+$PowerShellVerifierSource = Join-Path $ProjectRoot "tools\verify_release_package.ps1"
+$PowerShellVerifierTarget = Join-Path $DistDir "${ProjectName}_v${Version}_${DateStamp}_verify_release_package.ps1"
+Copy-Item -LiteralPath $PowerShellVerifierSource -Destination $PowerShellVerifierTarget -Force
+
 Write-Host "Windows EXE ZIP created: $ZipPath"
