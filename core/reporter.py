@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .models import DiffSummary
 from .snapshot import sanitize_filename
+from .version import APP_NAME, APP_VERSION
 
 
 class ReportWriter:
@@ -139,7 +140,7 @@ class ReportWriter:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Backbone Snapshot Diff</title>
+  <title>{escape(APP_NAME)} v{escape(APP_VERSION)} Snapshot Diff</title>
   <style>
     :root {{
       --bg: #f4f6f8;
@@ -206,8 +207,8 @@ class ReportWriter:
 <body>
   <div class="wrap">
     <header>
-      <h1>Backbone Snapshot Diff</h1>
-      <div class="meta">Base: {escape(Path(summary.base_snapshot).name)} | Target: {escape(Path(summary.target_snapshot).name)} | Generated: {escape(summary.generated_at)}</div>
+      <h1>{escape(APP_NAME)} Snapshot Diff</h1>
+      <div class="meta">Version: v{escape(APP_VERSION)} | Base: {escape(Path(summary.base_snapshot).name)} | Target: {escape(Path(summary.target_snapshot).name)} | Generated: {escape(summary.generated_at)}</div>
     </header>
     <section class="counts">
       <div class="count">Critical<strong>{counts.get('Critical', 0)}</strong></div>
@@ -237,4 +238,3 @@ class ReportWriter:
 </html>
 """
         path.write_text(html, encoding="utf-8")
-

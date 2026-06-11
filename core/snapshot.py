@@ -7,7 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .models import APP_VERSION, CommandResult, Device, Snapshot
+from .models import CommandResult, Device, Snapshot
+from .version import APP_NAME, APP_VERSION
 
 
 def sanitize_filename(value: str, fallback: str = "item") -> str:
@@ -68,6 +69,7 @@ class SnapshotStore:
             (device_dir / "_combined.txt").write_text("\n".join(combined_lines), encoding="utf-8")
 
         metadata_payload = {
+            "app_name": APP_NAME,
             "app_version": APP_VERSION,
             "label": label,
             "created_at": created_at,
@@ -95,4 +97,3 @@ class SnapshotStore:
             devices=list(payload.get("devices", [])),
             results=results,
         )
-

@@ -1,0 +1,23 @@
+# Runtime output
+outputs/
+dist/
+logs/
+
+# Local device inventory can contain internal IPs or hostnames.
+config/devices.yaml
+
+# Python cache and local environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Editor and OS files
+.idea/
+.vscode/
+Thumbs.db
+Desktop.ini
+

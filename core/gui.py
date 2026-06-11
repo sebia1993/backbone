@@ -13,6 +13,7 @@ from .diff_engine import DiffEngine
 from .models import Device
 from .reporter import ReportWriter
 from .snapshot import SnapshotStore
+from .version import APP_NAME, APP_VERSION
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -26,7 +27,7 @@ DEVICES_EXAMPLE_PATH = CONFIG_DIR / "devices.example.yaml"
 class BackboneStateTrackerApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
-        self.title("Backbone State Tracker")
+        self.title(f"{APP_NAME} v{APP_VERSION}")
         self.geometry("1180x760")
         self.minsize(980, 680)
 
@@ -52,7 +53,7 @@ class BackboneStateTrackerApp(tk.Tk):
         header = ttk.Frame(self, padding=(12, 10, 12, 6))
         header.grid(row=0, column=0, sticky="ew")
         header.columnconfigure(0, weight=1)
-        ttk.Label(header, text="Backbone State Tracker", font=("Segoe UI", 16, "bold")).grid(row=0, column=0, sticky="w")
+        ttk.Label(header, text=f"{APP_NAME} v{APP_VERSION}", font=("Segoe UI", 16, "bold")).grid(row=0, column=0, sticky="w")
         ttk.Label(
             header,
             text="Read-only snapshot collection and comparison for backbone 3/4.",
