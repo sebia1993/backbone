@@ -116,6 +116,15 @@ class Snapshot:
 
 
 @dataclass
+class DiffLine:
+    kind: str
+    base_line_no: int | None = None
+    target_line_no: int | None = None
+    base_text: str = ""
+    target_text: str = ""
+
+
+@dataclass
 class DiffItem:
     device_name: str
     command_id: str
@@ -127,6 +136,9 @@ class DiffItem:
     diff: str = ""
     base_raw_file: str = ""
     target_raw_file: str = ""
+    changed_lines: list[DiffLine] = field(default_factory=list)
+    change_count: int = 0
+    change_preview: str = ""
 
 
 @dataclass
