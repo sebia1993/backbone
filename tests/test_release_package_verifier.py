@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import warnings
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -17,6 +18,14 @@ def _write_zip(path: Path, entries: dict[str, str | bytes]) -> None:
     with ZipFile(path, "w") as archive:
         for name, content in entries.items():
             archive.writestr(name, content)
+
+
+def _write_zip_items(path: Path, entries: list[tuple[str, str | bytes]]) -> None:
+    with ZipFile(path, "w") as archive:
+        for name, content in entries:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                archive.writestr(name, content)
 
 
 def _common_entries() -> dict[str, str]:
@@ -157,6 +166,23 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             self.assertTrue(any("Unsafe ZIP entry found: /tmp/unexpected.txt" in error for error in result.errors))
             self.assertTrue(
                 any("Unsafe ZIP entry found: C:/temp/unexpected.txt" in error for error in result.errors)
+            )
+
+    def test_duplicate_zip_entry_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.12_20260612_source.zip"
+            duplicate_name = "backbone_state_tracker/docs/USER_GUIDE.md"
+            entries = list(_source_entries().items())
+            entries.append((duplicate_name, "duplicate user guide"))
+            _write_zip_items(package, entries)
+            write_package_checksum(package, "0.8.12", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(
+                any(f"Duplicate ZIP entry found: {duplicate_name}" in error for error in result.errors)
             )
 
     def test_requires_matching_version_manifest(self) -> None:
