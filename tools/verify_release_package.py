@@ -110,26 +110,32 @@ def package_identity(package_path: Path) -> tuple[str, str] | None:
     return version_label(match.group("version")), match.group("date")
 
 
-def parse_checksum_sidecar(sidecar_path: Path) -> tuple[str | None, str | None, int | None, str | None, list[str]]:
+def parse_checksum_sidecar(
+    sidecar_path: Path,
+) -> tuple[str | None, str | None, int | None, str | None, str | None, list[str]]:
     errors: list[str] = []
     if not sidecar_path.is_file():
-        return None, None, None, None, [f"Missing checksum sidecar: {sidecar_path.name}"]
+        return None, None, None, None, None, [f"Missing checksum sidecar: {sidecar_path.name}"]
 
     text = sidecar_path.read_text(encoding="utf-8")
     sha_match = SHA256_LINE.search(text)
     size_match = SIZE_LINE.search(text)
     version_match = VERSION_LINE.search(text)
+    date_match = DATE_STAMP_LINE.search(text)
     sidecar_package_name = sha_match.group("name") if sha_match else None
     expected_sha = sha_match.group("sha256") if sha_match else None
     expected_size = int(size_match.group("size")) if size_match else None
     expected_version = version_label(version_match.group("version")) if version_match else None
+    expected_date = date_match.group("date") if date_match else None
     if expected_sha is None:
         errors.append(f"Checksum sidecar does not contain a SHA256 line: {sidecar_path.name}")
     if expected_size is None:
         errors.append(f"Checksum sidecar does not contain a Size line: {sidecar_path.name}")
     if expected_version is None:
         errors.append(f"Checksum sidecar does not contain a Version line: {sidecar_path.name}")
-    return sidecar_package_name, expected_sha, expected_size, expected_version, errors
+    if expected_date is None:
+        errors.append(f"Checksum sidecar does not contain a Date stamp line: {sidecar_path.name}")
+    return sidecar_package_name, expected_sha, expected_size, expected_version, expected_date, errors
 
 
 def parse_manifest_package_records(manifest_text: str) -> dict[str, dict[str, str | int]]:
@@ -242,7 +248,7 @@ def verify_release_package(
     expected_date = identity[1] if identity else None
 
     sidecar_path = package_path.with_name(f"{package_path.name}.sha256.txt")
-    sidecar_package_name, expected_sha, expected_size, sidecar_version, sidecar_errors = parse_checksum_sidecar(
+    sidecar_package_name, expected_sha, expected_size, sidecar_version, sidecar_date, sidecar_errors = parse_checksum_sidecar(
         sidecar_path
     )
     errors.extend(sidecar_errors)
@@ -254,6 +260,11 @@ def verify_release_package(
         errors.append(
             f"Checksum sidecar version mismatch for {package_path.name}: "
             f"expected {expected_version}, sidecar {sidecar_version}"
+        )
+    if expected_date is not None and sidecar_date is not None and sidecar_date != expected_date:
+        errors.append(
+            f"Checksum sidecar date mismatch for {package_path.name}: "
+            f"expected {expected_date}, sidecar {sidecar_date}"
         )
 
     actual_sha = file_sha256(package_path)

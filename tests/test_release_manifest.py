@@ -12,7 +12,7 @@ from backbone_state_tracker.tools.write_release_manifest import (
 
 
 class ReleaseManifestTests(unittest.TestCase):
-    def test_package_checksum_sidecar_contains_hash_size_and_version(self) -> None:
+    def test_package_checksum_sidecar_contains_hash_size_version_and_date_stamp(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             package = Path(tmp) / "backbone_state_tracker_v0.8.0_20260611_source.zip"
             payload = b"source package payload"
@@ -29,6 +29,7 @@ class ReleaseManifestTests(unittest.TestCase):
             self.assertIn(f"SHA256 ({package.name}) = {expected_hash}", content)
             self.assertIn(f"Size = {len(payload)} bytes", content)
             self.assertIn("Version = v0.8.0", content)
+            self.assertIn("Date stamp = 20260611", content)
             self.assertIn("Get-FileHash -Algorithm SHA256", content)
 
     def test_release_manifest_lists_only_matching_zip_packages(self) -> None:

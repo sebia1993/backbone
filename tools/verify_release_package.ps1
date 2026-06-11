@@ -159,6 +159,7 @@ if (-not (Test-Path -LiteralPath $sidecarPath)) {
     $shaMatch = [regex]::Match($sidecarText, "^SHA256 \((?<name>.+)\) = (?<sha256>[0-9a-f]{64})\r?$", $multiline)
     $sizeMatch = [regex]::Match($sidecarText, "^Size = (?<size>\d+) bytes\r?$", $multiline)
     $versionMatch = [regex]::Match($sidecarText, "^Version = (?<version>v?\d+\.\d+\.\d+)\r?$", $multiline)
+    $dateStampMatch = [regex]::Match($sidecarText, "^Date stamp = (?<date>\d{8})\r?$", $multiline)
     if (-not $shaMatch.Success) {
         $errors.Add("Checksum sidecar does not contain a SHA256 line: $(Split-Path $sidecarPath -Leaf)")
     }
@@ -167,6 +168,9 @@ if (-not (Test-Path -LiteralPath $sidecarPath)) {
     }
     if (-not $versionMatch.Success) {
         $errors.Add("Checksum sidecar does not contain a Version line: $(Split-Path $sidecarPath -Leaf)")
+    }
+    if (-not $dateStampMatch.Success) {
+        $errors.Add("Checksum sidecar does not contain a Date stamp line: $(Split-Path $sidecarPath -Leaf)")
     }
     if ($shaMatch.Success) {
         $sidecarPackageName = $shaMatch.Groups["name"].Value
@@ -189,6 +193,12 @@ if (-not (Test-Path -LiteralPath $sidecarPath)) {
         $sidecarVersion = Format-VersionLabel -Version $versionMatch.Groups["version"].Value
         if ($sidecarVersion -ne $packageIdentity.Version) {
             $errors.Add("Checksum sidecar version mismatch for ${packageName}: expected $($packageIdentity.Version), sidecar $sidecarVersion")
+        }
+    }
+    if ($dateStampMatch.Success -and $packageIdentity) {
+        $sidecarDateStamp = $dateStampMatch.Groups["date"].Value
+        if ($sidecarDateStamp -ne $packageIdentity.DateStamp) {
+            $errors.Add("Checksum sidecar date mismatch for ${packageName}: expected $($packageIdentity.DateStamp), sidecar $sidecarDateStamp")
         }
     }
 }

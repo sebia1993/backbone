@@ -3,11 +3,13 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import re
 from pathlib import Path
 from typing import Iterable
 
 
 CHUNK_SIZE = 1024 * 1024
+PACKAGE_IDENTITY = re.compile(r"^.+_v\d+\.\d+\.\d+_(?P<date>\d{8})_(source|windows_exe)\.zip$")
 
 
 def _version_label(version: str) -> str:
@@ -35,6 +37,13 @@ def package_record(path: Path) -> dict[str, str | int]:
     }
 
 
+def package_date_stamp(path: Path) -> str | None:
+    match = PACKAGE_IDENTITY.match(Path(path).name)
+    if not match:
+        return None
+    return match.group("date")
+
+
 def write_package_checksum(
     package_path: Path,
     version: str,
@@ -50,6 +59,7 @@ def write_package_checksum(
         f"SHA256 ({record['name']}) = {record['sha256']}",
         f"Size = {record['size_bytes']} bytes",
         f"Version = {_version_label(version)}",
+        f"Date stamp = {package_date_stamp(package_path) or 'unknown'}",
         f"Generated = {generated_at or _now_text()}",
         "",
         "PowerShell verification:",

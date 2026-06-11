@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.14 - 2026-06-12
+
+- Added `Date stamp` to checksum sidecar files so sidecars carry the same release date identity as ZIP filenames and manifests.
+- Extended Python and PowerShell release package verification to reject sidecar date mismatches.
+- Added regression tests for sidecar date output and date mismatch detection.
+- Updated README, operator, developer, release checklist, command, and version history documents for v0.8.14.
+- No runtime collection, comparison, report, or GUI workflow behavior changed.
+
 ## v0.8.13 - 2026-06-12
 
 - Extended Python and PowerShell release package verification to reject duplicate package records inside `release_manifest.txt`.
