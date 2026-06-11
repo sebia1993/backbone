@@ -7,6 +7,7 @@ from html import escape
 from pathlib import Path
 
 from .models import DiffItem, DiffLine, DiffSummary
+from .redaction import redact_payload, redact_sensitive_text
 from .snapshot import sanitize_filename
 from .version import APP_NAME, APP_VERSION
 from .workflow import severity_to_korean, status_to_korean
@@ -45,7 +46,7 @@ class ReportWriter:
         csv_path = report_dir / "diff_summary.csv"
 
         manifest_path.write_text(
-            json.dumps(asdict(summary), indent=2, ensure_ascii=True),
+            json.dumps(redact_payload(asdict(summary)), indent=2, ensure_ascii=True),
             encoding="utf-8",
         )
         self._write_html(html_path, summary)
@@ -68,11 +69,11 @@ class ReportWriter:
                 "status": item.status,
                 "device": item.device_name,
                 "command_id": item.command_id,
-                "command": item.command,
+                "command": redact_sensitive_text(item.command),
                 "category": item.category,
                 "summary": summary_label(item),
                 "change_count": str(item.change_count),
-                "change_preview": item.change_preview,
+                "change_preview": redact_sensitive_text(item.change_preview),
                 "base_raw_file": item.base_raw_file,
                 "target_raw_file": item.target_raw_file,
             }
@@ -92,13 +93,13 @@ class ReportWriter:
                         "status": item.status,
                         "device": item.device_name,
                         "command_id": item.command_id,
-                        "command": item.command,
+                        "command": redact_sensitive_text(item.command),
                         "category": item.category,
                         "change_type": change_type_label(line.kind),
                         "base_line_no": str(line.base_line_no or ""),
                         "target_line_no": str(line.target_line_no or ""),
-                        "base_text": line.base_text,
-                        "target_text": line.target_text,
+                        "base_text": redact_sensitive_text(line.base_text),
+                        "target_text": redact_sensitive_text(line.target_text),
                     }
                 )
         return rows
@@ -186,7 +187,8 @@ class ReportWriter:
             detail_id = f"diff-{index}"
             severity_label = severity_to_korean(item.severity)
             status_label = status_to_korean(item.status)
-            item_summary = summary_label(item)
+            item_summary = redact_sensitive_text(summary_label(item))
+            change_preview = redact_sensitive_text(item.change_preview or "-")
             rows_html.append(
                 "<tr>"
                 f"<td><span class='badge' style='background:{colors.get(item.severity, '#667085')}'>{escape(severity_label)}</span></td>"
@@ -195,7 +197,7 @@ class ReportWriter:
                 f"<td>{escape(item.command_id)}</td>"
                 f"<td>{escape(item.category)}</td>"
                 f"<td>{item.change_count}</td>"
-                f"<td>{escape(item.change_preview or '-')}</td>"
+                f"<td>{escape(change_preview)}</td>"
                 f"<td>{escape(item_summary)}</td>"
                 f"<td><a href='#{detail_id}'>상세</a></td>"
                 "</tr>"
@@ -207,7 +209,7 @@ class ReportWriter:
                 f"{render_change_table(item)}"
                 "<details class='raw-diff'>"
                 "<summary>원본 unified diff 보기</summary>"
-                f"<pre>{escape(item.diff or '상세 diff 없음')}</pre>"
+                f"<pre>{escape(redact_sensitive_text(item.diff or '상세 diff 없음'))}</pre>"
                 "</details>"
                 "</section>"
             )
@@ -468,4 +470,4 @@ def render_inline_change(line: DiffLine) -> str:
 
 
 def render_value(value: str, css_class: str) -> str:
-    return f"<span class='{css_class}'>{escape(value or '-')}</span>"
+    return f"<span class='{css_class}'>{escape(redact_sensitive_text(value) or '-')}</span>"

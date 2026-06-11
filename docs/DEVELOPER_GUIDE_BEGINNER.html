@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 초급 개발자 가이드 v0.7.5</title>
+  <title>Backbone State Tracker 초급 개발자 가이드 v0.7.6</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -17,7 +17,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p>문서 버전: v0.7.5<br>작성일: 2026-06-11<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
+  <p>문서 버전: v0.7.6<br>작성일: 2026-06-11<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
 
   <h2>1. 프로젝트 목적</h2>
   <p>백본 3/4호기의 작업 전후 상태를 수집하고 특정 시점끼리 비교해 변경점을 추적하는 Windows GUI 프로그램입니다. 장비 설정 변경이 아니라 읽기 전용 점검과 리포트 생성을 목표로 합니다.</p>
@@ -29,6 +29,7 @@
     <li><code>core/collector.py</code>: Netmiko 기반 SSH 명령 수집</li>
     <li><code>core/connectivity.py</code>: 장비별 접속 상태 내부 결과 생성</li>
     <li><code>core/mock_validation.py</code>: 실제 장비 없이 샘플 스냅샷과 비교 리포트 생성</li>
+    <li><code>core/redaction.py</code>: 로그, 메타데이터, 리포트에 표시되는 명백한 비밀값 마스킹</li>
     <li><code>core/snapshot.py</code>: 스냅샷 저장과 로드</li>
     <li><code>core/diff_engine.py</code>: 스냅샷 비교 엔진</li>
     <li><code>core/reporter.py</code>: HTML, XLSX, JSON 리포트 생성</li>
@@ -58,6 +59,7 @@ python app.py --smoke-check</code></pre>
   <p>v0.7.3부터 <code>SnapshotStore._unique_snapshot_dir()</code>가 같은 초에 동일 단계 스냅샷을 여러 번 저장해도 폴더를 덮어쓰지 않도록 <code>_001</code>, <code>_002</code> 순번 폴더를 할당합니다. 관련 회귀 테스트는 <code>tests/test_snapshot.py</code>의 <code>test_write_snapshot_allocates_unique_folder_when_name_exists</code>입니다.</p>
   <p>v0.7.4부터 GUI 비교 상세는 <code>판단</code>, <code>라인</code>, <code>변경 내용</code>을 한 행에 표시하고 선택 상세에 핵심 판단, 변경값, 원본 파일, 등급별 운영 메모를 표시합니다. 관련 포맷 테스트는 <code>tests/test_gui_formatting.py</code>입니다.</p>
   <p>v0.7.5부터 <code>core/mock_validation.py</code>가 실제 장비 접속 없이 <code>[샘플]</code> 스냅샷 3개와 비교 리포트를 생성합니다. 관련 테스트는 <code>tests/test_mock_validation.py</code>입니다.</p>
+  <p>v0.7.6부터 <code>core/redaction.py</code>가 GUI 로그, 스냅샷 메타데이터, HTML/XLSX/JSON 비교 리포트의 명백한 비밀값을 <code>***</code>로 마스킹합니다. per-command <code>raw/*.txt</code> 출력은 운영 증거 보존을 위해 그대로 유지합니다. 관련 테스트는 <code>tests/test_redaction.py</code>와 <code>tests/test_reporter.py</code>입니다.</p>
 
   <h2>5. UI 유지보수 기준</h2>
   <ul>
@@ -87,6 +89,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1</code></p
   <ul>
     <li>암호, 토큰, 실제 장비 출력 원본을 Git이나 배포 ZIP에 넣지 않습니다.</li>
     <li><code>config/devices.yaml</code>과 <code>outputs/</code>는 배포 ZIP에서 제외됩니다.</li>
+    <li>리포트, GUI, 로그에 새 문자열 출력을 추가할 때는 <code>core.redaction.redact_sensitive_text()</code> 또는 <code>redact_payload()</code> 적용 여부를 확인합니다.</li>
     <li>장비 변경 명령은 <code>config/commands.yaml</code>에 추가하지 않습니다.</li>
   </ul>
 </main>

@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.7.5
+문서 버전: v0.7.6
 작성일: 2026-06-11
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -15,6 +15,7 @@
 - `core/collector.py`: Netmiko 기반 SSH 명령 수집입니다.
 - `core/connectivity.py`: 장비별 접속 상태 내부 결과를 생성합니다.
 - `core/mock_validation.py`: 실제 장비 없이 샘플 스냅샷과 비교 리포트를 생성합니다.
+- `core/redaction.py`: 로그, 메타데이터, 리포트에 표시되는 명백한 비밀값을 마스킹합니다.
 - `core/snapshot.py`: 스냅샷 저장과 로드입니다.
 - `core/diff_engine.py`: 스냅샷 비교 엔진입니다.
 - `core/reporter.py`: HTML, XLSX, JSON 리포트 생성입니다.
@@ -60,6 +61,7 @@ v0.7.2부터 모든 수집은 장비별 `device_connectivity` 결과를 포함�
 v0.7.3부터 `SnapshotStore._unique_snapshot_dir()`가 같은 초에 동일 단계 스냅샷을 여러 번 저장해도 폴더를 덮어쓰지 않도록 `_001`, `_002` 순번 폴더를 할당합니다. 관련 회귀 테스트는 `tests/test_snapshot.py`의 `test_write_snapshot_allocates_unique_folder_when_name_exists`입니다.
 v0.7.4부터 GUI 비교 상세는 `판단`, `라인`, `변경 내용`을 한 행에 표시하고 선택 상세에 핵심 판단, 변경값, 원본 파일, 등급별 운영 메모를 표시합니다. 관련 포맷 테스트는 `tests/test_gui_formatting.py`입니다.
 v0.7.5부터 `core/mock_validation.py`가 실제 장비 접속 없이 `[샘플]` 스냅샷 3개와 비교 리포트를 생성합니다. 관련 테스트는 `tests/test_mock_validation.py`입니다.
+v0.7.6부터 `core/redaction.py`가 GUI 로그, 스냅샷 메타데이터, HTML/XLSX/JSON 비교 리포트의 명백한 비밀값을 `***`로 마스킹합니다. per-command `raw/*.txt` 출력은 운영 증거 보존을 위해 그대로 유지합니다. 관련 테스트는 `tests/test_redaction.py`와 `tests/test_reporter.py`입니다.
 
 ## 5. UI 유지보수 기준
 
@@ -106,4 +108,5 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 - 암호, 토큰, 실제 장비 출력 원본을 Git이나 배포 ZIP에 넣지 않습니다.
 - `config/devices.yaml`은 로컬 운영 파일이므로 소스 ZIP에서 제외됩니다.
 - `outputs/`는 수집 결과가 들어가므로 배포 ZIP에서 제외됩니다.
+- 리포트, GUI, 로그에 새 문자열 출력을 추가할 때는 `core.redaction.redact_sensitive_text()` 또는 `redact_payload()` 적용 여부를 확인합니다.
 - 장비 변경 명령은 `config/commands.yaml`에 추가하지 않습니다.

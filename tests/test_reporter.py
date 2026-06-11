@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -60,6 +61,52 @@ class ReportWriterTests(unittest.TestCase):
             self.assertIn("base_text", rows[0])
             self.assertTrue(any("GE1/0/1 UP" in row for row in rows[1:]))
             self.assertTrue(any("GE1/0/1 DOWN" in row for row in rows[1:]))
+
+    def test_reports_redact_sensitive_values_but_keep_raw_output(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(
+                root,
+                "base",
+                "snmp-server community UltraSnmpSecret RO\npassword=OldSecret\nGE1/0/1 UP",
+            )
+            target = self._snapshot(
+                root,
+                "target",
+                "snmp-server community UltraSnmpSecret RW\npassword=NewSecret\nGE1/0/1 DOWN",
+            )
+            summary = DiffEngine().compare(base, target)
+
+            paths = ReportWriter().write_reports(summary)
+
+            html = paths["html"].read_text(encoding="utf-8")
+            manifest = json.loads(paths["json"].read_text(encoding="utf-8"))
+            manifest_text = json.dumps(manifest, ensure_ascii=False)
+
+            for secret in ("UltraSnmpSecret", "OldSecret", "NewSecret"):
+                self.assertNotIn(secret, html)
+                self.assertNotIn(secret, manifest_text)
+            self.assertIn("***", html)
+            self.assertIn("***", manifest_text)
+
+            if "xlsx" in paths:
+                from openpyxl import load_workbook
+
+                workbook = load_workbook(paths["xlsx"])
+                all_values = "\n".join(
+                    str(cell)
+                    for sheet in workbook.worksheets
+                    for row in sheet.iter_rows(values_only=True)
+                    for cell in row
+                    if cell is not None
+                )
+                for secret in ("UltraSnmpSecret", "OldSecret", "NewSecret"):
+                    self.assertNotIn(secret, all_values)
+
+            base_raw = base / "raw" / "backbone4" / "interface_brief.txt"
+            target_raw = target / "raw" / "backbone4" / "interface_brief.txt"
+            self.assertIn("OldSecret", base_raw.read_text(encoding="utf-8"))
+            self.assertIn("NewSecret", target_raw.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
