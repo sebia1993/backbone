@@ -1,0 +1,118 @@
+session_setup:
+  - id: disable_paging
+    command: screen-length disable
+    description: Disable terminal paging for complete command output.
+    category: session
+    phase: setup
+    allow_failure: true
+    timeout: 20
+
+commands:
+  - id: system_clock
+    command: display clock
+    description: Device clock used for operation timestamp cross-check.
+    category: basic
+    timeout: 20
+
+  - id: system_version
+    command: display version
+    description: OS version, boot image, and uptime baseline.
+    category: basic
+    timeout: 30
+
+  - id: device_status
+    command: display device
+    description: Chassis, slot, and module status.
+    category: hardware
+    timeout: 30
+
+  - id: power_status
+    command: display power
+    description: Power supply status.
+    category: hardware
+    allow_failure: true
+    timeout: 30
+
+  - id: fan_status
+    command: display fan
+    description: Fan status.
+    category: hardware
+    allow_failure: true
+    timeout: 30
+
+  - id: environment_status
+    command: display environment
+    description: Temperature and environmental sensor status.
+    category: hardware
+    allow_failure: true
+    timeout: 30
+
+  - id: alarm_status
+    command: display alarm
+    description: Current alarm status.
+    category: hardware
+    allow_failure: true
+    timeout: 30
+
+  - id: interface_brief
+    command: display interface brief
+    description: Interface up/down summary.
+    category: interface
+    timeout: 45
+
+  - id: link_aggregation_summary
+    command: display link-aggregation summary
+    description: Link aggregation and selected member summary.
+    category: interface
+    timeout: 45
+
+  - id: link_aggregation_verbose
+    command: display link-aggregation verbose
+    description: Detailed link aggregation state.
+    category: interface
+    timeout: 60
+
+  - id: vlan_summary
+    command: display vlan
+    description: VLAN state and membership summary.
+    category: switching
+    timeout: 60
+
+  - id: stp_brief
+    command: display stp brief
+    description: Spanning-tree state summary.
+    category: switching
+    timeout: 45
+
+  - id: ospf_peer
+    command: display ospf peer
+    description: OSPF neighbor state. Full state should remain stable.
+    category: routing
+    allow_failure: true
+    timeout: 45
+
+  - id: ospf_routes
+    command: display ip routing-table protocol ospf
+    description: OSPF learned routes and next-hop state.
+    category: routing
+    allow_failure: true
+    timeout: 60
+
+  - id: cpu_usage
+    command: display cpu-usage
+    description: CPU utilization.
+    category: resource
+    timeout: 30
+
+  - id: memory_usage
+    command: display memory
+    description: Memory utilization.
+    category: resource
+    timeout: 30
+
+  - id: recent_log
+    command: display logbuffer
+    description: Recent system log entries for link, OSPF, power, fan, and module events.
+    category: log
+    timeout: 90
+

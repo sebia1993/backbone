@@ -1,0 +1,12 @@
+devices:
+  - name: backbone3
+    host: 192.0.2.3
+    port: 22
+    device_type: hp_comware
+    enabled: true
+  - name: backbone4
+    host: 192.0.2.4
+    port: 22
+    device_type: hp_comware
+    enabled: true
+
