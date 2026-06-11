@@ -22,6 +22,39 @@ function Get-NormalizedZipEntries {
     }
 }
 
+function Get-ZipEntrySafetyErrors {
+    param([string[]]$Entries)
+
+    $entryErrors = New-Object System.Collections.Generic.List[string]
+    foreach ($entry in $Entries) {
+        $normalized = $entry.Replace("\", "/")
+        $stripped = $normalized.TrimEnd("/")
+        $parts = if ([string]::IsNullOrEmpty($stripped)) { @() } else { $stripped -split "/" }
+        $hasUnsafePart = $false
+        foreach ($part in $parts) {
+            if ([string]::IsNullOrEmpty($part) -or $part -eq "." -or $part -eq "..") {
+                $hasUnsafePart = $true
+                break
+            }
+        }
+
+        if (
+            $normalized.StartsWith("/") -or
+            $normalized -match "^[A-Za-z]:/" -or
+            [string]::IsNullOrEmpty($stripped) -or
+            $hasUnsafePart
+        ) {
+            $entryErrors.Add("Unsafe ZIP entry found: $entry")
+            continue
+        }
+
+        if ($stripped -ne "backbone_state_tracker" -and -not $normalized.StartsWith("backbone_state_tracker/")) {
+            $entryErrors.Add("Unexpected ZIP root entry found: $entry")
+        }
+    }
+    return @($entryErrors.ToArray())
+}
+
 function Get-PackageType {
     param([string]$PackageName)
 
@@ -185,6 +218,9 @@ $entries = Get-NormalizedZipEntries -PackagePath $resolvedPackage
 $entrySet = @{}
 foreach ($entry in $entries) {
     $entrySet[$entry] = $true
+}
+foreach ($entryError in (Get-ZipEntrySafetyErrors -Entries $entries)) {
+    $errors.Add($entryError)
 }
 foreach ($requiredEntry in $required) {
     if (-not $entrySet.ContainsKey($requiredEntry)) {
