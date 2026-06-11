@@ -17,6 +17,8 @@ from .reporter import ReportWriter
 from .snapshot import SnapshotStore
 from .version import APP_NAME, APP_VERSION
 from .workflow import (
+    BB3_OFF_STAGE,
+    POST_RESTORE_STAGE,
     PRE_WORK_STAGE,
     WORK_STAGE_NAMES,
     WorkStage,
@@ -24,6 +26,12 @@ from .workflow import (
     find_latest_pre_work_snapshot,
     resolve_stage,
     severity_to_korean,
+)
+from .workflow_wizard import (
+    WorkflowWizardState,
+    action_stage_name,
+    build_workflow_wizard_state,
+    find_latest_stage_snapshot,
 )
 
 
@@ -83,6 +91,11 @@ class BackboneStateTrackerApp(tk.Tk):
         self.last_counts = {key: 0 for key in SEVERITY_META}
         self.last_diff_summary: DiffSummary | None = None
         self.diff_detail_rows: list[tuple[DiffItem, DiffLine]] = []
+        self.workflow_busy = False
+        self.off_review_confirmed = False
+        self.final_review_confirmed = False
+        self.workflow_step_widgets: list[dict[str, tk.Widget]] = []
+        self.current_wizard_state: WorkflowWizardState | None = None
 
         self._ensure_runtime_config_files()
 
@@ -101,6 +114,9 @@ class BackboneStateTrackerApp(tk.Tk):
         self.latest_snapshot_var = tk.StringVar(value="-")
         self.latest_report_var = tk.StringVar(value="-")
         self.status_chip_var = tk.StringVar(value="대기")
+        self.wizard_title_var = tk.StringVar(value="작업 진행")
+        self.wizard_message_var = tk.StringVar(value="작업 흐름을 확인하세요.")
+        self.wizard_next_label_var = tk.StringVar(value="다음 단계")
         self.metric_vars = {key: tk.StringVar(value="0") for key in SEVERITY_META}
 
         self._configure_styles()
@@ -309,7 +325,7 @@ class BackboneStateTrackerApp(tk.Tk):
 
     def _build_dashboard_page(self) -> None:
         page = self._make_page("dashboard")
-        page.rowconfigure(1, weight=1)
+        page.rowconfigure(2, weight=1)
 
         metrics = tk.Frame(page, bg=PALETTE["bg"])
         metrics.grid(row=0, column=0, sticky="ew")
@@ -320,21 +336,66 @@ class BackboneStateTrackerApp(tk.Tk):
             label, accent, soft = SEVERITY_META[key]
             self._metric_card(metrics, column, label, self.metric_vars[key], accent, soft)
 
+        wizard = self._make_section(page, "작업 진행 마법사", 1)
+        wizard.rowconfigure(1, weight=1)
+        wizard_body = tk.Frame(wizard, bg=PALETTE["surface"], padx=16, pady=16)
+        wizard_body.grid(row=1, column=0, sticky="nsew")
+        wizard_body.columnconfigure(0, weight=1)
+
+        self.workflow_steps_frame = tk.Frame(wizard_body, bg=PALETTE["surface"])
+        self.workflow_steps_frame.grid(row=0, column=0, sticky="ew")
+        for column in range(6):
+            self.workflow_steps_frame.columnconfigure(column, weight=1)
+        self._build_wizard_step_cards()
+
+        current = tk.Frame(
+            wizard_body,
+            bg=PALETTE["surface_alt"],
+            highlightbackground=PALETTE["border"],
+            highlightthickness=1,
+            padx=14,
+            pady=14,
+        )
+        current.grid(row=1, column=0, sticky="ew", pady=(14, 0))
+        current.columnconfigure(0, weight=1)
+        tk.Label(
+            current,
+            textvariable=self.wizard_title_var,
+            bg=PALETTE["surface_alt"],
+            fg=PALETTE["text"],
+            font=("Segoe UI", 12, "bold"),
+        ).grid(row=0, column=0, sticky="w")
+        tk.Label(
+            current,
+            textvariable=self.wizard_message_var,
+            bg=PALETTE["surface_alt"],
+            fg=PALETTE["muted"],
+            font=("Segoe UI", 9),
+            wraplength=720,
+            justify="left",
+        ).grid(row=1, column=0, sticky="w", pady=(4, 0))
+        self.wizard_next_button = ttk.Button(
+            current,
+            textvariable=self.wizard_next_label_var,
+            style="Primary.TButton",
+            command=self._run_wizard_next_action,
+        )
+        self.wizard_next_button.grid(row=0, column=1, rowspan=2, sticky="e", padx=(14, 0))
+
         body = tk.Frame(page, bg=PALETTE["bg"])
-        body.grid(row=1, column=0, sticky="nsew")
+        body.grid(row=2, column=0, sticky="nsew")
         body.columnconfigure(0, weight=3)
         body.columnconfigure(1, weight=2)
         body.rowconfigure(0, weight=1)
 
-        workflow = self._make_section(body, "작업 흐름", 0, 0)
-        workflow.rowconfigure(1, weight=1)
-        steps = tk.Frame(workflow, bg=PALETTE["surface"], padx=16, pady=16)
-        steps.grid(row=1, column=0, sticky="nsew")
-        steps.columnconfigure(0, weight=1)
-
+        manual = self._make_section(body, "수동 작업 바로가기", 0, 0)
+        manual.rowconfigure(1, weight=1)
+        manual_body = tk.Frame(manual, bg=PALETTE["surface"], padx=16, pady=16)
+        manual_body.grid(row=1, column=0, sticky="nsew")
+        manual_body.columnconfigure(0, weight=1)
         for row, stage_name in enumerate(WORK_STAGE_NAMES):
             stage = resolve_stage(stage_name)
-            self._workflow_row(steps, row, stage.name, stage.description, stage.auto_compare)
+            self._workflow_row(manual_body, row, stage.name, stage.description, stage.auto_compare)
 
         summary = self._make_section(body, "운영 요약", 0, 1)
         summary.rowconfigure(1, weight=1)
@@ -351,6 +412,27 @@ class BackboneStateTrackerApp(tk.Tk):
         ttk.Button(quick, text="스냅샷 새로고침", style="Secondary.TButton", command=self.refresh_snapshots).pack(side="left")
         ttk.Button(quick, text="최근 리포트", style="Secondary.TButton", command=self.open_last_report).pack(side="left", padx=(8, 0))
         ttk.Button(quick, text="결과 폴더", style="Secondary.TButton", command=self.open_outputs).pack(side="left", padx=(8, 0))
+
+    def _build_wizard_step_cards(self) -> None:
+        self.workflow_step_widgets = []
+        for column in range(6):
+            card = tk.Frame(
+                self.workflow_steps_frame,
+                bg=PALETTE["surface_alt"],
+                highlightbackground=PALETTE["border"],
+                highlightthickness=1,
+                padx=10,
+                pady=10,
+            )
+            card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 8, 0))
+            marker = tk.Frame(card, bg=PALETTE["neutral_soft"], height=5)
+            marker.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+            title = tk.Label(card, text="-", bg=PALETTE["surface_alt"], fg=PALETTE["text"], font=("Segoe UI", 9, "bold"), wraplength=130)
+            title.grid(row=1, column=0, sticky="w")
+            status = tk.Label(card, text="-", bg=PALETTE["surface_alt"], fg=PALETTE["muted"], font=("Segoe UI", 8), wraplength=130)
+            status.grid(row=2, column=0, sticky="w", pady=(5, 0))
+            card.columnconfigure(0, weight=1)
+            self.workflow_step_widgets.append({"card": card, "marker": marker, "title": title, "status": status})
 
     def _metric_card(self, parent: tk.Frame, column: int, title: str, variable: tk.StringVar, accent: str, soft: str) -> None:
         card = tk.Frame(
@@ -389,6 +471,114 @@ class BackboneStateTrackerApp(tk.Tk):
         ttk.Button(item, text="수집", style="Secondary.TButton", command=lambda value=title: self.collect_stage(value)).grid(
             row=0, column=2, rowspan=2, sticky="e", padx=12, pady=10
         )
+
+    def _refresh_wizard(self) -> None:
+        if not hasattr(self, "wizard_next_button"):
+            return
+
+        snapshots = self.snapshot_store.list_snapshots()
+        state = build_workflow_wizard_state(
+            snapshots,
+            device_ready=self._has_ready_device_config(),
+            busy=self.workflow_busy,
+            off_review_confirmed=self.off_review_confirmed,
+            final_review_confirmed=self.final_review_confirmed,
+            latest_counts=self.last_counts,
+        )
+        self.current_wizard_state = state
+        self.wizard_title_var.set(self._active_step_title(state))
+        self.wizard_message_var.set(state.message)
+        self.wizard_next_label_var.set(state.next_label)
+        self.wizard_next_button.configure(state="normal" if state.next_enabled else "disabled")
+
+        for step, widgets in zip(state.steps, self.workflow_step_widgets):
+            colors = self._wizard_status_colors(step.status)
+            for key in ("card", "title", "status"):
+                widgets[key].configure(bg=colors["bg"])
+            widgets["marker"].configure(bg=colors["accent"])
+            widgets["title"].configure(text=step.title, fg=colors["fg"])
+            widgets["status"].configure(text=f"{self._wizard_status_label(step.status)} · {step.detail}", fg=colors["muted"])
+
+    def _run_wizard_next_action(self) -> None:
+        state = self.current_wizard_state
+        if state is None or not state.next_enabled:
+            return
+
+        stage_name = action_stage_name(state.next_action)
+        if stage_name is not None:
+            self.stage_var.set(stage_name)
+            self.show_page("dashboard")
+            self.collect_stage(stage_name)
+            return
+
+        if state.next_action == "open_settings":
+            self.show_page("settings")
+            return
+        if state.next_action == "review_off":
+            self._review_stage_from_wizard("bb3_off")
+            return
+        if state.next_action == "review_final":
+            self._review_stage_from_wizard("post_restore")
+            return
+        if state.next_action == "open_report":
+            self.open_last_report()
+
+    def _review_stage_from_wizard(self, stage_slug: str) -> None:
+        snapshots = self.snapshot_store.list_snapshots()
+        baseline = find_latest_pre_work_snapshot(snapshots)
+        target = find_latest_stage_snapshot(snapshots, stage_slug)
+        if baseline is None or target is None:
+            messagebox.showerror("비교 오류", "비교할 기준 또는 대상 스냅샷을 찾을 수 없습니다.")
+            return
+
+        self.baseline_var.set(baseline.name)
+        self.target_var.set(target.name)
+        if stage_slug == "bb3_off":
+            self.off_review_confirmed = True
+        elif stage_slug == "post_restore":
+            self.final_review_confirmed = True
+        self.show_page("compare")
+        self._refresh_wizard()
+
+        if not self._last_summary_matches_target(target.name):
+            self.compare_selected()
+
+    def _last_summary_matches_target(self, target_name: str) -> bool:
+        if self.last_diff_summary is None:
+            return False
+        return Path(self.last_diff_summary.target_snapshot).name == target_name
+
+    def _has_ready_device_config(self) -> bool:
+        for row in self.device_rows:
+            if bool(row["enabled"].get()) and str(row["host"].get()).strip():
+                return True
+        return False
+
+    @staticmethod
+    def _active_step_title(state: WorkflowWizardState) -> str:
+        current = next((step for step in state.steps if step.key == state.active_step), None)
+        if current is None:
+            return "작업 진행 완료"
+        return f"현재 단계: {current.title}"
+
+    @staticmethod
+    def _wizard_status_label(status: str) -> str:
+        return {
+            "complete": "완료",
+            "current": "진행 가능",
+            "pending": "대기",
+            "locked": "잠김",
+        }.get(status, status)
+
+    @staticmethod
+    def _wizard_status_colors(status: str) -> dict[str, str]:
+        if status == "complete":
+            return {"bg": PALETTE["accent_soft"], "accent": PALETTE["accent"], "fg": PALETTE["accent_dark"], "muted": PALETTE["accent_dark"]}
+        if status == "current":
+            return {"bg": PALETTE["info_soft"], "accent": PALETTE["info"], "fg": PALETTE["text"], "muted": PALETTE["info"]}
+        if status == "locked":
+            return {"bg": PALETTE["neutral_soft"], "accent": PALETTE["border"], "fg": PALETTE["muted"], "muted": PALETTE["muted"]}
+        return {"bg": PALETTE["surface_alt"], "accent": PALETTE["border"], "fg": PALETTE["text"], "muted": PALETTE["muted"]}
 
     def _summary_row(self, parent: tk.Frame, row: int, label: str, variable: tk.StringVar) -> None:
         tk.Label(parent, text=label, bg=PALETTE["surface"], fg=PALETTE["muted"], font=("Segoe UI", 9)).grid(
@@ -726,6 +916,7 @@ class BackboneStateTrackerApp(tk.Tk):
             self.log(f"장비 목록을 불러왔습니다: {path}")
         except Exception as exc:
             self.log(f"장비 목록을 불러오지 못했습니다: {exc}")
+        self._refresh_wizard()
 
     def _apply_devices(self, devices: list[Device]) -> None:
         for row, device in zip(self.device_rows, devices):
@@ -806,6 +997,8 @@ class BackboneStateTrackerApp(tk.Tk):
 
         self.status_chip_var.set("수집 중")
         self.compare_status_var.set(f"[{stage.name}] 상태 수집 중")
+        self.workflow_busy = True
+        self._refresh_wizard()
 
         def worker() -> None:
             try:
@@ -839,22 +1032,33 @@ class BackboneStateTrackerApp(tk.Tk):
         self.baseline_var.set(snapshot_dir.name)
         self.compare_status_var.set("작업 전 기준 스냅샷이 준비되었습니다.")
         self.status_chip_var.set("기준 준비")
+        self.workflow_busy = False
         self._update_diff_details(None)
         self._update_dashboard_metrics()
+        self._refresh_wizard()
 
     def _set_failed_status(self, status: str) -> None:
         self.status_chip_var.set(status)
         self.compare_status_var.set(status)
+        self.workflow_busy = False
         self._update_dashboard_metrics()
+        self._refresh_wizard()
 
     def _select_snapshot_after_collect(self, snapshot_dir: Path, stage: WorkStage) -> None:
         self.refresh_snapshots(log_message=False)
         self.latest_snapshot_var.set(snapshot_dir.name)
         if stage.name == PRE_WORK_STAGE:
             self.baseline_var.set(snapshot_dir.name)
+        elif stage.name == BB3_OFF_STAGE:
+            self.target_var.set(snapshot_dir.name)
+            self.off_review_confirmed = False
+        elif stage.name == POST_RESTORE_STAGE:
+            self.target_var.set(snapshot_dir.name)
+            self.final_review_confirmed = False
         else:
             self.target_var.set(snapshot_dir.name)
         self._update_dashboard_metrics()
+        self._refresh_wizard()
 
     def _auto_compare_against_pre_work(self, target_dir: Path) -> None:
         snapshot_dirs = [path for path in self.snapshot_store.list_snapshots() if path != target_dir]
@@ -892,6 +1096,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.target_var.set(target_name)
         self.compare_status_var.set(status)
         self.status_chip_var.set("비교 완료")
+        self.workflow_busy = False
         if summary is not None:
             self._apply_compare_summary(summary)
         if report_path is not None:
@@ -914,6 +1119,7 @@ class BackboneStateTrackerApp(tk.Tk):
         if log_message:
             self.log(f"스냅샷 목록을 새로고침했습니다: {len(values)}개")
         self._update_dashboard_metrics()
+        self._refresh_wizard()
 
     def compare_selected(self) -> None:
         base_name = self.baseline_var.get()
@@ -927,6 +1133,8 @@ class BackboneStateTrackerApp(tk.Tk):
 
         self.status_chip_var.set("비교 중")
         self.compare_status_var.set("선택 항목 비교 중")
+        self.workflow_busy = True
+        self._refresh_wizard()
 
         def worker() -> None:
             try:
@@ -952,12 +1160,16 @@ class BackboneStateTrackerApp(tk.Tk):
         self.latest_report_var.set(report_path.name)
         self.compare_status_var.set("선택 항목 비교 완료")
         self.status_chip_var.set("비교 완료")
+        self.workflow_busy = False
         self._apply_compare_summary(summary)
         self._update_dashboard_metrics()
+        self._refresh_wizard()
 
     def _apply_compare_summary(self, summary: DiffSummary) -> None:
+        self.last_diff_summary = summary
         self._apply_compare_counts(summary.counts)
         self._update_diff_details(summary)
+        self._refresh_wizard()
 
     def _apply_compare_counts(self, counts: dict[str, int]) -> None:
         self.last_counts = {key: int(counts.get(key, 0)) for key in SEVERITY_META}
@@ -969,6 +1181,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.target_display_var.set(self.target_var.get() or "-")
         if self.latest_report and self.latest_report.exists():
             self.latest_report_var.set(self.latest_report.name)
+        self._refresh_wizard()
 
     @staticmethod
     def _format_counts(counts: dict[str, int]) -> str:

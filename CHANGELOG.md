@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.7.0 - 2026-06-11
+
+- Added a dashboard workflow wizard for the maintenance sequence.
+- Added step cards for device setup, pre-work collection, BB3 OFF collection, OFF review, restore collection, and final review.
+- Added a single next-step action button that advances only after the operator confirms the previous result.
+- Locked restore collection in the wizard until the BB3 OFF comparison review is opened.
+- Preserved the existing left navigation, manual collection, manual comparison, and report behavior.
+- Added workflow wizard unit tests.
+
 ## v0.6.0 - 2026-06-11
 
 - Added structured line-level diff details for snapshot comparisons.
