@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.0</title>
+  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.1</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -17,7 +17,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p>문서 버전: v0.8.0<br>작성일: 2026-06-11<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
+  <p>문서 버전: v0.8.1<br>작성일: 2026-06-11<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
 
   <h2>1. 프로젝트 목적</h2>
   <p>백본 3/4호기의 작업 전후 상태를 수집하고 특정 시점끼리 비교해 변경점을 추적하는 Windows GUI 프로그램입니다. 장비 설정 변경이 아니라 읽기 전용 점검과 리포트 생성을 목표로 합니다.</p>
@@ -42,6 +42,7 @@
     <li><code>tests/</code>: 단위 테스트</li>
     <li><code>tools/</code>: ZIP과 EXE 배포 스크립트</li>
     <li><code>tools/write_release_manifest.py</code>: 배포 ZIP의 SHA256 체크섬과 릴리스 매니페스트 생성</li>
+    <li><code>tools/verify_release_package.py</code>: 배포 ZIP의 해시, 필수 파일, 금지 경로 포함 여부 검증</li>
   </ul>
 
   <h2>3. 개발 환경 준비</h2>
@@ -67,6 +68,7 @@ python app.py --smoke-check</code></pre>
   <p>v0.7.8부터 GUI 비교 상세 목록에 등급 필터와 검색 입력이 있습니다. 필터 검색은 표시용 마스킹 값을 기준으로 동작해야 하며, 관련 테스트는 <code>tests/test_gui_formatting.py</code>입니다.</p>
   <p>v0.7.9부터 <code>core/preflight.py</code>가 실제 장비 접속 전에 장비/명령 설정을 로컬에서 검증합니다. 오류는 수집을 차단하고, 주의는 운영자가 확인 후 진행할 수 있습니다. 관련 테스트는 <code>tests/test_preflight.py</code>입니다.</p>
   <p>v0.8.0부터 <code>tools/write_release_manifest.py</code>가 소스 ZIP과 Windows EXE ZIP의 SHA256 체크섬 파일 및 버전 단위 릴리스 매니페스트를 생성합니다. 관련 테스트는 <code>tests/test_release_manifest.py</code>입니다.</p>
+  <p>v0.8.1부터 <code>tools/verify_release_package.py</code>가 배포 ZIP의 sidecar 해시, manifest 기록, 필수 파일, 금지 파일 포함 여부를 검증합니다. 관련 테스트는 <code>tests/test_release_package_verifier.py</code>입니다.</p>
 
   <h2>5. UI 유지보수 기준</h2>
   <ul>
@@ -86,6 +88,7 @@ python app.py --smoke-check</code></pre>
     <li>테스트와 smoke-check를 실행합니다.</li>
     <li>소스 ZIP과 Windows EXE ZIP을 생성합니다.</li>
     <li><code>dist/</code>의 ZIP, <code>.sha256.txt</code>, <code>release_manifest.txt</code>를 확인합니다.</li>
+    <li><code>python .\tools\verify_release_package.py .\dist\&lt;package&gt;.zip --require-manifest</code>로 배포 ZIP을 검증합니다.</li>
     <li>Git 브랜치, 커밋, 태그를 남깁니다.</li>
   </ol>
 
@@ -93,6 +96,7 @@ python app.py --smoke-check</code></pre>
   <pre><code>powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
 powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1</code></pre>
   <p>각 ZIP에는 <code>PACKAGE_INFO.txt</code>가 포함되고, ZIP 밖에는 같은 이름의 <code>.sha256.txt</code> 파일과 버전 단위 <code>release_manifest.txt</code>가 함께 생성됩니다.</p>
+  <p>빌드 스크립트는 ZIP 생성 후 <code>tools/verify_release_package.py</code>를 자동 실행하므로 필수 파일 누락이나 <code>config/devices.yaml</code>, <code>outputs/</code>, <code>raw/</code> 같은 금지 경로가 포함되면 실패합니다.</p>
 
   <h2>8. 보안 원칙</h2>
   <ul>

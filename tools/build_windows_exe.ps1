@@ -177,4 +177,10 @@ if ($LASTEXITCODE -ne 0) {
     throw "Release manifest generation failed with exit code $LASTEXITCODE"
 }
 
+$VerifierTool = Join-Path $ProjectRoot "tools\verify_release_package.py"
+python $VerifierTool $ZipPath --type windows_exe --require-manifest
+if ($LASTEXITCODE -ne 0) {
+    throw "Release package verification failed with exit code $LASTEXITCODE"
+}
+
 Write-Host "Windows EXE ZIP created: $ZipPath"
