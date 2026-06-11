@@ -159,7 +159,11 @@ def normalized_zip_names(package_path: Path) -> tuple[set[str], list[str]]:
     try:
         with zipfile.ZipFile(package_path) as archive:
             for info in archive.infolist():
-                names.add(info.filename.replace("\\", "/"))
+                name = info.filename.replace("\\", "/")
+                if name in names:
+                    errors.append(f"Duplicate ZIP entry found: {name}")
+                else:
+                    names.add(name)
     except zipfile.BadZipFile:
         errors.append(f"Not a readable ZIP file: {package_path.name}")
     return names, errors

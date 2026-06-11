@@ -1,6 +1,6 @@
 # Backbone State Tracker 릴리스 반입 체크리스트
 
-문서 버전: v0.8.11
+문서 버전: v0.8.12
 작성일: 2026-06-12  
 대상: 사외 개발 ZIP을 사내 환경으로 반입해 검증하는 운영자와 인수자
 
@@ -12,18 +12,19 @@
 - ZIP 내부에는 `PACKAGE_INFO.txt`, README, CHANGELOG, `config/commands.yaml`, `config/devices.example.yaml`, `docs/` 가이드 문서가 있어야 합니다.
 - ZIP 내부에 `config/devices.yaml`, `outputs/`, `raw/`, `.git/`, `build/`, 캐시 파일이 있으면 반입하지 않습니다.
 - ZIP 내부 파일은 `backbone_state_tracker/` 루트 아래에 있어야 하며 절대 경로, 드라이브 경로, `..` 이동 경로가 있으면 반입하지 않습니다.
+- ZIP 내부에 같은 경로가 두 번 이상 들어간 중복 엔트리가 있으면 반입하지 않습니다.
 
 ## 2. 파일 세트 확인
 
 반입 폴더에는 아래 파일 세트가 함께 있어야 합니다.
 
 ```text
-backbone_state_tracker_v0.8.11_YYYYMMDD_source.zip
-backbone_state_tracker_v0.8.11_YYYYMMDD_source.zip.sha256.txt
-backbone_state_tracker_v0.8.11_YYYYMMDD_windows_exe.zip
-backbone_state_tracker_v0.8.11_YYYYMMDD_windows_exe.zip.sha256.txt
-backbone_state_tracker_v0.8.11_YYYYMMDD_release_manifest.txt
-backbone_state_tracker_v0.8.11_YYYYMMDD_verify_release_package.ps1
+backbone_state_tracker_v0.8.12_YYYYMMDD_source.zip
+backbone_state_tracker_v0.8.12_YYYYMMDD_source.zip.sha256.txt
+backbone_state_tracker_v0.8.12_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.12_YYYYMMDD_windows_exe.zip.sha256.txt
+backbone_state_tracker_v0.8.12_YYYYMMDD_release_manifest.txt
+backbone_state_tracker_v0.8.12_YYYYMMDD_verify_release_package.ps1
 CURRENT_RELEASE.txt
 ```
 
@@ -34,22 +35,22 @@ CURRENT_RELEASE.txt
 PowerShell에서 ZIP 해시를 확인합니다.
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.11_YYYYMMDD_windows_exe.zip
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.12_YYYYMMDD_windows_exe.zip
 ```
 
 출력된 SHA256 값이 같은 이름의 `.sha256.txt` 또는 `*_release_manifest.txt`에 기록된 값과 일치해야 합니다.
-검증기는 ZIP 파일명 버전, `.sha256.txt`의 대상 ZIP 이름과 `Version`, `*_release_manifest.txt`의 `Version`, `Date stamp`, 해당 패키지 `Size`/`SHA256` 레코드, ZIP 내부 경로 안전성도 함께 비교합니다.
+검증기는 ZIP 파일명 버전, `.sha256.txt`의 대상 ZIP 이름과 `Version`, `*_release_manifest.txt`의 `Version`, `Date stamp`, 해당 패키지 `Size`/`SHA256` 레코드, ZIP 내부 경로 안전성, 중복 엔트리 여부도 함께 비교합니다.
 
 소스 폴더가 함께 있는 환경에서는 Python 검증기를 실행합니다.
 
 ```powershell
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.11_YYYYMMDD_windows_exe.zip --require-manifest
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.12_YYYYMMDD_windows_exe.zip --require-manifest
 ```
 
 ZIP 파일과 검증 스크립트만 있는 환경에서는 독립 PowerShell 검증기를 실행합니다.
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.11_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.11_YYYYMMDD_windows_exe.zip -RequireManifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.12_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.12_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 정상 결과는 `Verification OK`입니다.
@@ -93,6 +94,7 @@ GUI로 실행할 때는 장비 IP, 계정, 비밀번호를 운영자가 직접 �
 - `Forbidden ZIP entry found`가 나오면 로컬 설정, 출력, 빌드 산출물, raw 원본이 섞인 것입니다.
 - `Unsafe ZIP entry found`가 나오면 ZIP 내부에 절대 경로, 드라이브 경로, 빈 경로 조각, `..` 이동 경로가 섞인 것입니다.
 - `Unexpected ZIP root entry found`가 나오면 `backbone_state_tracker/` 루트 밖의 파일이 섞인 것입니다.
+- `Duplicate ZIP entry found`가 나오면 같은 내부 경로가 두 번 이상 들어간 ZIP입니다.
 - `version mismatch` 또는 `date mismatch`가 나오면 ZIP, `.sha256.txt`, `release_manifest.txt` 중 서로 다른 버전 파일이 섞인 것입니다.
 - `package mismatch`, `package size mismatch`, `package SHA256 mismatch`가 나오면 sidecar 또는 manifest의 해당 패키지 레코드가 ZIP과 맞지 않는 것입니다.
 - EXE ZIP이 메일에 업로드되지 않으면 사내 승인된 파일 반입 경로를 사용합니다.

@@ -217,9 +217,13 @@ $required = switch ($packageType) {
 $entries = Get-NormalizedZipEntries -PackagePath $resolvedPackage
 $entrySet = @{}
 foreach ($entry in $entries) {
-    $entrySet[$entry] = $true
+    if ($entrySet.ContainsKey($entry)) {
+        $errors.Add("Duplicate ZIP entry found: $entry")
+    } else {
+        $entrySet[$entry] = $true
+    }
 }
-foreach ($entryError in (Get-ZipEntrySafetyErrors -Entries $entries)) {
+foreach ($entryError in (Get-ZipEntrySafetyErrors -Entries @($entrySet.Keys))) {
     $errors.Add($entryError)
 }
 foreach ($requiredEntry in $required) {

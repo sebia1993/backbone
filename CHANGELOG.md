@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.12 - 2026-06-12
+
+- Extended Python and PowerShell release package verification to reject duplicate normalized ZIP entries.
+- Added a regression test that creates a real duplicate ZIP member and verifies the `Duplicate ZIP entry found` failure.
+- Updated README, operator, developer, release checklist, command, and version history documents for v0.8.12.
+- No runtime collection, comparison, report, or GUI workflow behavior changed.
+
 ## v0.8.11 - 2026-06-12
 
 - Extended Python and PowerShell release package verification to reject unsafe ZIP entries, including absolute paths, Windows drive paths, empty path segments, and `..` traversal segments.
