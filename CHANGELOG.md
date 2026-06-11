@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.1 - 2026-06-11
+
+- Added `tools/verify_release_package.py` to validate release ZIP checksum sidecars, manifest entries, required contents, and forbidden sensitive/build paths.
+- Wired source and Windows EXE build scripts to run the package verifier after ZIP creation.
+- Added regression tests for valid source packages, checksum/size mismatch detection, and blocked local `config/devices.yaml` inclusion.
+- Updated release documentation with the post-transfer verification command.
+
 ## v0.8.0 - 2026-06-11
 
 - Added SHA256 sidecar files for source and Windows EXE ZIP release packages.

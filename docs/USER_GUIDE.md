@@ -1,6 +1,6 @@
 # Backbone State Tracker 사용자 가이드
 
-문서 버전: v0.8.0
+문서 버전: v0.8.1
 작성일: 2026-06-11
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
@@ -113,10 +113,13 @@
 ## 8. 배포 ZIP 무결성 확인
 
 - v0.8.0부터 `dist/`에 ZIP 파일과 같은 이름의 `.sha256.txt` 파일이 함께 생성됩니다.
-- `dist/backbone_state_tracker_v0.8.0_YYYYMMDD_release_manifest.txt`에는 같은 버전의 소스 ZIP과 Windows EXE ZIP 이름, 크기, SHA256 값이 정리됩니다.
+- `dist/backbone_state_tracker_v0.8.1_YYYYMMDD_release_manifest.txt`에는 같은 버전의 소스 ZIP과 Windows EXE ZIP 이름, 크기, SHA256 값이 정리됩니다.
 - ZIP 내부의 `PACKAGE_INFO.txt`에서 패키지 종류, 포함 파일, 제외 항목, 검증 방법을 다시 확인할 수 있습니다.
 - 사내 반입 후 PowerShell에서 아래 명령을 실행하고, 결과 해시가 `.sha256.txt` 또는 `release_manifest.txt`의 SHA256 값과 같은지 비교합니다.
+- v0.8.1부터는 소스/배포 작업 폴더가 있는 경우 `tools/verify_release_package.py`로 ZIP 내부 필수 파일과 금지 파일 포함 여부까지 함께 점검할 수 있습니다.
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.0_YYYYMMDD_windows_exe.zip
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.1_YYYYMMDD_windows_exe.zip
+# 아래 명령은 소스/배포 작업 폴더에서 실행합니다.
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.1_YYYYMMDD_windows_exe.zip --require-manifest
 ```
