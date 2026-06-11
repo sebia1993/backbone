@@ -14,6 +14,7 @@ from .diff_engine import DiffEngine
 from .models import Device, DiffItem, DiffLine, DiffSummary
 from .mock_validation import create_mock_validation_artifacts
 from .paths import resource_root, runtime_root
+from .preflight import preflight_detail_text, preflight_summary_text, validate_preflight
 from .redaction import redact_sensitive_text
 from .report_bundle import create_share_report_bundle
 from .reporter import ReportWriter, change_type_label, summary_label
@@ -128,6 +129,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.diff_severity_filter_var = tk.StringVar(value="전체")
         self.diff_search_var = tk.StringVar()
         self.diff_filter_status_var = tk.StringVar(value="필터: -")
+        self.preflight_status_var = tk.StringVar(value="설정 점검 전")
         self.status_chip_var = tk.StringVar(value="대기")
         self.wizard_title_var = tk.StringVar(value="작업 진행")
         self.wizard_message_var = tk.StringVar(value="작업 흐름을 확인하세요.")
@@ -623,6 +625,7 @@ class BackboneStateTrackerApp(tk.Tk):
         form = tk.Frame(stage_section, bg=PALETTE["surface"], padx=16, pady=16)
         form.grid(row=1, column=0, sticky="ew")
         form.columnconfigure(1, weight=1)
+        form.columnconfigure(3, weight=1)
 
         for column, stage_name in enumerate(WORK_STAGE_NAMES):
             ttk.Radiobutton(form, text=stage_name, value=stage_name, variable=self.stage_var).grid(
@@ -633,7 +636,20 @@ class BackboneStateTrackerApp(tk.Tk):
             row=1, column=0, sticky="w"
         )
         ttk.Entry(form, textvariable=self.custom_label_var).grid(row=1, column=1, columnspan=3, sticky="ew", padx=(0, 12))
-        ttk.Button(form, text="상태 수집 시작", style="Primary.TButton", command=self.collect_snapshot).grid(row=1, column=4, sticky="e")
+        ttk.Button(form, text="설정 점검", style="Secondary.TButton", command=self.run_preflight_check).grid(
+            row=1,
+            column=4,
+            sticky="e",
+            padx=(0, 8),
+        )
+        ttk.Button(form, text="상태 수집 시작", style="Primary.TButton", command=self.collect_snapshot).grid(row=1, column=5, sticky="e")
+        tk.Label(form, textvariable=self.preflight_status_var, bg=PALETTE["surface"], fg=PALETTE["muted"]).grid(
+            row=2,
+            column=0,
+            columnspan=6,
+            sticky="w",
+            pady=(10, 0),
+        )
 
         command_section = self._make_section(page, "점검 명령 세트", 1)
         command_body = tk.Frame(command_section, bg=PALETTE["surface"], padx=16, pady=16)
@@ -1096,6 +1112,30 @@ class BackboneStateTrackerApp(tk.Tk):
         except Exception as exc:
             messagebox.showerror("저장 실패", str(exc))
 
+    def run_preflight_check(self, show_dialog: bool = True) -> bool:
+        try:
+            devices = self._read_devices_from_form()
+            commands = load_commands(COMMANDS_PATH)
+            result = validate_preflight(devices, commands)
+        except Exception as exc:
+            self.preflight_status_var.set(f"설정 점검 실패: {exc}")
+            if show_dialog:
+                messagebox.showerror("설정 점검 실패", str(exc))
+            return False
+
+        summary = preflight_summary_text(result)
+        details = preflight_detail_text(result)
+        self.preflight_status_var.set(summary)
+        self.log(details)
+        if show_dialog:
+            if result.has_errors:
+                messagebox.showerror("설정 점검 실패", details)
+            elif result.warning_count:
+                messagebox.showwarning("설정 점검 주의", details)
+            else:
+                messagebox.showinfo("설정 점검 통과", details)
+        return not result.has_errors
+
     def collect_stage(self, stage_name: str) -> None:
         self.stage_var.set(stage_name)
         self.collect_snapshot()
@@ -1103,6 +1143,11 @@ class BackboneStateTrackerApp(tk.Tk):
     def collect_snapshot(self) -> None:
         try:
             devices = self._read_devices_from_form()
+            commands = load_commands(COMMANDS_PATH)
+            preflight = validate_preflight(devices, commands)
+            self.preflight_status_var.set(preflight_summary_text(preflight))
+            if preflight.has_errors:
+                raise ValueError(preflight_detail_text(preflight))
             username = self.username_var.get().strip()
             password = self.password_var.get()
             timeout = int(self.timeout_var.get().strip() or "30")
@@ -1123,7 +1168,6 @@ class BackboneStateTrackerApp(tk.Tk):
         def worker() -> None:
             try:
                 self.thread_log(f"[{stage.name}] 상태 수집을 시작합니다.")
-                commands = load_commands(COMMANDS_PATH)
                 collector = SnapshotCollector(timeout=timeout, progress=self.thread_log)
                 results = collector.collect(devices, commands, username, password)
                 snapshot_dir = self.snapshot_store.write_snapshot(

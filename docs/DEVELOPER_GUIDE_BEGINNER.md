@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.7.8
+문서 버전: v0.7.9
 작성일: 2026-06-11
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -14,6 +14,7 @@
 - `core/gui.py`: Tkinter GUI 화면과 사용자 이벤트 처리입니다.
 - `core/collector.py`: Netmiko 기반 SSH 명령 수집입니다.
 - `core/connectivity.py`: 장비별 접속 상태 내부 결과를 생성합니다.
+- `core/preflight.py`: 수집 전 장비/명령 설정 검증 규칙입니다.
 - `core/mock_validation.py`: 실제 장비 없이 샘플 스냅샷과 비교 리포트를 생성합니다.
 - `core/redaction.py`: 로그, 메타데이터, 리포트에 표시되는 명백한 비밀값을 마스킹합니다.
 - `core/report_bundle.py`: 공유용 리포트 ZIP을 생성하고 raw 출력 제외 규칙을 관리합니다.
@@ -65,6 +66,7 @@ v0.7.5부터 `core/mock_validation.py`가 실제 장비 접속 없이 `[샘플]`
 v0.7.6부터 `core/redaction.py`가 GUI 로그, 스냅샷 메타데이터, HTML/XLSX/JSON 비교 리포트의 명백한 비밀값을 `***`로 마스킹합니다. per-command `raw/*.txt` 출력은 운영 증거 보존을 위해 그대로 유지합니다. 관련 테스트는 `tests/test_redaction.py`와 `tests/test_reporter.py`입니다.
 v0.7.7부터 `core/report_bundle.py`가 비교 리포트마다 공유용 ZIP을 생성합니다. ZIP에는 마스킹된 리포트와 사용자 문서만 넣고, `raw/`, `config/devices.yaml`, 실행파일은 제외합니다. 관련 테스트는 `tests/test_reporter.py`의 공유 ZIP 검증입니다.
 v0.7.8부터 GUI 비교 상세 목록에 등급 필터와 검색 입력이 있습니다. 필터 검색은 표시용 마스킹 값을 기준으로 동작해야 하며, 관련 테스트는 `tests/test_gui_formatting.py`입니다.
+v0.7.9부터 `core/preflight.py`가 실제 장비 접속 전에 장비/명령 설정을 로컬에서 검증합니다. 오류는 수집을 차단하고, 주의는 운영자가 확인 후 진행할 수 있습니다. 관련 테스트는 `tests/test_preflight.py`입니다.
 
 ## 5. UI 유지보수 기준
 
@@ -114,4 +116,5 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 - 리포트, GUI, 로그에 새 문자열 출력을 추가할 때는 `core.redaction.redact_sensitive_text()` 또는 `redact_payload()` 적용 여부를 확인합니다.
 - 공유 ZIP 구성을 변경할 때는 raw 출력 폴더, 로컬 장비 설정, 실행파일이 포함되지 않는지 테스트로 확인합니다.
 - GUI 검색/필터를 수정할 때는 검색 대상에 민감값 원문이 들어가지 않는지 확인합니다.
+- 수집 전 검증 규칙을 완화할 때는 변경성 명령이 통과하지 않는지 테스트를 함께 보강합니다.
 - 장비 변경 명령은 `config/commands.yaml`에 추가하지 않습니다.
