@@ -109,11 +109,42 @@ $PayloadRoot = Join-Path $StagingRoot $ProjectName
 
 try {
     Copy-ReleaseTree -SourceRoot $ProjectRoot -DestinationRoot $PayloadRoot
+    $packageInfoText = @"
+Backbone State Tracker v$Version
+Package type: Source ZIP
+Created: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")
+
+Contents:
+- Source code
+- Config examples
+- Operator and developer guides
+- Unit tests
+- Release packaging scripts
+
+Excluded:
+- .git
+- outputs
+- dist
+- build
+- config\devices.yaml
+- Python caches and virtual environments
+
+Verification:
+- Compare this ZIP file SHA256 with the matching .sha256.txt file in dist.
+- A version-level release_manifest.txt file is also generated in dist.
+"@
+    Set-Content -LiteralPath (Join-Path $PayloadRoot "PACKAGE_INFO.txt") -Value $packageInfoText -Encoding UTF8
     Compress-Archive -LiteralPath $PayloadRoot -DestinationPath $ZipPath -CompressionLevel Optimal
 } finally {
     if (Test-Path -LiteralPath $StagingRoot) {
         Remove-Item -LiteralPath $StagingRoot -Recurse -Force
     }
+}
+
+$ManifestTool = Join-Path $ProjectRoot "tools\write_release_manifest.py"
+python $ManifestTool --project-name $ProjectName --version $Version --date-stamp $DateStamp --dist-dir $DistDir --package $ZipPath
+if ($LASTEXITCODE -ne 0) {
+    throw "Release manifest generation failed with exit code $LASTEXITCODE"
 }
 
 Write-Host "Release ZIP created: $ZipPath"
