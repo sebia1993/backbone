@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 버전별 변경내역 v0.7.4</title>
+  <title>Backbone State Tracker 버전별 변경내역 v0.7.5</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 1020px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -20,12 +20,13 @@
 <body>
 <main>
   <h1>Backbone State Tracker 버전별 변경내역</h1>
-  <p>문서 버전: v0.7.4<br>작성일: 2026-06-11<br>대상: 운영자, 인수자, 초급 유지보수 담당자</p>
+  <p>문서 버전: v0.7.5<br>작성일: 2026-06-11<br>대상: 운영자, 인수자, 초급 유지보수 담당자</p>
 
   <h2>1. 최신 버전 요약</h2>
   <table>
     <thead><tr><th>버전</th><th>날짜</th><th>핵심 변경</th></tr></thead>
     <tbody>
+      <tr><td>v0.7.5</td><td>2026-06-11</td><td>실제 장비 없이 샘플 검증 스냅샷/리포트 생성</td></tr>
       <tr><td>v0.7.4</td><td>2026-06-11</td><td>GUI 비교 상세의 판단/라인/변경값 강조</td></tr>
       <tr><td>v0.7.3</td><td>2026-06-11</td><td>같은 초에 반복 수집한 스냅샷 폴더 충돌 방지</td></tr>
       <tr><td>v0.7.2</td><td>2026-06-11</td><td>접속 불가 장비를 장비 단위 긴급 비교 항목으로 표시</td></tr>
@@ -41,7 +42,23 @@
     </tbody>
   </table>
 
-  <h2>2. v0.7.4 변경내역</h2>
+  <h2>2. v0.7.5 변경내역</h2>
+  <h3>추가 및 변경</h3>
+  <ul>
+    <li><code>대시보드</code>와 <code>비교 결과</code> 화면에 <code>샘플 검증 생성</code> 버튼을 추가했습니다.</li>
+    <li>실제 장비 접속 없이 <code>[샘플] 작업 전</code>, <code>[샘플] 백본3 OFF 중</code>, <code>[샘플] 복구 후</code> 스냅샷을 생성합니다.</li>
+    <li>작업 전 대비 백본3 OFF, 작업 전 대비 복구 후, 백본3 OFF 대비 복구 후 비교 리포트를 생성합니다.</li>
+    <li>백본3 접속 불가 Critical 항목과 복구 Info 항목을 샘플 비교군에 포함합니다.</li>
+    <li>샘플 생성 회귀 테스트를 추가했습니다.</li>
+  </ul>
+  <h3>운영 영향</h3>
+  <ul>
+    <li>사내 반입 전 또는 교육 중 실제 장비 없이 비교 화면과 리포트 생성을 검증할 수 있습니다.</li>
+    <li>샘플 결과는 <code>[샘플]</code> 라벨로 실제 작업 결과와 구분됩니다.</li>
+    <li>SSH 접속, 계정 입력, 실제 장비 명령 실행은 수행하지 않습니다.</li>
+  </ul>
+
+  <h2>3. v0.7.4 변경내역</h2>
   <h3>추가 및 변경</h3>
   <ul>
     <li>GUI <code>비교 결과</code> 화면의 <code>최근 변경 상세</code> 목록에 <code>판단</code> 컬럼을 추가했습니다.</li>
@@ -57,7 +74,7 @@
     <li>장비 수집 명령, 스냅샷 형식, HTML/XLSX/JSON 리포트 형식은 변경하지 않았습니다.</li>
   </ul>
 
-  <h2>3. v0.7.3 변경내역</h2>
+  <h2>4. v0.7.3 변경내역</h2>
   <h3>추가 및 변경</h3>
   <ul>
     <li>같은 단계 스냅샷을 같은 초에 두 번 이상 저장해도 기존 폴더를 덮어쓰지 않도록 했습니다.</li>
@@ -72,7 +89,7 @@
     <li>실제 장비 수집 명령과 비교 엔진은 변경하지 않았습니다.</li>
   </ul>
 
-  <h2>4. v0.7.2 변경내역</h2>
+  <h2>5. v0.7.2 변경내역</h2>
   <h3>추가 및 변경</h3>
   <ul>
     <li>장비별 접속 상태를 <code>device_connectivity</code> 내부 결과로 스냅샷에 저장합니다.</li>
@@ -88,7 +105,7 @@
     <li>실제 장비 수집 명령과 사용자 설정 파일 형식은 변경하지 않았습니다.</li>
   </ul>
 
-  <h2>5. v0.7.1 변경내역</h2>
+  <h2>6. v0.7.1 변경내역</h2>
   <h3>추가 및 변경</h3>
   <ul>
     <li>HTML 비교 리포트의 변경 상세 테이블을 <code>유형</code>, <code>라인</code>, <code>변경 내용</code> 3열 구조로 재설계했습니다.</li>
@@ -103,7 +120,7 @@
     <li>GUI 비교 화면, XLSX <code>diff_detail</code> 시트, JSON manifest, 장비 수집 명령은 변경하지 않았습니다.</li>
   </ul>
 
-  <h2>6. v0.7.0 변경내역</h2>
+  <h2>7. v0.7.0 변경내역</h2>
   <h3>추가 및 변경</h3>
   <ul>
     <li>대시보드에 <code>작업 진행 마법사</code>를 추가했습니다.</li>
@@ -119,7 +136,7 @@
     <li>실제 장비 수집 명령과 비교 엔진은 변경하지 않았습니다.</li>
   </ul>
 
-  <h2>7. v0.6.0 변경내역</h2>
+  <h2>8. v0.6.0 변경내역</h2>
   <h3>추가 및 변경</h3>
   <ul>
     <li>스냅샷 비교 결과에 행 단위 변경 상세를 추가했습니다.</li>
@@ -135,7 +152,7 @@
     <li>운영자는 어떤 장비의 어떤 명령 출력에서 어느 라인이 바뀌었는지 바로 확인할 수 있습니다.</li>
   </ul>
 
-  <h2>8. v0.5.0 변경내역</h2>
+  <h2>9. v0.5.0 변경내역</h2>
   <h3>추가 및 변경</h3>
   <ul>
     <li>밝은 운영 콘솔형 GUI로 재설계했습니다.</li>
@@ -158,7 +175,7 @@
     <li>공식 HPE/Aruba 로고나 고유 브랜드 자산은 포함하지 않았습니다.</li>
   </ul>
 
-  <h2>9. 이전 버전 요약</h2>
+  <h2>10. 이전 버전 요약</h2>
   <ul>
     <li><strong>v0.4.0:</strong> 한국어 3단계 작업 흐름, 자동 비교, 한국어 로그와 리포트 표시를 추가했습니다.</li>
     <li><strong>v0.3.0:</strong> Windows 실행파일 ZIP, frozen-runtime 경로 처리, smoke-check를 추가했습니다.</li>
@@ -167,16 +184,16 @@
     <li><strong>v0.1.0:</strong> SSH 상태 수집, 스냅샷 저장, 비교 엔진, HTML/XLSX/JSON 리포트를 최초 구현했습니다.</li>
   </ul>
 
-  <h2>10. 버전 확인 방법</h2>
+  <h2>11. 버전 확인 방법</h2>
   <p>GUI 제목과 좌측 하단에서 현재 버전을 확인할 수 있습니다.</p>
-  <pre><code>Backbone State Tracker v0.7.4</code></pre>
+  <pre><code>Backbone State Tracker v0.7.5</code></pre>
   <p>소스 기준으로는 <code>core/version.py</code>를 확인합니다.</p>
 
-  <h2>11. 배포 ZIP 예시</h2>
-  <pre><code>dist\backbone_state_tracker_v0.7.4_20260611_source.zip
-dist\backbone_state_tracker_v0.7.4_20260611_windows_exe.zip</code></pre>
+  <h2>12. 배포 ZIP 예시</h2>
+  <pre><code>dist\backbone_state_tracker_v0.7.5_20260611_source.zip
+dist\backbone_state_tracker_v0.7.5_20260611_windows_exe.zip</code></pre>
 
-  <h2>12. 반입 전 확인사항</h2>
+  <h2>13. 반입 전 확인사항</h2>
   <ul>
     <li>ZIP 파일명에 의도한 버전이 포함되어 있는지 확인합니다.</li>
     <li><code>docs/</code> 폴더에 사용자 가이드, 개발자 가이드, 버전 변경내역 문서가 Markdown/HTML 모두 있는지 확인합니다.</li>

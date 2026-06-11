@@ -12,6 +12,7 @@ from .collector import SnapshotCollector
 from .config import load_commands, load_devices, save_devices
 from .diff_engine import DiffEngine
 from .models import Device, DiffItem, DiffLine, DiffSummary
+from .mock_validation import create_mock_validation_artifacts
 from .paths import resource_root, runtime_root
 from .reporter import ReportWriter, change_type_label, summary_label
 from .snapshot import SnapshotStore
@@ -412,6 +413,10 @@ class BackboneStateTrackerApp(tk.Tk):
         ttk.Button(quick, text="스냅샷 새로고침", style="Secondary.TButton", command=self.refresh_snapshots).pack(side="left")
         ttk.Button(quick, text="최근 리포트", style="Secondary.TButton", command=self.open_last_report).pack(side="left", padx=(8, 0))
         ttk.Button(quick, text="결과 폴더", style="Secondary.TButton", command=self.open_outputs).pack(side="left", padx=(8, 0))
+        ttk.Button(quick, text="샘플 검증 생성", style="Secondary.TButton", command=self.create_mock_validation).pack(
+            side="left",
+            padx=(8, 0),
+        )
 
     def _build_wizard_step_cards(self) -> None:
         self.workflow_step_widgets = []
@@ -648,6 +653,7 @@ class BackboneStateTrackerApp(tk.Tk):
         actions = tk.Frame(form, bg=PALETTE["surface"])
         actions.grid(row=1, column=0, columnspan=5, sticky="ew", pady=(14, 0))
         ttk.Button(actions, text="선택 항목 비교", style="Primary.TButton", command=self.compare_selected).pack(side="left")
+        ttk.Button(actions, text="샘플 검증 생성", style="Secondary.TButton", command=self.create_mock_validation).pack(side="left", padx=(8, 0))
         ttk.Button(actions, text="최근 리포트", style="Secondary.TButton", command=self.open_last_report).pack(side="left", padx=(8, 0))
         ttk.Button(actions, text="결과 폴더", style="Secondary.TButton", command=self.open_outputs).pack(side="left", padx=(8, 0))
         tk.Label(actions, textvariable=self.compare_status_var, bg=PALETTE["surface"], fg=PALETTE["muted"]).pack(side="left", padx=(16, 0))
@@ -1174,6 +1180,32 @@ class BackboneStateTrackerApp(tk.Tk):
 
         self.log(f"선택 항목을 비교합니다: {base_name} -> {target_name}")
         threading.Thread(target=worker, daemon=True).start()
+
+    def create_mock_validation(self) -> None:
+        self.status_chip_var.set("샘플 생성 중")
+        self.compare_status_var.set("샘플 검증 데이터 생성 중")
+        try:
+            result = create_mock_validation_artifacts(self.snapshot_store)
+        except Exception:
+            self.log(traceback.format_exc())
+            self._set_failed_status("샘플 생성 실패")
+            return
+
+        self.log(f"샘플 작업 전 스냅샷: {result.pre_snapshot}")
+        self.log(f"샘플 백본3 OFF 스냅샷: {result.off_snapshot}")
+        self.log(f"샘플 복구 후 스냅샷: {result.restore_snapshot}")
+        self.log(f"샘플 OFF 비교 리포트: {result.off_report}")
+        self.log(f"샘플 복구 비교 리포트: {result.restore_report}")
+        self.log(f"샘플 OFF 대비 복구 비교 리포트: {result.restore_from_off_report}")
+        self._select_compared_snapshots(
+            result.pre_snapshot.name,
+            result.off_snapshot.name,
+            "샘플 검증 생성 완료",
+            result.off_summary,
+            result.off_report,
+        )
+        self.latest_snapshot_var.set(result.restore_snapshot.name)
+        self.show_page("compare")
 
     def _finish_manual_compare(self, summary: DiffSummary, report_path: Path) -> None:
         self.latest_report = report_path
