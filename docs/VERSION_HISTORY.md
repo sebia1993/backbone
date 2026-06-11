@@ -1,131 +1,89 @@
-# Backbone State Tracker 버전별 변경내용
+# Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.4.0  
-작성일: 2026-06-11  
+문서 버전: v0.5.0
+작성일: 2026-06-11
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
-## 1. 문서 목적
-
-이 문서는 Backbone State Tracker가 버전별로 어떤 기능과 문서를 추가했는지
-쉽게 확인하기 위한 릴리즈 노트입니다. `CHANGELOG.md`가 개발자용 변경 로그라면,
-이 문서는 사내 반입/운영 인수 시 빠르게 읽을 수 있는 요약 문서입니다.
-
-## 2. 최신 버전 요약
+## 1. 최신 버전 요약
 
 | 버전 | 날짜 | 핵심 변경 |
 | --- | --- | --- |
-| v0.4.0 | 2026-06-11 | 한국어 작업 단계형 UI와 자동 비교 흐름 |
+| v0.5.0 | 2026-06-11 | HPE/Aruba 계열 운영 콘솔에서 영감을 받은 밝은 좌측 메뉴형 UI |
+| v0.4.0 | 2026-06-11 | 한국어 작업 단계 UI와 자동 비교 흐름 |
 | v0.3.0 | 2026-06-11 | Windows 실행파일 ZIP 배포 추가 |
-| v0.2.1 | 2026-06-11 | 버전별 변경내용 문서 추가 |
+| v0.2.1 | 2026-06-11 | 버전별 변경내역 문서 추가 |
 | v0.2.0 | 2026-06-11 | Git 기록, ZIP 배포, 사용자/개발자 가이드 추가 |
 | v0.1.0 | 2026-06-11 | 백본 상태 수집/비교 도구 최초 구현 |
 
-## 3. v0.4.0 변경내용
+## 2. v0.5.0 변경내역
 
-### 추가
+### 추가 및 변경
 
-- 한국어 작업 단계형 GUI
-- 작업 단계명: `작업 전`, `백본3 OFF 중`, `복구 후`, `사용자 지정`
-- 작업 전 기준 자동 비교 흐름
-- 한국어 메뉴바와 작업 로그
-- 한국어 HTML 비교 리포트 표시
-- 작업 단계/기준 스냅샷 선택 단위 테스트
+- 밝은 운영 콘솔형 GUI로 재설계했습니다.
+- 좌측 메뉴를 추가했습니다: `대시보드`, `상태 수집`, `비교 결과`, `장비 설정`, `작업 로그`.
+- 상단 상태 바에 현재 상태, 기준 스냅샷, 비교 대상을 표시합니다.
+- 대시보드에 긴급, 주의, 정보, 변경없음 지표 카드를 추가했습니다.
+- 최근 스냅샷과 최근 리포트 상태를 더 명확하게 표시합니다.
+- 사용자 가이드, 초급 개발자 가이드, 버전 변경내역 문서를 Markdown과 HTML 모두 업데이트했습니다.
 
-### 운영 영향
+### 유지된 동작
 
-- 운영자는 먼저 `작업 전`을 수집하고, 이후 단계는 수집 직후 자동 비교 결과를 확인하면 됩니다.
-- 기존 수동 비교 기능은 `선택 항목 다시 비교`로 유지됩니다.
-
-## 4. v0.3.0 변경내용
-
-### 추가
-
-- `tools/build_windows_exe.ps1` 추가
-- `BackboneStateTracker.exe`를 포함한 Windows 실행파일 ZIP 생성 기능 추가
-- 소스 실행과 EXE 실행의 경로 기준을 분리하는 `core/paths.py` 추가
-- `app.py --smoke-check` 검증 옵션 추가
-
-### 변경
-
-- 프로그램 버전 표기를 `v0.3.0`으로 갱신
-- 사용자/개발자/버전 히스토리 문서에 실행파일 ZIP 설명 추가
+- 장비 수집 방식은 SSH 기반 읽기 전용 점검 그대로입니다.
+- `작업 전`은 자동 비교 기준으로 사용됩니다.
+- `백본3 OFF 중`, `복구 후`, `사용자 지정` 단계는 최신 `작업 전` 스냅샷과 자동 비교됩니다.
+- HTML, XLSX, JSON 리포트 생성 방식은 유지됩니다.
 
 ### 운영 영향
 
-- Python 설치 없이도 실행파일 패키지에서 `BackboneStateTracker.exe`를 실행할 수 있습니다.
-- 실행파일 옆의 `config/`와 `outputs/` 폴더를 기준으로 동작합니다.
-- 메일 보안 정책은 `.exe` 포함 ZIP을 차단할 수 있으므로 승인된 파일 반입 절차가 필요할 수 있습니다.
+- 메뉴 구조가 바뀌었지만 작업 순서는 동일합니다.
+- 기존 스냅샷 폴더와 리포트는 그대로 사용할 수 있습니다.
+- 공식 HPE/Aruba 로고나 고유 브랜드 자산은 포함하지 않았습니다.
 
-## 5. v0.2.1 변경내용
+## 3. v0.4.0 변경내역
 
-### 추가
+- 한국어 3단계 작업 흐름 GUI를 추가했습니다.
+- 작업 단계명 `작업 전`, `백본3 OFF 중`, `복구 후`, `사용자 지정`을 추가했습니다.
+- 작업 전 기준 자동 비교 흐름을 추가했습니다.
+- 한국어 메뉴, 작업 로그, HTML 비교 리포트 표시를 추가했습니다.
+- 작업 단계와 기준 스냅샷 선택 단위 테스트를 추가했습니다.
 
-- `docs/VERSION_HISTORY.md` 추가
-- `docs/VERSION_HISTORY.html` 추가
-- README의 가이드 문서 목록에 버전별 변경내용 문서 링크 추가
+## 4. v0.3.0 변경내역
 
-### 변경
+- `tools/build_windows_exe.ps1`을 추가했습니다.
+- `BackboneStateTracker.exe`가 포함된 Windows 실행파일 ZIP을 생성할 수 있게 했습니다.
+- EXE 실행 시 실행파일 옆의 `config/`와 `outputs/`를 사용하도록 경로 처리를 분리했습니다.
+- `app.py --smoke-check` 검증 옵션을 추가했습니다.
+- 사내 메일 보안 정책으로 EXE 포함 ZIP이 차단될 수 있음을 문서화했습니다.
 
-- 프로그램 버전 표기를 `v0.2.1`로 갱신
-- `CHANGELOG.md`에 `v0.2.1` 항목 추가
+## 5. v0.2.1 변경내역
 
-### 운영 영향
+- `docs/VERSION_HISTORY.md`와 `docs/VERSION_HISTORY.html`을 추가했습니다.
+- README에 버전별 변경내역 문서 링크를 추가했습니다.
+- 프로그램 버전 표시를 `v0.2.1`로 갱신했습니다.
 
-- 기존 스냅샷 수집, 비교, 리포트 생성 기능에는 영향이 없습니다.
-- ZIP 배포 파일명은 `backbone_state_tracker_v0.2.1_YYYYMMDD_source.zip` 형식으로 생성됩니다.
-- 새 문서는 ZIP에 자동 포함됩니다.
+## 6. v0.2.0 변경내역
 
-## 6. v0.2.0 변경내용
+- 로컬 Git 저장소와 버전 태그 기반 기록을 구성했습니다.
+- `tools/build_release.ps1` 소스 ZIP 생성 스크립트를 추가했습니다.
+- 사용자 가이드와 초급 개발자 가이드를 Markdown/HTML로 추가했습니다.
+- `core/version.py`로 버전 정보를 중앙화했습니다.
+- GUI, 스냅샷 메타데이터, 리포트에 프로그램 버전을 표시했습니다.
 
-### 추가
+## 7. v0.1.0 변경내역
 
-- 독립 로컬 Git 저장소 구성
-- `v0.1.0`, `v0.2.0` 태그 기반 버전 기록
-- `tools/build_release.ps1` 릴리즈 ZIP 생성 스크립트
-- 사용자 가이드 `docs/USER_GUIDE.md`, `docs/USER_GUIDE.html`
-- 초급 개발자 가이드 `docs/DEVELOPER_GUIDE_BEGINNER.md`, `docs/DEVELOPER_GUIDE_BEGINNER.html`
-- 중앙 버전 파일 `core/version.py`
-- 변경 이력 파일 `CHANGELOG.md`
-
-### 변경
-
-- GUI 제목에 프로그램 버전 표시
-- 스냅샷 메타데이터에 프로그램 이름과 버전 저장
-- 비교 리포트 HTML에 프로그램 버전 표시
-- README에 ZIP 생성 방법과 가이드 문서 위치 추가
-
-### 운영 영향
-
-- 사내 반입용 소스 ZIP을 표준 방식으로 생성할 수 있습니다.
-- ZIP에는 `.git`, `outputs`, `dist`, `config/devices.yaml`, 캐시 파일이 포함되지 않습니다.
-- 실제 장비 접속 정보와 수집 결과물이 배포 파일에 섞일 가능성을 낮췄습니다.
-
-## 7. v0.1.0 변경내용
-
-### 추가
-
-- 백본 3호기/4호기 대상 상태 수집 GUI
-- Netmiko 기반 SSH 접속 및 읽기 전용 명령 실행
-- `config/commands.yaml` 기반 점검 명령 관리
-- 시점별 스냅샷 저장
-- 장비별 원본 명령 출력 보관
-- 기준/대상 스냅샷 비교
-- Critical, Warning, Info, Unchanged 등급 분류
-- HTML, XLSX, JSON 비교 리포트 생성
-- 스냅샷 및 비교 엔진 기본 단위 테스트
-
-### 운영 영향
-
-- 작업 전, 백본 3호기 OFF 중, 복구 후 상태를 각각 수집해 비교할 수 있습니다.
-- OSPF, LACP, interface, log 등 주요 상태 변화 추적이 가능합니다.
-- 장비 설정 변경 명령은 포함하지 않았습니다.
+- 백본 3/4호기 대상 상태 수집 GUI를 최초 구현했습니다.
+- Netmiko 기반 SSH 접속과 읽기 전용 명령 실행을 추가했습니다.
+- 스냅샷 저장과 원본 명령 출력 보관을 추가했습니다.
+- 기준/대상 스냅샷 비교 기능을 추가했습니다.
+- Critical, Warning, Info, Unchanged 등급 분류를 추가했습니다.
+- HTML, XLSX, JSON 비교 리포트를 생성했습니다.
 
 ## 8. 버전 확인 방법
 
-GUI 상단 제목에서 현재 버전을 확인할 수 있습니다.
+GUI 제목과 좌측 하단에서 현재 버전을 확인할 수 있습니다.
 
 ```text
-Backbone State Tracker v0.4.0
+Backbone State Tracker v0.5.0
 ```
 
 소스 기준으로는 아래 파일을 확인합니다.
@@ -134,27 +92,17 @@ Backbone State Tracker v0.4.0
 core/version.py
 ```
 
-## 9. 릴리즈 ZIP 생성 기준
-
-릴리즈 ZIP은 아래 명령으로 생성합니다.
-
-```powershell
-cd "D:\Codex Project\Network\backbone_state_tracker"
-powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
-powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
-```
-
-ZIP 파일명 예시:
+## 9. 배포 ZIP 예시
 
 ```text
-dist\backbone_state_tracker_v0.4.0_20260611_source.zip
-dist\backbone_state_tracker_v0.4.0_20260611_windows_exe.zip
+dist\backbone_state_tracker_v0.5.0_20260611_source.zip
+dist\backbone_state_tracker_v0.5.0_20260611_windows_exe.zip
 ```
 
 ## 10. 반입 전 확인사항
 
 - ZIP 파일명에 의도한 버전이 포함되어 있는지 확인합니다.
-- `docs/` 폴더에 사용자 가이드, 개발자 가이드, 버전별 변경내용 문서가 모두 있는지 확인합니다.
-- `config/devices.yaml`과 `outputs/`가 ZIP에 포함되지 않았는지 확인합니다.
-- 장비 IP, 계정, 원본 출력 등 내부 정보가 반입 파일에 섞이지 않았는지 확인합니다.
-
+- `docs/` 폴더에 사용자 가이드, 개발자 가이드, 버전 변경내역 문서가 Markdown/HTML 모두 있는지 확인합니다.
+- 소스 ZIP에 `.git`, `outputs/`, `dist/`, `config/devices.yaml`이 포함되지 않았는지 확인합니다.
+- Windows EXE ZIP에 `BackboneStateTracker.exe`가 포함되어 있는지 확인합니다.
+- 장비 IP, 계정, 원본 출력 등 내부 정보가 배포 파일에 포함되지 않았는지 확인합니다.

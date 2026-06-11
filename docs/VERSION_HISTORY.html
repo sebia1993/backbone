@@ -2,142 +2,88 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Backbone State Tracker 버전별 변경내용</title>
+  <title>Backbone State Tracker 버전별 변경내역 v0.5.0</title>
   <style>
-    body { margin: 0; font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif; color: #1f2328; background: #f6f8fa; line-height: 1.6; }
-    main { max-width: 980px; margin: 0 auto; padding: 32px 24px; background: #fff; min-height: 100vh; }
-    h1 { margin-top: 0; font-size: 30px; }
-    h2 { margin-top: 30px; border-bottom: 1px solid #d0d7de; padding-bottom: 6px; }
-    h3 { margin-top: 22px; color: #344054; }
-    code, pre { font-family: Consolas, "Courier New", monospace; }
-    pre { background: #0d1117; color: #e6edf3; padding: 14px; border-radius: 6px; overflow: auto; }
-    table { width: 100%; border-collapse: collapse; margin: 14px 0; }
-    th, td { border: 1px solid #d0d7de; padding: 8px 10px; vertical-align: top; }
-    th { background: #eef3f8; }
-    .note { background: #eef6ff; border: 1px solid #bfd7f2; padding: 12px; border-radius: 6px; }
+    body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
+    main { max-width: 1020px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
+    h1, h2, h3 { color: #102a43; }
+    h1 { border-bottom: 4px solid #01a982; padding-bottom: 12px; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    th, td { border: 1px solid #d9e3ea; padding: 9px 10px; text-align: left; }
+    th { background: #e7f7f2; }
+    code, pre { background: #eef2f6; }
+    code { padding: 2px 5px; }
+    pre { padding: 14px; overflow-x: auto; }
+    li { margin: 5px 0; }
   </style>
 </head>
 <body>
 <main>
-  <h1>Backbone State Tracker 버전별 변경내용</h1>
-  <p><strong>문서 버전:</strong> v0.4.0<br><strong>작성일:</strong> 2026-06-11<br><strong>대상:</strong> 운영자, 인수자, 초급 유지보수 담당자</p>
+  <h1>Backbone State Tracker 버전별 변경내역</h1>
+  <p>문서 버전: v0.5.0<br>작성일: 2026-06-11<br>대상: 운영자, 인수자, 초급 유지보수 담당자</p>
 
-  <h2>1. 문서 목적</h2>
-  <p>이 문서는 Backbone State Tracker가 버전별로 어떤 기능과 문서를 추가했는지 쉽게 확인하기 위한 릴리즈 노트입니다.</p>
-  <p class="note"><code>CHANGELOG.md</code>가 개발자용 변경 로그라면, 이 문서는 사내 반입/운영 인수 시 빠르게 읽을 수 있는 요약 문서입니다.</p>
-
-  <h2>2. 최신 버전 요약</h2>
+  <h2>1. 최신 버전 요약</h2>
   <table>
     <thead><tr><th>버전</th><th>날짜</th><th>핵심 변경</th></tr></thead>
     <tbody>
-      <tr><td>v0.4.0</td><td>2026-06-11</td><td>한국어 작업 단계형 UI와 자동 비교 흐름</td></tr>
+      <tr><td>v0.5.0</td><td>2026-06-11</td><td>HPE/Aruba 계열 운영 콘솔에서 영감을 받은 밝은 좌측 메뉴형 UI</td></tr>
+      <tr><td>v0.4.0</td><td>2026-06-11</td><td>한국어 작업 단계 UI와 자동 비교 흐름</td></tr>
       <tr><td>v0.3.0</td><td>2026-06-11</td><td>Windows 실행파일 ZIP 배포 추가</td></tr>
-      <tr><td>v0.2.1</td><td>2026-06-11</td><td>버전별 변경내용 문서 추가</td></tr>
+      <tr><td>v0.2.1</td><td>2026-06-11</td><td>버전별 변경내역 문서 추가</td></tr>
       <tr><td>v0.2.0</td><td>2026-06-11</td><td>Git 기록, ZIP 배포, 사용자/개발자 가이드 추가</td></tr>
       <tr><td>v0.1.0</td><td>2026-06-11</td><td>백본 상태 수집/비교 도구 최초 구현</td></tr>
     </tbody>
   </table>
 
-  <h2>3. v0.4.0 변경내용</h2>
-  <h3>추가</h3>
+  <h2>2. v0.5.0 변경내역</h2>
+  <h3>추가 및 변경</h3>
   <ul>
-    <li>한국어 작업 단계형 GUI</li>
-    <li>작업 단계명: <code>작업 전</code>, <code>백본3 OFF 중</code>, <code>복구 후</code>, <code>사용자 지정</code></li>
-    <li>작업 전 기준 자동 비교 흐름</li>
-    <li>한국어 메뉴바와 작업 로그</li>
-    <li>한국어 HTML 비교 리포트 표시</li>
+    <li>밝은 운영 콘솔형 GUI로 재설계했습니다.</li>
+    <li>좌측 메뉴를 추가했습니다: <code>대시보드</code>, <code>상태 수집</code>, <code>비교 결과</code>, <code>장비 설정</code>, <code>작업 로그</code>.</li>
+    <li>상단 상태 바에 현재 상태, 기준 스냅샷, 비교 대상을 표시합니다.</li>
+    <li>대시보드에 긴급, 주의, 정보, 변경없음 지표 카드를 추가했습니다.</li>
+    <li>사용자 가이드, 초급 개발자 가이드, 버전 변경내역 문서를 Markdown과 HTML 모두 업데이트했습니다.</li>
+  </ul>
+  <h3>유지된 동작</h3>
+  <ul>
+    <li>장비 수집 방식은 SSH 기반 읽기 전용 점검 그대로입니다.</li>
+    <li><code>작업 전</code>은 자동 비교 기준으로 사용됩니다.</li>
+    <li><code>백본3 OFF 중</code>, <code>복구 후</code>, <code>사용자 지정</code> 단계는 최신 <code>작업 전</code> 스냅샷과 자동 비교됩니다.</li>
+    <li>HTML, XLSX, JSON 리포트 생성 방식은 유지됩니다.</li>
   </ul>
   <h3>운영 영향</h3>
   <ul>
-    <li>운영자는 먼저 <code>작업 전</code>을 수집하고, 이후 단계는 수집 직후 자동 비교 결과를 확인하면 됩니다.</li>
-    <li>기존 수동 비교 기능은 <code>선택 항목 다시 비교</code>로 유지됩니다.</li>
+    <li>메뉴 구조가 바뀌었지만 작업 순서는 동일합니다.</li>
+    <li>기존 스냅샷 폴더와 리포트는 그대로 사용할 수 있습니다.</li>
+    <li>공식 HPE/Aruba 로고나 고유 브랜드 자산은 포함하지 않았습니다.</li>
   </ul>
 
-  <h2>4. v0.3.0 변경내용</h2>
-  <h3>추가</h3>
+  <h2>3. 이전 버전 요약</h2>
   <ul>
-    <li><code>tools/build_windows_exe.ps1</code> 추가</li>
-    <li><code>BackboneStateTracker.exe</code>를 포함한 Windows 실행파일 ZIP 생성 기능 추가</li>
-    <li>소스 실행과 EXE 실행의 경로 기준을 분리하는 <code>core/paths.py</code> 추가</li>
-    <li><code>app.py --smoke-check</code> 검증 옵션 추가</li>
-  </ul>
-  <h3>운영 영향</h3>
-  <ul>
-    <li>Python 설치 없이도 실행파일 패키지에서 <code>BackboneStateTracker.exe</code>를 실행할 수 있습니다.</li>
-    <li>실행파일 옆의 <code>config/</code>와 <code>outputs/</code> 폴더를 기준으로 동작합니다.</li>
-    <li>메일 보안 정책은 <code>.exe</code> 포함 ZIP을 차단할 수 있습니다.</li>
+    <li><strong>v0.4.0:</strong> 한국어 3단계 작업 흐름, 자동 비교, 한국어 로그와 리포트 표시를 추가했습니다.</li>
+    <li><strong>v0.3.0:</strong> Windows 실행파일 ZIP, frozen-runtime 경로 처리, smoke-check를 추가했습니다.</li>
+    <li><strong>v0.2.1:</strong> 버전별 변경내역 Markdown/HTML 문서를 추가했습니다.</li>
+    <li><strong>v0.2.0:</strong> Git 기록, 소스 ZIP 빌드, 사용자/개발자 가이드, 중앙 버전 파일을 추가했습니다.</li>
+    <li><strong>v0.1.0:</strong> SSH 상태 수집, 스냅샷 저장, 비교 엔진, HTML/XLSX/JSON 리포트를 최초 구현했습니다.</li>
   </ul>
 
-  <h2>5. v0.2.1 변경내용</h2>
-  <h3>추가</h3>
-  <ul>
-    <li><code>docs/VERSION_HISTORY.md</code> 추가</li>
-    <li><code>docs/VERSION_HISTORY.html</code> 추가</li>
-    <li>README의 가이드 문서 목록에 버전별 변경내용 문서 링크 추가</li>
-  </ul>
-  <h3>변경</h3>
-  <ul>
-    <li>프로그램 버전 표기를 <code>v0.2.1</code>로 갱신</li>
-    <li><code>CHANGELOG.md</code>에 <code>v0.2.1</code> 항목 추가</li>
-  </ul>
-  <h3>운영 영향</h3>
-  <ul>
-    <li>기존 스냅샷 수집, 비교, 리포트 생성 기능에는 영향이 없습니다.</li>
-    <li>ZIP 배포 파일명은 <code>backbone_state_tracker_v0.2.1_YYYYMMDD_source.zip</code> 형식으로 생성됩니다.</li>
-  </ul>
-
-  <h2>6. v0.2.0 변경내용</h2>
-  <h3>추가</h3>
-  <ul>
-    <li>독립 로컬 Git 저장소 구성</li>
-    <li><code>tools/build_release.ps1</code> 릴리즈 ZIP 생성 스크립트</li>
-    <li>사용자 가이드와 초급 개발자 가이드 MD/HTML 추가</li>
-    <li>중앙 버전 파일 <code>core/version.py</code> 추가</li>
-    <li>변경 이력 파일 <code>CHANGELOG.md</code> 추가</li>
-  </ul>
-  <h3>운영 영향</h3>
-  <ul>
-    <li>사내 반입용 소스 ZIP을 표준 방식으로 생성할 수 있습니다.</li>
-    <li>ZIP에는 <code>.git</code>, <code>outputs</code>, <code>dist</code>, <code>config/devices.yaml</code>, 캐시 파일이 포함되지 않습니다.</li>
-  </ul>
-
-  <h2>7. v0.1.0 변경내용</h2>
-  <h3>추가</h3>
-  <ul>
-    <li>백본 3호기/4호기 대상 상태 수집 GUI</li>
-    <li>Netmiko 기반 SSH 접속 및 읽기 전용 명령 실행</li>
-    <li>시점별 스냅샷 저장과 원본 명령 출력 보관</li>
-    <li>기준/대상 스냅샷 비교</li>
-    <li>Critical, Warning, Info, Unchanged 등급 분류</li>
-    <li>HTML, XLSX, JSON 비교 리포트 생성</li>
-  </ul>
-  <h3>운영 영향</h3>
-  <ul>
-    <li>작업 전, 백본 3호기 OFF 중, 복구 후 상태를 각각 수집해 비교할 수 있습니다.</li>
-    <li>OSPF, LACP, interface, log 등 주요 상태 변화 추적이 가능합니다.</li>
-    <li>장비 설정 변경 명령은 포함하지 않았습니다.</li>
-  </ul>
-
-  <h2>8. 버전 확인 방법</h2>
-  <pre>Backbone State Tracker v0.4.0</pre>
+  <h2>4. 버전 확인 방법</h2>
+  <p>GUI 제목과 좌측 하단에서 현재 버전을 확인할 수 있습니다.</p>
+  <pre><code>Backbone State Tracker v0.5.0</code></pre>
   <p>소스 기준으로는 <code>core/version.py</code>를 확인합니다.</p>
 
-  <h2>9. 릴리즈 ZIP 생성 기준</h2>
-  <pre>cd "D:\Codex Project\Network\backbone_state_tracker"
-powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
-powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1</pre>
-  <pre>dist\backbone_state_tracker_v0.4.0_20260611_source.zip
-dist\backbone_state_tracker_v0.4.0_20260611_windows_exe.zip</pre>
+  <h2>5. 배포 ZIP 예시</h2>
+  <pre><code>dist\backbone_state_tracker_v0.5.0_20260611_source.zip
+dist\backbone_state_tracker_v0.5.0_20260611_windows_exe.zip</code></pre>
 
-  <h2>10. 반입 전 확인사항</h2>
+  <h2>6. 반입 전 확인사항</h2>
   <ul>
     <li>ZIP 파일명에 의도한 버전이 포함되어 있는지 확인합니다.</li>
-    <li><code>docs/</code> 폴더에 사용자 가이드, 개발자 가이드, 버전별 변경내용 문서가 모두 있는지 확인합니다.</li>
-    <li><code>config/devices.yaml</code>과 <code>outputs/</code>가 ZIP에 포함되지 않았는지 확인합니다.</li>
-    <li>장비 IP, 계정, 원본 출력 등 내부 정보가 반입 파일에 섞이지 않았는지 확인합니다.</li>
+    <li><code>docs/</code> 폴더에 사용자 가이드, 개발자 가이드, 버전 변경내역 문서가 Markdown/HTML 모두 있는지 확인합니다.</li>
+    <li>소스 ZIP에 <code>.git</code>, <code>outputs/</code>, <code>dist/</code>, <code>config/devices.yaml</code>이 포함되지 않았는지 확인합니다.</li>
+    <li>Windows EXE ZIP에 <code>BackboneStateTracker.exe</code>가 포함되어 있는지 확인합니다.</li>
+    <li>장비 IP, 계정, 원본 출력 등 내부 정보가 배포 파일에 포함되지 않았는지 확인합니다.</li>
   </ul>
 </main>
 </body>
 </html>
-

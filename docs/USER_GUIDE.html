@@ -2,116 +2,71 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Backbone State Tracker 사용자 가이드</title>
+  <title>Backbone State Tracker 사용자 가이드 v0.5.0</title>
   <style>
-    body { margin: 0; font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif; color: #1f2328; background: #f6f8fa; line-height: 1.6; }
-    main { max-width: 980px; margin: 0 auto; padding: 32px 24px; background: #fff; min-height: 100vh; }
-    h1 { margin-top: 0; font-size: 30px; }
-    h2 { margin-top: 30px; border-bottom: 1px solid #d0d7de; padding-bottom: 6px; }
-    code, pre { font-family: Consolas, "Courier New", monospace; }
-    pre { background: #0d1117; color: #e6edf3; padding: 14px; border-radius: 6px; overflow: auto; }
-    table { width: 100%; border-collapse: collapse; margin: 14px 0; }
-    th, td { border: 1px solid #d0d7de; padding: 8px 10px; vertical-align: top; }
-    th { background: #eef3f8; }
-    .note { background: #fff8e6; border: 1px solid #f0d98c; padding: 12px; border-radius: 6px; }
+    body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
+    main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
+    h1, h2, h3 { color: #102a43; }
+    h1 { border-bottom: 4px solid #01a982; padding-bottom: 12px; }
+    code { background: #eef2f6; padding: 2px 5px; }
+    .core { border-left: 5px solid #01a982; background: #e7f7f2; padding: 14px 18px; }
+    li { margin: 5px 0; }
   </style>
 </head>
 <body>
 <main>
   <h1>Backbone State Tracker 사용자 가이드</h1>
-  <p><strong>버전:</strong> v0.4.0<br><strong>대상:</strong> 백본 3호기 / 백본 4호기 상태 수집 및 비교 담당자</p>
+  <p>문서 버전: v0.5.0<br>작성일: 2026-06-11<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
-  <h2>1. 목적</h2>
-  <p>Backbone State Tracker는 백본 3/4호기에서 읽기 전용 점검 명령을 실행하고, 작업 전/중/후 스냅샷을 비교해 달라진 점을 추적하는 Windows용 GUI 도구입니다.</p>
-  <p class="note">이 도구는 장비 설정을 변경하지 않습니다. <code>display</code> 계열 상태 확인 명령만 실행합니다.</p>
+  <h2>1. 핵심 운영 포인트</h2>
+  <div class="core">
+    <ul>
+      <li>먼저 <code>작업 전</code> 상태를 수집합니다.</li>
+      <li><code>백본3 OFF 중</code>, <code>복구 후</code>, <code>사용자 지정</code> 단계는 최신 <code>작업 전</code> 스냅샷과 자동 비교됩니다.</li>
+      <li>장비 변경 명령은 실행하지 않고, 읽기 전용 점검 명령만 실행합니다.</li>
+      <li>암호는 저장하지 않습니다.</li>
+      <li>비교 리포트는 HTML, XLSX, JSON으로 생성됩니다.</li>
+    </ul>
+  </div>
 
-  <h2>2. 패키지 종류</h2>
-  <table>
-    <thead><tr><th>패키지</th><th>실행파일 포함</th><th>용도</th></tr></thead>
-    <tbody>
-      <tr><td><code>source.zip</code></td><td>아니오</td><td>Python이 설치된 PC에서 소스 기준 실행/수정</td></tr>
-      <tr><td><code>windows_exe.zip</code></td><td>예</td><td><code>BackboneStateTracker.exe</code>로 바로 실행</td></tr>
-    </tbody>
-  </table>
-  <p class="note">메일 시스템은 <code>.exe</code>, <code>.py</code>, <code>.ps1</code>이 들어 있는 ZIP을 차단할 수 있습니다. 업로드가 막히면 사내 승인된 파일 반입/전송 절차를 사용해야 합니다.</p>
-
-  <h2>3. 설치</h2>
+  <h2>2. 프로그램 동작 방식</h2>
   <ol>
-    <li>ZIP 파일을 사내 PC의 원하는 위치에 압축 해제합니다.</li>
-    <li><code>windows_exe.zip</code>이면 <code>BackboneStateTracker.exe</code>를 실행합니다.</li>
-    <li><code>source.zip</code>이면 PowerShell을 열고 프로젝트 폴더로 이동합니다.</li>
-  </ol>
-  <pre>cd "D:\NetworkTools\backbone_state_tracker"
-python -m pip install -r requirements.txt</pre>
-
-  <h2>4. 실행</h2>
-  <p>실행파일 패키지는 <code>BackboneStateTracker.exe</code>를 실행합니다. 소스 패키지는 <code>python app.py</code>로 실행합니다.</p>
-  <table>
-    <thead><tr><th>단계</th><th>목적</th></tr></thead>
-    <tbody>
-      <tr><td>1. 장비 및 접속 설정</td><td>접속 계정, 암호, 백본 3/4호기 정보를 입력</td></tr>
-      <tr><td>2. 작업 단계 선택 및 상태 수집</td><td>작업 전, 백본3 OFF 중, 복구 후 상태 수집</td></tr>
-      <tr><td>3. 자동 비교 및 결과 확인</td><td>작업 전 기준으로 자동 비교된 리포트 확인</td></tr>
-    </tbody>
-  </table>
-  <table>
-    <thead><tr><th>항목</th><th>설명</th></tr></thead>
-    <tbody>
-      <tr><td>Username</td><td>백본 장비 SSH 접속 계정</td></tr>
-      <tr><td>Password</td><td>백본 장비 SSH 접속 암호. 파일에 저장되지 않습니다.</td></tr>
-      <tr><td>Timeout</td><td>장비 접속 및 명령 대기 시간</td></tr>
-      <tr><td>Snapshot label</td><td><code>pre</code>, <code>bb3_off</code>, <code>post_restore</code> 같은 수집 시점 이름</td></tr>
-      <tr><td>Device</td><td>백본 3호기와 4호기 이름, IP, SSH 포트, Netmiko device type</td></tr>
-    </tbody>
-  </table>
-
-  <h2>5. 스냅샷 수집</h2>
-  <ol>
-    <li>장비 정보와 계정 정보를 입력합니다.</li>
-    <li>작업 단계를 선택합니다: <code>작업 전</code>, <code>백본3 OFF 중</code>, <code>복구 후</code>, <code>사용자 지정</code>.</li>
-    <li><strong>상태 수집 시작</strong>을 누릅니다.</li>
-    <li>하단 Run log에서 진행 상황을 확인합니다.</li>
-  </ol>
-  <pre>outputs\snapshots\YYYYMMDD_HHMMSS_스냅샷명\</pre>
-
-  <h2>6. 스냅샷 비교</h2>
-  <p><code>백본3 OFF 중</code>, <code>복구 후</code>, <code>사용자 지정</code> 단계는 수집 완료 후 자동으로 최신 <code>작업 전</code> 스냅샷과 비교합니다.</p>
-  <ol>
-    <li><strong>목록 새로고침</strong>으로 스냅샷 목록을 갱신합니다.</li>
-    <li><strong>기준 스냅샷(작업 전)</strong>에 기준 스냅샷을 선택합니다.</li>
-    <li><strong>비교 스냅샷</strong>에 비교 대상 스냅샷을 선택합니다.</li>
-    <li><strong>선택 항목 다시 비교</strong>를 누릅니다.</li>
-  </ol>
-  <pre>outputs\snapshots\&lt;target&gt;\comparisons\vs_&lt;baseline&gt;\</pre>
-
-  <h2>7. 리포트 해석</h2>
-  <table>
-    <thead><tr><th>등급</th><th>의미</th><th>예시</th></tr></thead>
-    <tbody>
-      <tr><td>Critical</td><td>서비스 영향 가능성이 큰 변경</td><td>Interface down, OSPF neighbor down, LACP member unselected</td></tr>
-      <tr><td>Warning</td><td>확인이 필요한 운영 상태 변경</td><td>Route/log/resource 상태 변화</td></tr>
-      <tr><td>Info</td><td>참고용 출력 변화</td><td>단순 출력 차이</td></tr>
-      <tr><td>Unchanged</td><td>의미 있는 변경 없음</td><td>기준과 대상 출력 동일</td></tr>
-    </tbody>
-  </table>
-
-  <h2>8. 작업 권장 흐름</h2>
-  <ol>
-    <li>작업 전: <code>pre</code> 스냅샷 수집</li>
-    <li>백본 3호기 OFF 중: <code>bb3_off</code> 스냅샷 수집</li>
-    <li>복구 후: <code>post_restore</code> 스냅샷 수집</li>
-    <li><code>pre</code>와 <code>bb3_off</code> 비교</li>
-    <li><code>pre</code>와 <code>post_restore</code> 비교</li>
+    <li><strong>장비 설정</strong> 화면에서 백본 3/4호기 IP, 포트, 장비 타입, 접속 계정을 입력합니다.</li>
+    <li><strong>상태 수집</strong> 화면에서 작업 단계를 선택합니다.</li>
+    <li>프로그램이 SSH로 접속해 읽기 전용 명령을 실행합니다.</li>
+    <li>명령 출력이 시간별 스냅샷 폴더에 저장됩니다.</li>
+    <li>작업 전이 아닌 단계는 최신 <code>작업 전</code> 스냅샷과 자동 비교됩니다.</li>
+    <li><strong>비교 결과</strong> 화면 또는 <strong>최근 리포트</strong> 버튼으로 변경점을 확인합니다.</li>
   </ol>
 
-  <h2>9. 보안 주의사항</h2>
+  <h2>3. 화면 구성</h2>
+  <h3>대시보드</h3>
+  <p>긴급, 주의, 정보, 변경없음 건수와 최근 스냅샷/리포트 상태를 확인합니다.</p>
+  <h3>상태 수집</h3>
+  <p><code>작업 전</code>, <code>백본3 OFF 중</code>, <code>복구 후</code>, <code>사용자 지정</code> 단계 중 하나를 선택합니다.</p>
+  <h3>비교 결과</h3>
+  <p>기준 스냅샷과 비교 스냅샷을 직접 선택해 다시 비교합니다.</p>
+  <h3>장비 설정</h3>
+  <p>백본 3/4호기 접속 정보와 SSH 계정을 입력합니다. 암호는 저장하지 않습니다.</p>
+  <h3>작업 로그</h3>
+  <p>수집, 저장, 비교, 오류 메시지를 시간 순서대로 확인합니다.</p>
+
+  <h2>4. 권장 작업 순서</h2>
+  <ol>
+    <li>장비 설정에서 백본 3/4호기 정보와 접속 계정을 확인합니다.</li>
+    <li>작업 전 상태에서 <code>작업 전</code> 수집을 실행합니다.</li>
+    <li>백본 3호기 OFF, 백본 4호기 ON 상태에서 <code>백본3 OFF 중</code> 수집을 실행합니다.</li>
+    <li>자동 비교 결과의 긴급/주의 항목을 확인합니다.</li>
+    <li>복구 후 백본 3/4호기 ON 상태에서 <code>복구 후</code> 수집을 실행합니다.</li>
+    <li>최종 리포트와 작업 로그를 확인합니다.</li>
+  </ol>
+
+  <h2>5. 주의 사항</h2>
   <ul>
-    <li>암호는 프로그램 실행 중에만 사용하며 파일로 저장하지 않습니다.</li>
-    <li><code>config/devices.yaml</code>은 내부 IP/호스트명을 포함할 수 있으므로 외부 공유 전 확인해야 합니다.</li>
-    <li><code>outputs/</code>에는 장비 상태 출력이 포함되므로 외부 반출 대상에서 제외하는 것이 좋습니다.</li>
+    <li>운영 장비 대상이므로 승인된 점검 시간과 접속 권한을 확인합니다.</li>
+    <li>사내 반입용 ZIP에는 로컬 <code>config/devices.yaml</code>과 <code>outputs/</code>가 포함되지 않도록 유지합니다.</li>
+    <li>장비 설정 변경, 재부팅, 포트 shutdown 같은 명령은 이 도구에 추가하지 않습니다.</li>
   </ul>
 </main>
 </body>
 </html>
-
