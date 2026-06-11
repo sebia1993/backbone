@@ -20,22 +20,33 @@
 <body>
 <main>
   <h1>Backbone State Tracker 사용자 가이드</h1>
-  <p><strong>버전:</strong> v0.2.1<br><strong>대상:</strong> 백본 3호기 / 백본 4호기 상태 수집 및 비교 담당자</p>
+  <p><strong>버전:</strong> v0.3.0<br><strong>대상:</strong> 백본 3호기 / 백본 4호기 상태 수집 및 비교 담당자</p>
 
   <h2>1. 목적</h2>
   <p>Backbone State Tracker는 백본 3/4호기에서 읽기 전용 점검 명령을 실행하고, 작업 전/중/후 스냅샷을 비교해 달라진 점을 추적하는 Windows용 GUI 도구입니다.</p>
   <p class="note">이 도구는 장비 설정을 변경하지 않습니다. <code>display</code> 계열 상태 확인 명령만 실행합니다.</p>
 
-  <h2>2. 설치</h2>
+  <h2>2. 패키지 종류</h2>
+  <table>
+    <thead><tr><th>패키지</th><th>실행파일 포함</th><th>용도</th></tr></thead>
+    <tbody>
+      <tr><td><code>source.zip</code></td><td>아니오</td><td>Python이 설치된 PC에서 소스 기준 실행/수정</td></tr>
+      <tr><td><code>windows_exe.zip</code></td><td>예</td><td><code>BackboneStateTracker.exe</code>로 바로 실행</td></tr>
+    </tbody>
+  </table>
+  <p class="note">메일 시스템은 <code>.exe</code>, <code>.py</code>, <code>.ps1</code>이 들어 있는 ZIP을 차단할 수 있습니다. 업로드가 막히면 사내 승인된 파일 반입/전송 절차를 사용해야 합니다.</p>
+
+  <h2>3. 설치</h2>
   <ol>
     <li>ZIP 파일을 사내 PC의 원하는 위치에 압축 해제합니다.</li>
-    <li>PowerShell을 열고 프로젝트 폴더로 이동합니다.</li>
+    <li><code>windows_exe.zip</code>이면 <code>BackboneStateTracker.exe</code>를 실행합니다.</li>
+    <li><code>source.zip</code>이면 PowerShell을 열고 프로젝트 폴더로 이동합니다.</li>
   </ol>
   <pre>cd "D:\NetworkTools\backbone_state_tracker"
 python -m pip install -r requirements.txt</pre>
 
-  <h2>3. 실행</h2>
-  <pre>python app.py</pre>
+  <h2>4. 실행</h2>
+  <p>실행파일 패키지는 <code>BackboneStateTracker.exe</code>를 실행합니다. 소스 패키지는 <code>python app.py</code>로 실행합니다.</p>
   <table>
     <thead><tr><th>항목</th><th>설명</th></tr></thead>
     <tbody>

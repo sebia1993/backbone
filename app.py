@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-from core.gui import main
+import sys
+
+from core.gui import main, smoke_check
 
 
 if __name__ == "__main__":
-    main()
-
+    if "--smoke-check" in sys.argv:
+        smoke_check()
+    else:
+        main()

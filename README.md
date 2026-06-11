@@ -1,6 +1,6 @@
 # Backbone State Tracker
 
-Version: `v0.2.1`
+Version: `v0.3.0`
 
 Small Windows GUI utility for collecting read-only status snapshots from backbone
 3 and 4, then comparing snapshots to track operational changes.
@@ -41,6 +41,8 @@ python -m unittest discover -s backbone_state_tracker\tests
 
 ## Release ZIP
 
+Source ZIP only. This does not include a Windows `.exe`.
+
 ```powershell
 cd "D:\Codex Project\Network\backbone_state_tracker"
 powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
@@ -48,6 +50,24 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
 
 The generated ZIP is written to `dist\`. It excludes `.git`, runtime outputs,
 local `config\devices.yaml`, caches, and virtual environments.
+
+## Windows executable ZIP
+
+This package includes `BackboneStateTracker.exe` plus config examples and guides.
+
+```powershell
+cd "D:\Codex Project\Network\backbone_state_tracker"
+powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
+```
+
+The generated ZIP is written to `dist\` as:
+
+```text
+backbone_state_tracker_v0.3.0_YYYYMMDD_windows_exe.zip
+```
+
+Corporate mail systems may block ZIP files containing `.exe`, `.py`, or `.ps1`
+files. If upload is blocked, use the approved internal file transfer process.
 
 ## Guides
 

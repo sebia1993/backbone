@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import threading
 import traceback
 from pathlib import Path
@@ -11,13 +12,16 @@ from .collector import SnapshotCollector
 from .config import load_commands, load_devices, save_devices
 from .diff_engine import DiffEngine
 from .models import Device
+from .paths import resource_root, runtime_root
 from .reporter import ReportWriter
 from .snapshot import SnapshotStore
 from .version import APP_NAME, APP_VERSION
 
 
-PROJECT_DIR = Path(__file__).resolve().parents[1]
+PROJECT_DIR = runtime_root()
+RESOURCE_DIR = resource_root()
 CONFIG_DIR = PROJECT_DIR / "config"
+BUNDLED_CONFIG_DIR = RESOURCE_DIR / "config"
 OUTPUT_DIR = PROJECT_DIR / "outputs" / "snapshots"
 COMMANDS_PATH = CONFIG_DIR / "commands.yaml"
 DEVICES_PATH = CONFIG_DIR / "devices.yaml"
@@ -35,6 +39,8 @@ class BackboneStateTrackerApp(tk.Tk):
         self.latest_report: Path | None = None
         self.device_rows: list[dict[str, tk.Variable]] = []
 
+        self._ensure_runtime_config_files()
+
         self.username_var = tk.StringVar()
         self.password_var = tk.StringVar()
         self.timeout_var = tk.StringVar(value="30")
@@ -45,6 +51,10 @@ class BackboneStateTrackerApp(tk.Tk):
         self._build_ui()
         self._load_initial_devices()
         self.refresh_snapshots()
+
+    def _ensure_runtime_config_files(self) -> None:
+        _copy_if_missing(BUNDLED_CONFIG_DIR / "commands.yaml", COMMANDS_PATH)
+        _copy_if_missing(BUNDLED_CONFIG_DIR / "devices.example.yaml", DEVICES_EXAMPLE_PATH)
 
     def _build_ui(self) -> None:
         self.columnconfigure(0, weight=1)
@@ -314,3 +324,17 @@ class BackboneStateTrackerApp(tk.Tk):
 def main() -> None:
     app = BackboneStateTrackerApp()
     app.mainloop()
+
+
+def smoke_check() -> None:
+    app = BackboneStateTrackerApp()
+    app.update()
+    print(app.title())
+    app.destroy()
+
+
+def _copy_if_missing(source: Path, target: Path) -> None:
+    if target.exists() or not source.exists():
+        return
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, target)

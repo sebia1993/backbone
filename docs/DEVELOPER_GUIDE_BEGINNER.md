@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-버전: v0.2.1  
+버전: v0.3.0  
 대상: Python 초급 개발자 또는 내부 유지보수 담당자
 
 ## 1. 프로젝트 구조
@@ -18,6 +18,7 @@ backbone_state_tracker\
     diff_engine.py
     gui.py
     models.py
+    paths.py
     reporter.py
     snapshot.py
     version.py
@@ -33,6 +34,7 @@ backbone_state_tracker\
 | `app.py` | GUI 실행 진입점 |
 | `core/gui.py` | Tkinter 기반 화면과 버튼 동작 |
 | `core/collector.py` | Netmiko SSH 접속 및 명령 실행 |
+| `core/paths.py` | 소스 실행과 EXE 실행의 경로 기준 분리 |
 | `core/snapshot.py` | 스냅샷 폴더와 원본 출력 저장 |
 | `core/diff_engine.py` | 기준/대상 스냅샷 비교 |
 | `core/reporter.py` | HTML, XLSX, JSON 리포트 생성 |
@@ -105,21 +107,31 @@ python -m unittest discover -s tests
 
 ```powershell
 git add .
-git commit -m "Release v0.2.1"
-git tag v0.2.1
+git commit -m "Release v0.3.0"
+git tag v0.3.0
 ```
 
 ## 7. ZIP 생성
+
+소스 ZIP:
 
 ```powershell
 cd "D:\Codex Project\Network\backbone_state_tracker"
 powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
 ```
 
+Windows 실행파일 ZIP:
+
+```powershell
+cd "D:\Codex Project\Network\backbone_state_tracker"
+powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
+```
+
 생성 위치:
 
 ```text
-dist\backbone_state_tracker_v0.2.1_YYYYMMDD_source.zip
+dist\backbone_state_tracker_v0.3.0_YYYYMMDD_source.zip
+dist\backbone_state_tracker_v0.3.0_YYYYMMDD_windows_exe.zip
 ```
 
 ZIP 제외 대상:

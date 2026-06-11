@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.0 - 2026-06-11
+
+- Added Windows executable ZIP packaging with `tools/build_windows_exe.ps1`.
+- Added frozen-runtime path handling so the executable uses `config/` and `outputs/` next to the EXE.
+- Added `app.py --smoke-check` for source and EXE validation.
+- Updated documentation to distinguish source ZIP from Windows EXE ZIP.
+- Added mail/security notes for environments that block ZIP files containing scripts or executable files.
+
 ## v0.2.1 - 2026-06-11
 
 - Added Markdown and HTML version history documents for operator-friendly release notes.

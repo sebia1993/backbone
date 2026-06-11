@@ -1,7 +1,9 @@
 # Runtime output
 outputs/
 dist/
+build/
 logs/
+*.spec
 
 # Local device inventory can contain internal IPs or hostnames.
 config/devices.yaml
