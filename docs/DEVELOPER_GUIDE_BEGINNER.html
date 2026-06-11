@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.8</title>
+  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.9</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -17,7 +17,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p>문서 버전: v0.8.8<br>작성일: 2026-06-12<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
+  <p>문서 버전: v0.8.9<br>작성일: 2026-06-12<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
 
   <h2>1. 프로젝트 목적</h2>
   <p>백본 3/4호기의 작업 전후 상태를 수집하고 특정 시점끼리 비교해 변경점을 추적하는 Windows GUI 프로그램입니다. 장비 설정 변경이 아니라 읽기 전용 점검과 리포트 생성을 목표로 합니다.</p>
@@ -80,6 +80,7 @@ python app.py --smoke-check</code></pre>
   <p>v0.8.6부터 비교 상세 선택 행에서 기준/비교 <code>raw/*.txt</code>를 바로 열고, 마스킹된 선택 상세를 클립보드로 복사할 수 있습니다. 원본 파일 경로는 <code>DiffSummary.base_snapshot</code>, <code>DiffSummary.target_snapshot</code>, <code>DiffItem.base_raw_file</code>, <code>DiffItem.target_raw_file</code> 조합으로 계산합니다.</p>
   <p>v0.8.7부터 README와 가이드는 특정 개발 PC의 절대 경로 대신 <code>&lt;folder-that-contains-backbone_state_tracker&gt;</code> 형태의 휴대 가능한 예시를 사용합니다. 문서를 수정할 때는 로컬 작업 경로가 배포 ZIP에 들어가지 않도록 확인합니다.</p>
   <p>v0.8.8부터 <code>docs/RELEASE_CHECKLIST.md/html</code>이 배포 필수 문서에 포함됩니다. Python/PowerShell 패키지 검증기는 이 문서가 빠진 ZIP을 실패 처리합니다.</p>
+  <p>v0.8.9부터 Python/PowerShell 패키지 검증기는 ZIP 파일명 버전과 sidecar <code>Version</code>, manifest <code>Version</code>, manifest <code>Date stamp</code>가 일치하는지 확인합니다.</p>
 
   <h2>5. UI 유지보수 기준</h2>
   <ul>
@@ -101,7 +102,7 @@ python app.py --smoke-check</code></pre>
     <li>테스트와 smoke-check를 실행합니다.</li>
     <li>소스 ZIP과 Windows EXE ZIP을 생성합니다.</li>
     <li><code>dist/</code>의 ZIP, <code>.sha256.txt</code>, <code>release_manifest.txt</code>, <code>CURRENT_RELEASE.txt</code>, <code>latest/</code>를 확인합니다.</li>
-    <li><code>python .\tools\verify_release_package.py .\dist\&lt;package&gt;.zip --require-manifest</code>로 배포 ZIP을 검증합니다.</li>
+    <li><code>python .\tools\verify_release_package.py .\dist\&lt;package&gt;.zip --require-manifest</code>로 배포 ZIP을 검증합니다. 파일명 버전과 sidecar/manifest 버전 및 날짜가 맞는지도 확인합니다.</li>
     <li><code>powershell -ExecutionPolicy Bypass -File .\dist\&lt;version&gt;_verify_release_package.ps1 -Package .\dist\&lt;package&gt;.zip -RequireManifest</code>로 독립 PowerShell 검증도 확인합니다.</li>
     <li>Git 브랜치, 커밋, 태그를 남깁니다.</li>
   </ol>

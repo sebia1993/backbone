@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.9 - 2026-06-12
+
+- Extended Python and PowerShell release package verification to compare the ZIP filename version with the checksum sidecar `Version` line.
+- Extended release manifest verification to compare manifest `Version` and `Date stamp` values with the ZIP filename version and date.
+- Added regression tests for sidecar version mismatch, manifest version mismatch, and manifest date mismatch.
+- Updated README, operator, developer, release checklist, command, and version history documents for v0.8.9.
+- No runtime collection, comparison, report, or GUI workflow behavior changed.
+
 ## v0.8.8 - 2026-06-12
 
 - Added `docs/RELEASE_CHECKLIST.md` and `docs/RELEASE_CHECKLIST.html` for Korean internal-transfer and release verification handoff.

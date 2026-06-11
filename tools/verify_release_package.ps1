@@ -44,11 +44,34 @@ function Get-ExpectedManifestName {
     return $null
 }
 
+function Format-VersionLabel {
+    param([string]$Version)
+
+    if ($Version.StartsWith("v")) {
+        return $Version
+    }
+    return "v$Version"
+}
+
+function Get-PackageIdentity {
+    param([string]$PackageName)
+
+    if ($PackageName -match "^(?<project>.+)_v(?<version>\d+\.\d+\.\d+)_(?<date>\d{8})_(source|windows_exe)\.zip$") {
+        return @{
+            Version = "v$($Matches["version"])"
+            DateStamp = $Matches["date"]
+        }
+    }
+    return $null
+}
+
 $resolvedPackage = (Resolve-Path -LiteralPath $Package).Path
 $packageItem = Get-Item -LiteralPath $resolvedPackage
 $packageName = $packageItem.Name
 $packageType = if ($Type -eq "unknown") { Get-PackageType -PackageName $packageName } else { $Type }
+$packageIdentity = Get-PackageIdentity -PackageName $packageName
 $sidecarPath = "$resolvedPackage.sha256.txt"
+$expectedSha = $null
 $errors = New-Object System.Collections.Generic.List[string]
 $warnings = New-Object System.Collections.Generic.List[string]
 
@@ -59,11 +82,15 @@ if (-not (Test-Path -LiteralPath $sidecarPath)) {
     $multiline = [System.Text.RegularExpressions.RegexOptions]::Multiline
     $shaMatch = [regex]::Match($sidecarText, "^SHA256 \((?<name>.+)\) = (?<sha256>[0-9a-f]{64})\r?$", $multiline)
     $sizeMatch = [regex]::Match($sidecarText, "^Size = (?<size>\d+) bytes\r?$", $multiline)
+    $versionMatch = [regex]::Match($sidecarText, "^Version = (?<version>v?\d+\.\d+\.\d+)\r?$", $multiline)
     if (-not $shaMatch.Success) {
         $errors.Add("Checksum sidecar does not contain a SHA256 line: $(Split-Path $sidecarPath -Leaf)")
     }
     if (-not $sizeMatch.Success) {
         $errors.Add("Checksum sidecar does not contain a Size line: $(Split-Path $sidecarPath -Leaf)")
+    }
+    if (-not $versionMatch.Success) {
+        $errors.Add("Checksum sidecar does not contain a Version line: $(Split-Path $sidecarPath -Leaf)")
     }
     if ($shaMatch.Success) {
         $expectedSha = $shaMatch.Groups["sha256"].Value
@@ -76,6 +103,12 @@ if (-not (Test-Path -LiteralPath $sidecarPath)) {
         $expectedSize = [int64]$sizeMatch.Groups["size"].Value
         if ($packageItem.Length -ne $expectedSize) {
             $errors.Add("Size mismatch for ${packageName}: expected $expectedSize, actual $($packageItem.Length)")
+        }
+    }
+    if ($versionMatch.Success -and $packageIdentity) {
+        $sidecarVersion = Format-VersionLabel -Version $versionMatch.Groups["version"].Value
+        if ($sidecarVersion -ne $packageIdentity.Version) {
+            $errors.Add("Checksum sidecar version mismatch for ${packageName}: expected $($packageIdentity.Version), sidecar $sidecarVersion")
         }
     }
 }
@@ -174,6 +207,24 @@ if ([string]::IsNullOrWhiteSpace($manifestName)) {
         }
         if ($expectedSha -and $manifestText -notmatch [regex]::Escape($expectedSha)) {
             $errors.Add("Release manifest does not list package SHA256: $expectedSha")
+        }
+        if ($packageIdentity) {
+            $multiline = [System.Text.RegularExpressions.RegexOptions]::Multiline
+            $manifestVersionMatch = [regex]::Match($manifestText, "^Version = (?<version>v?\d+\.\d+\.\d+)\r?$", $multiline)
+            $manifestDateMatch = [regex]::Match($manifestText, "^Date stamp = (?<date>\d{8})\r?$", $multiline)
+            if (-not $manifestVersionMatch.Success) {
+                $errors.Add("Release manifest does not contain a Version line: $manifestName")
+            } else {
+                $manifestVersion = Format-VersionLabel -Version $manifestVersionMatch.Groups["version"].Value
+                if ($manifestVersion -ne $packageIdentity.Version) {
+                    $errors.Add("Release manifest version mismatch for ${packageName}: expected $($packageIdentity.Version), manifest $manifestVersion")
+                }
+            }
+            if (-not $manifestDateMatch.Success) {
+                $errors.Add("Release manifest does not contain a Date stamp line: $manifestName")
+            } elseif ($manifestDateMatch.Groups["date"].Value -ne $packageIdentity.DateStamp) {
+                $errors.Add("Release manifest date mismatch for ${packageName}: expected $($packageIdentity.DateStamp), manifest $($manifestDateMatch.Groups["date"].Value)")
+            }
         }
     }
 }
