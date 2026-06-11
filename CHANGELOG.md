@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.7.1 - 2026-06-11
+
+- Redesigned HTML comparison detail rows into a compact inline format: change type, line mapping, and `before → after` content.
+- Added colored inline value chips for changed, added, and removed lines.
+- Added horizontal scrolling for long command output lines in HTML reports.
+- Preserved raw unified diff, XLSX `diff_detail`, JSON manifest, GUI behavior, and collection workflow.
+- Updated tests and release documents for the HTML readability patch.
+
 ## v0.7.0 - 2026-06-11
 
 - Added a dashboard workflow wizard for the maintenance sequence.

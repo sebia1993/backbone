@@ -39,8 +39,12 @@ class ReportWriterTests(unittest.TestCase):
             paths = ReportWriter().write_reports(summary)
 
             html = paths["html"].read_text(encoding="utf-8")
-            self.assertIn("변경 전", html)
-            self.assertIn("변경 후", html)
+            self.assertIn("변경 내용", html)
+            self.assertIn("change-inline", html)
+            self.assertIn("1 → 1", html)
+            self.assertIn("GE1/0/1 UP</span><span class='diff-arrow'>→</span><span class='value-after'>GE1/0/1 DOWN", html)
+            self.assertNotIn("<th>변경 전</th>", html)
+            self.assertNotIn("<th>변경 후</th>", html)
             self.assertIn("GE1/0/1 UP", html)
             self.assertIn("GE1/0/1 DOWN", html)
 

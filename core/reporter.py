@@ -265,10 +265,57 @@ class ReportWriter:
     .badge {{ color: #fff; border-radius: 999px; padding: 3px 8px; font-size: 12px; font-weight: 700; }}
     .diff-block {{ padding: 14px; }}
     .diff-block h2 {{ margin: 0 0 6px; font-size: 17px; }}
-    .change-table {{ width: 100%; border-collapse: collapse; margin: 12px 0; table-layout: fixed; }}
+    .change-table-wrap {{
+      overflow-x: auto;
+      margin: 12px 0;
+      border: 1px solid #eaeef2;
+      border-radius: 6px;
+    }}
+    .change-table {{ width: max-content; min-width: 100%; border-collapse: collapse; margin: 0; }}
     .change-table th:nth-child(1) {{ width: 82px; }}
-    .change-table th:nth-child(2), .change-table th:nth-child(4) {{ width: 78px; }}
-    .change-table td {{ word-break: break-word; white-space: pre-wrap; }}
+    .change-table th:nth-child(2) {{ width: 110px; }}
+    .change-table td {{ word-break: normal; white-space: nowrap; }}
+    .change-kind {{
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #d0d7de;
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      color: #1f2328;
+    }}
+    .line-no {{
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }}
+    .change-inline {{
+      font-family: Consolas, "SFMono-Regular", monospace;
+      line-height: 1.7;
+    }}
+    .value-before, .value-after, .value-context {{
+      display: inline-block;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 2px 6px;
+    }}
+    .value-before {{
+      background: var(--removed);
+      border-color: #f4b8b2;
+      color: #8a1f16;
+    }}
+    .value-after {{
+      background: var(--added);
+      border-color: #a8dfd2;
+      color: #007a63;
+    }}
+    .value-context {{
+      color: var(--muted);
+      padding-left: 0;
+    }}
+    .diff-arrow {{ color: var(--muted); font-weight: 700; padding: 0 8px; }}
+    .diff-prefix {{ color: var(--muted); font-weight: 700; margin-right: 6px; }}
     .line-added {{ background: var(--added); }}
     .line-removed {{ background: var(--removed); }}
     .line-changed {{ background: var(--changed); }}
@@ -366,18 +413,18 @@ def render_change_table(item: DiffItem) -> str:
     for line in item.changed_lines:
         rows.append(
             f"<tr class='{line_css_class(line)}'>"
-            f"<td>{escape(change_type_label(line.kind))}</td>"
-            f"<td>{escape(format_line_no(line.base_line_no))}</td>"
-            f"<td>{escape(line.base_text)}</td>"
-            f"<td>{escape(format_line_no(line.target_line_no))}</td>"
-            f"<td>{escape(line.target_text)}</td>"
+            f"<td><span class='change-kind'>{escape(change_type_label(line.kind))}</span></td>"
+            f"<td class='line-no'>{escape(format_inline_line_no(line))}</td>"
+            f"<td class='change-inline'>{render_inline_change(line)}</td>"
             "</tr>"
         )
     return (
+        "<div class='change-table-wrap'>"
         "<table class='change-table'>"
-        "<thead><tr><th>유형</th><th>기준 라인</th><th>변경 전</th><th>비교 라인</th><th>변경 후</th></tr></thead>"
+        "<thead><tr><th>유형</th><th>라인</th><th>변경 내용</th></tr></thead>"
         f"<tbody>{''.join(rows)}</tbody>"
         "</table>"
+        "</div>"
     )
 
 
@@ -392,3 +439,31 @@ def line_css_class(line: DiffLine) -> str:
 
 def format_line_no(value: int | None) -> str:
     return "-" if value is None else str(value)
+
+
+def format_inline_line_no(line: DiffLine) -> str:
+    base_line_no = format_line_no(line.base_line_no)
+    target_line_no = format_line_no(line.target_line_no)
+    if line.kind == "added":
+        return f"- → {target_line_no}"
+    if line.kind == "removed":
+        return f"{base_line_no} → -"
+    return f"{base_line_no} → {target_line_no}"
+
+
+def render_inline_change(line: DiffLine) -> str:
+    if line.kind == "changed":
+        return (
+            f"{render_value(line.base_text, 'value-before')}"
+            "<span class='diff-arrow'>→</span>"
+            f"{render_value(line.target_text, 'value-after')}"
+        )
+    if line.kind == "added":
+        return f"<span class='diff-prefix'>추가:</span>{render_value(line.target_text, 'value-after')}"
+    if line.kind == "removed":
+        return f"<span class='diff-prefix'>삭제:</span>{render_value(line.base_text, 'value-before')}"
+    return render_value(line.target_text or line.base_text, "value-context")
+
+
+def render_value(value: str, css_class: str) -> str:
+    return f"<span class='{css_class}'>{escape(value or '-')}</span>"
