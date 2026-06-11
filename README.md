@@ -1,6 +1,6 @@
 # Backbone State Tracker
 
-Version: `v0.7.8`
+Version: `v0.7.9`
 
 Windows GUI utility for collecting read-only status snapshots from backbone 3
 and 4, then comparing snapshots to track operational changes during maintenance.
@@ -9,6 +9,7 @@ and 4, then comparing snapshots to track operational changes during maintenance.
 
 - Connects to backbone devices over SSH.
 - Runs read-only display/check commands from `config/commands.yaml`.
+- Runs a local preflight check for device and command configuration before collection.
 - Saves command outputs as timestamped snapshots.
 - Keeps repeated snapshots separate even when the same stage is collected twice in the same second.
 - Compares snapshots by device and command.
@@ -78,7 +79,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 The generated ZIP is written to `dist\` as:
 
 ```text
-backbone_state_tracker_v0.7.8_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.7.9_YYYYMMDD_windows_exe.zip
 ```
 
 Corporate mail systems may block ZIP files containing `.exe`, `.py`, or `.ps1`

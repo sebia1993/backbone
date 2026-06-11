@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 사용자 가이드 v0.7.8</title>
+  <title>Backbone State Tracker 사용자 가이드 v0.7.9</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -16,7 +16,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 사용자 가이드</h1>
-  <p>문서 버전: v0.7.8<br>작성일: 2026-06-11<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
+  <p>문서 버전: v0.7.9<br>작성일: 2026-06-11<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
   <h2>1. 핵심 운영 포인트</h2>
   <div class="core">
@@ -24,6 +24,7 @@
       <li>먼저 <code>작업 전</code> 상태를 수집합니다.</li>
       <li><code>백본3 OFF 중</code>, <code>복구 후</code>, <code>사용자 지정</code> 단계는 최신 <code>작업 전</code> 스냅샷과 자동 비교됩니다.</li>
       <li>장비 변경 명령은 실행하지 않고, 읽기 전용 점검 명령만 실행합니다.</li>
+      <li>수집 전 <code>설정 점검</code>으로 장비 목록, 포트, 명령 ID 중복, 변경성 명령 의심 항목을 먼저 확인합니다.</li>
       <li>암호는 저장하지 않습니다.</li>
       <li>비교 리포트는 HTML, XLSX, JSON으로 생성됩니다.</li>
       <li>각 비교 결과마다 공유용 ZIP이 함께 생성됩니다. 이 ZIP은 마스킹된 리포트와 사용자 문서를 포함하고, 스냅샷 <code>raw/</code> 원본 출력 폴더는 제외합니다.</li>
@@ -62,7 +63,7 @@
   <h3>대시보드</h3>
   <p>긴급, 주의, 정보, 변경없음 건수와 최근 스냅샷/리포트 상태를 확인합니다. 작업 진행 마법사는 장비 설정 확인, 작업 전 수집, 백본3 OFF 중 수집, OFF 중 변경 확인, 복구 후 수집, 최종 확인 순서로 안내합니다.</p>
   <h3>상태 수집</h3>
-  <p><code>작업 전</code>, <code>백본3 OFF 중</code>, <code>복구 후</code>, <code>사용자 지정</code> 단계 중 하나를 선택합니다.</p>
+  <p><code>작업 전</code>, <code>백본3 OFF 중</code>, <code>복구 후</code>, <code>사용자 지정</code> 단계 중 하나를 선택합니다. <code>설정 점검</code> 버튼은 실제 장비 접속 없이 로컬 설정을 확인합니다. 오류가 있으면 수집이 차단되고, 주의만 있으면 운영자가 확인 후 수집할 수 있습니다. 예시용 IP, 장비명/IP 중복, 위험해 보이는 명령, <code>check</code> 단계 명령 누락을 먼저 확인합니다.</p>
   <h3>비교 결과</h3>
   <p>기준 스냅샷과 비교 스냅샷을 직접 선택해 다시 비교합니다. 최근 변경 상세 목록은 등급, 장비, 명령, 판단, 유형, 라인, 변경 내용을 표시합니다. <code>등급</code> 필터와 <code>검색</code> 입력으로 긴급/주의 항목, 특정 장비, 명령, 인터페이스, 변경값만 좁혀 볼 수 있습니다. 검색은 표시되는 마스킹 값 기준으로 동작하므로 비밀값 원문은 검색 결과에 노출되지 않습니다. 변경 행을 선택하면 핵심 판단, 변경 전/후 값, 원본 파일 위치, 등급별 운영 메모를 확인할 수 있습니다. 접속 불가 장비는 일반 명령 누락을 여러 건으로 나열하지 않고 <code>device_connectivity</code> 긴급 항목 한 줄로 표시합니다.</p>
   <h3>장비 설정</h3>
@@ -73,6 +74,7 @@
   <h2>5. 권장 작업 순서</h2>
   <ol>
     <li>장비 설정에서 백본 3/4호기 정보와 접속 계정을 확인합니다.</li>
+    <li><code>상태 수집</code> 화면에서 <code>설정 점검</code>을 실행해 차단 오류가 없는지 확인합니다.</li>
     <li>대시보드의 <code>작업 전 수집 시작</code> 버튼으로 기준 스냅샷을 생성합니다.</li>
     <li>백본 3호기 OFF, 백본 4호기 ON 상태에서 <code>백본3 OFF 중 수집 시작</code>을 실행합니다.</li>
     <li><code>OFF 중 변경 상세 확인</code>으로 자동 비교 결과의 긴급/주의 항목을 확인합니다.</li>

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.7.9 - 2026-06-11
+
+- Added a local preflight configuration check before collection.
+- Validates enabled devices, duplicate device names, host/port values, command IDs, check commands, and likely write/destructive command patterns.
+- Adds a `설정 점검` button and status summary on the collection screen.
+- Blocks collection when preflight errors are found, while allowing warning-only results.
+- Added unit tests for valid configs, duplicate names, dangerous commands, documentation IP warnings, and duplicate command IDs.
+
 ## v0.7.8 - 2026-06-11
 
 - Added severity filtering and free-text search to the GUI comparison detail list.
