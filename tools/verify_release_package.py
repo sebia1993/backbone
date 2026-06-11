@@ -14,7 +14,11 @@ except ModuleNotFoundError:  # pragma: no cover - supports direct script executi
 
 SHA256_LINE = re.compile(r"^SHA256 \((?P<name>.+)\) = (?P<sha256>[0-9a-f]{64})$", re.MULTILINE)
 SIZE_LINE = re.compile(r"^Size = (?P<size>\d+) bytes$", re.MULTILINE)
-PACKAGE_PREFIX = re.compile(r"^(?P<prefix>.+_v\d+\.\d+\.\d+_\d{8})_(source|windows_exe)\.zip$")
+VERSION_LINE = re.compile(r"^Version = (?P<version>v?\d+\.\d+\.\d+)$", re.MULTILINE)
+DATE_STAMP_LINE = re.compile(r"^Date stamp = (?P<date>\d{8})$", re.MULTILINE)
+PACKAGE_PREFIX = re.compile(
+    r"^(?P<prefix>.+_v(?P<version>\d+\.\d+\.\d+)_(?P<date>\d{8}))_(source|windows_exe)\.zip$"
+)
 
 COMMON_REQUIRED = {
     "backbone_state_tracker/PACKAGE_INFO.txt",
@@ -89,21 +93,36 @@ def infer_package_type(package_path: Path) -> str:
     return "unknown"
 
 
-def parse_checksum_sidecar(sidecar_path: Path) -> tuple[str | None, int | None, list[str]]:
+def version_label(version: str) -> str:
+    return version if version.startswith("v") else f"v{version}"
+
+
+def package_identity(package_path: Path) -> tuple[str, str] | None:
+    match = PACKAGE_PREFIX.match(package_path.name)
+    if not match:
+        return None
+    return version_label(match.group("version")), match.group("date")
+
+
+def parse_checksum_sidecar(sidecar_path: Path) -> tuple[str | None, int | None, str | None, list[str]]:
     errors: list[str] = []
     if not sidecar_path.is_file():
-        return None, None, [f"Missing checksum sidecar: {sidecar_path.name}"]
+        return None, None, None, [f"Missing checksum sidecar: {sidecar_path.name}"]
 
     text = sidecar_path.read_text(encoding="utf-8")
     sha_match = SHA256_LINE.search(text)
     size_match = SIZE_LINE.search(text)
+    version_match = VERSION_LINE.search(text)
     expected_sha = sha_match.group("sha256") if sha_match else None
     expected_size = int(size_match.group("size")) if size_match else None
+    expected_version = version_label(version_match.group("version")) if version_match else None
     if expected_sha is None:
         errors.append(f"Checksum sidecar does not contain a SHA256 line: {sidecar_path.name}")
     if expected_size is None:
         errors.append(f"Checksum sidecar does not contain a Size line: {sidecar_path.name}")
-    return expected_sha, expected_size, errors
+    if expected_version is None:
+        errors.append(f"Checksum sidecar does not contain a Version line: {sidecar_path.name}")
+    return expected_sha, expected_size, expected_version, errors
 
 
 def normalized_zip_names(package_path: Path) -> tuple[set[str], list[str]]:
@@ -151,9 +170,18 @@ def verify_release_package(
             warnings=(),
         )
 
+    identity = package_identity(package_path)
+    expected_version = identity[0] if identity else None
+    expected_date = identity[1] if identity else None
+
     sidecar_path = package_path.with_name(f"{package_path.name}.sha256.txt")
-    expected_sha, expected_size, sidecar_errors = parse_checksum_sidecar(sidecar_path)
+    expected_sha, expected_size, sidecar_version, sidecar_errors = parse_checksum_sidecar(sidecar_path)
     errors.extend(sidecar_errors)
+    if expected_version is not None and sidecar_version is not None and sidecar_version != expected_version:
+        errors.append(
+            f"Checksum sidecar version mismatch for {package_path.name}: "
+            f"expected {expected_version}, sidecar {sidecar_version}"
+        )
 
     actual_sha = file_sha256(package_path)
     actual_size = package_path.stat().st_size
@@ -188,12 +216,34 @@ def verify_release_package(
             errors.append(message)
         else:
             warnings.append(message)
-    elif expected_sha is not None:
+    else:
         manifest_text = manifest_path.read_text(encoding="utf-8")
         if package_path.name not in manifest_text:
             errors.append(f"Release manifest does not list package: {package_path.name}")
-        if expected_sha not in manifest_text:
+        if expected_sha is not None and expected_sha not in manifest_text:
             errors.append(f"Release manifest does not list package SHA256: {expected_sha}")
+        if expected_version is not None:
+            manifest_version_match = VERSION_LINE.search(manifest_text)
+            manifest_version = (
+                version_label(manifest_version_match.group("version")) if manifest_version_match else None
+            )
+            if manifest_version is None:
+                errors.append(f"Release manifest does not contain a Version line: {manifest_path.name}")
+            elif manifest_version != expected_version:
+                errors.append(
+                    f"Release manifest version mismatch for {package_path.name}: "
+                    f"expected {expected_version}, manifest {manifest_version}"
+                )
+        if expected_date is not None:
+            manifest_date_match = DATE_STAMP_LINE.search(manifest_text)
+            manifest_date = manifest_date_match.group("date") if manifest_date_match else None
+            if manifest_date is None:
+                errors.append(f"Release manifest does not contain a Date stamp line: {manifest_path.name}")
+            elif manifest_date != expected_date:
+                errors.append(
+                    f"Release manifest date mismatch for {package_path.name}: "
+                    f"expected {expected_date}, manifest {manifest_date}"
+                )
 
     return VerificationResult(
         package_path=package_path,
