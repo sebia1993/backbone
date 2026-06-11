@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.5 - 2026-06-11
+
+- Added offline sample validation generation from the dashboard and comparison screens.
+- Creates `[샘플] 작업 전`, `[샘플] 백본3 OFF 중`, and `[샘플] 복구 후` snapshots without using SSH or credentials.
+- Generates comparison reports for pre-work vs BB3 OFF, pre-work vs restored, and BB3 OFF vs restored scenarios.
+- Added tests that verify sample snapshots, reports, unreachable-device Critical items, and restored-device Info items.
+
 ## v0.7.4 - 2026-06-11
 
 - Improved the GUI comparison detail list with an operational impact column and compact `base → target` line location display.

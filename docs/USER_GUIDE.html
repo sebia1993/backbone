@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 사용자 가이드 v0.7.4</title>
+  <title>Backbone State Tracker 사용자 가이드 v0.7.5</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -16,7 +16,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 사용자 가이드</h1>
-  <p>문서 버전: v0.7.4<br>작성일: 2026-06-11<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
+  <p>문서 버전: v0.7.5<br>작성일: 2026-06-11<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
   <h2>1. 핵심 운영 포인트</h2>
   <div class="core">
@@ -30,6 +30,7 @@
       <li>GUI 비교 결과는 <code>판단</code>, <code>라인</code>, <code>변경 내용</code>을 한 행에 보여주며, 행 선택 시 핵심 판단과 추적 포인트를 먼저 표시합니다.</li>
       <li>HTML 리포트는 변경 내용을 <code>기존값 → 신규값</code> 형태로 한 줄에 표시합니다.</li>
       <li>장비 1대가 접속 불가이면 해당 장비는 <code>device_connectivity</code> 긴급 항목으로 비교 결과에 포함됩니다.</li>
+      <li><code>샘플 검증 생성</code>은 실제 장비에 접속하지 않고 <code>[샘플]</code> 스냅샷과 비교 리포트를 만들어 기능 확인에 사용합니다.</li>
       <li>같은 단계의 스냅샷을 같은 초에 다시 수집해도 기존 폴더를 덮지 않고 <code>_001</code> 같은 별도 폴더로 저장합니다.</li>
       <li>대시보드의 작업 진행 마법사를 따라가면 다음 단계 버튼으로 작업 흐름을 이어갈 수 있습니다.</li>
     </ul>
@@ -45,7 +46,16 @@
     <li><strong>비교 결과</strong> 화면 또는 <strong>최근 리포트</strong> 버튼으로 변경점을 확인합니다.</li>
   </ol>
 
-  <h2>3. 화면 구성</h2>
+  <h2>3. 샘플 검증 모드</h2>
+  <ul>
+    <li><strong>대시보드</strong> 또는 <strong>비교 결과</strong> 화면의 <code>샘플 검증 생성</code> 버튼을 누르면 예제 스냅샷 3개가 생성됩니다.</li>
+    <li>생성되는 스냅샷은 <code>[샘플] 작업 전</code>, <code>[샘플] 백본3 OFF 중</code>, <code>[샘플] 복구 후</code>입니다.</li>
+    <li>이 기능은 SSH 접속, 계정 입력, 실제 장비 명령 실행을 하지 않습니다.</li>
+    <li>백본3 접속 불가, 백본4 측 링크 DOWN, 복구 후 접속 회복 예시를 비교 리포트로 확인할 수 있습니다.</li>
+    <li>샘플 결과는 <code>outputs/snapshots/</code> 아래에 저장되므로 실제 작업 리포트와 구분해 보관합니다.</li>
+  </ul>
+
+  <h2>4. 화면 구성</h2>
   <h3>대시보드</h3>
   <p>긴급, 주의, 정보, 변경없음 건수와 최근 스냅샷/리포트 상태를 확인합니다. 작업 진행 마법사는 장비 설정 확인, 작업 전 수집, 백본3 OFF 중 수집, OFF 중 변경 확인, 복구 후 수집, 최종 확인 순서로 안내합니다.</p>
   <h3>상태 수집</h3>
@@ -57,7 +67,7 @@
   <h3>작업 로그</h3>
   <p>수집, 저장, 비교, 오류 메시지를 시간 순서대로 확인합니다.</p>
 
-  <h2>4. 권장 작업 순서</h2>
+  <h2>5. 권장 작업 순서</h2>
   <ol>
     <li>장비 설정에서 백본 3/4호기 정보와 접속 계정을 확인합니다.</li>
     <li>대시보드의 <code>작업 전 수집 시작</code> 버튼으로 기준 스냅샷을 생성합니다.</li>
@@ -67,11 +77,14 @@
     <li><code>최종 변경 상세 확인</code>과 <code>최종 리포트 열기</code>로 작업 결과를 보관합니다.</li>
   </ol>
 
-  <h2>5. 주의 사항</h2>
+  <h2>6. 리포트 확인</h2>
   <p>HTML 리포트는 명령별 변경 상세 테이블과 원본 unified diff를 함께 제공합니다. HTML 변경 상세는 <code>유형</code>, <code>라인</code>, <code>변경 내용</code> 구조이며 변경 행은 <code>기존값 → 신규값</code>, 추가 행은 <code>추가: 신규값</code>, 삭제 행은 <code>삭제: 기존값</code>으로 표시됩니다. 장비 접속 실패는 <code>reachable → unreachable: timeout</code>처럼 접속 상태 변경으로 표시됩니다. 긴 명령 출력은 변경 상세 영역의 가로 스크롤로 확인합니다.</p>
   <p>GUI의 <code>라인</code> 값은 <code>기준 라인 → 비교 라인</code> 형태입니다. 예를 들어 <code>2 → 2</code>는 같은 행의 값이 바뀐 경우이고, <code>- → 4</code>는 비교 스냅샷에 추가된 행입니다. XLSX 리포트의 <code>diff_detail</code> 시트는 장비, 명령, 변경 유형, 기준 라인, 비교 라인, 변경 전/후 값을 행 단위로 제공합니다.</p>
+
+  <h2>7. 주의 사항</h2>
   <ul>
     <li>운영 장비 대상이므로 승인된 점검 시간과 접속 권한을 확인합니다.</li>
+    <li>샘플 스냅샷은 교육/검증용입니다. 실제 휴전 결과로 제출할 때는 <code>[샘플]</code> 표기가 없는 실제 수집 리포트를 사용합니다.</li>
     <li>사내 반입용 ZIP에는 로컬 <code>config/devices.yaml</code>과 <code>outputs/</code>가 포함되지 않도록 유지합니다.</li>
     <li>장비 설정 변경, 재부팅, 포트 shutdown 같은 명령은 이 도구에 추가하지 않습니다.</li>
   </ul>
