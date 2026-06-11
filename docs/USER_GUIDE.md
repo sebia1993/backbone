@@ -1,0 +1,121 @@
+# Backbone State Tracker 사용자 가이드
+
+버전: v0.2.0  
+대상: 백본 3호기 / 백본 4호기 상태 수집 및 비교 담당자
+
+## 1. 목적
+
+Backbone State Tracker는 백본 3/4호기에서 읽기 전용 점검 명령을 실행하고,
+작업 전/중/후 스냅샷을 비교해 달라진 점을 추적하는 Windows용 GUI 도구입니다.
+
+이 도구는 장비 설정을 변경하지 않습니다. `display` 계열 상태 확인 명령만 실행합니다.
+
+## 2. 설치
+
+1. ZIP 파일을 사내 PC의 원하는 위치에 압축 해제합니다.
+2. PowerShell을 열고 프로젝트 폴더로 이동합니다.
+
+```powershell
+cd "D:\NetworkTools\backbone_state_tracker"
+```
+
+3. 필요한 Python 패키지를 설치합니다.
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+## 3. 실행
+
+```powershell
+python app.py
+```
+
+실행 후 GUI에서 다음 값을 입력합니다.
+
+| 항목 | 설명 |
+| --- | --- |
+| Username | 백본 장비 SSH 접속 계정 |
+| Password | 백본 장비 SSH 접속 암호. 파일에 저장되지 않습니다. |
+| Timeout | 장비 접속 및 명령 대기 시간 |
+| Snapshot label | `pre`, `bb3_off`, `post_restore` 같은 수집 시점 이름 |
+| Device | 백본 3호기와 4호기 이름, IP, SSH 포트, Netmiko device type |
+
+## 4. 장비 정보 저장
+
+화면에서 장비 정보를 입력한 뒤 `Save Devices`를 누르면
+`config/devices.yaml`에 저장됩니다.
+
+주의: 이 파일에는 내부 IP나 호스트명이 들어갈 수 있으므로 ZIP 배포 파일에는 포함되지 않습니다.
+
+## 5. 스냅샷 수집
+
+1. 장비 정보와 계정 정보를 입력합니다.
+2. `Snapshot label`에 수집 시점 이름을 입력합니다.
+3. `Collect Snapshot`을 누릅니다.
+4. 하단 Run log에서 진행 상황을 확인합니다.
+
+스냅샷은 아래 경로에 저장됩니다.
+
+```text
+outputs\snapshots\YYYYMMDD_HHMMSS_스냅샷명\
+```
+
+각 스냅샷에는 장비별 원본 명령 출력과 `snapshot.json` 메타데이터가 저장됩니다.
+
+## 6. 스냅샷 비교
+
+1. `Refresh`를 눌러 스냅샷 목록을 갱신합니다.
+2. Baseline에 기준 스냅샷을 선택합니다.
+3. Target에 비교 대상 스냅샷을 선택합니다.
+4. `Compare Selected`를 누릅니다.
+
+비교 결과는 Target 스냅샷 아래에 생성됩니다.
+
+```text
+outputs\snapshots\<target>\comparisons\vs_<baseline>\
+```
+
+생성 파일:
+
+| 파일 | 설명 |
+| --- | --- |
+| diff_report.html | 브라우저에서 보는 비교 리포트 |
+| diff_summary.xlsx | 엑셀 요약 리포트 |
+| diff_manifest.json | 자동화/추적용 원본 비교 데이터 |
+
+## 7. 리포트 해석
+
+| 등급 | 의미 | 예시 |
+| --- | --- | --- |
+| Critical | 서비스 영향 가능성이 큰 변경 | Interface down, OSPF neighbor down, LACP member unselected |
+| Warning | 확인이 필요한 운영 상태 변경 | Route/log/resource 상태 변화 |
+| Info | 참고용 출력 변화 | 단순 출력 차이 |
+| Unchanged | 의미 있는 변경 없음 | 기준과 대상 출력 동일 |
+
+## 8. 작업 시 권장 흐름
+
+1. 작업 전: `pre` 스냅샷 수집
+2. 백본 3호기 OFF 중: `bb3_off` 스냅샷 수집
+3. 복구 후: `post_restore` 스냅샷 수집
+4. `pre`와 `bb3_off` 비교
+5. `pre`와 `post_restore` 비교
+6. Critical/Warning 항목을 먼저 확인
+
+## 9. 보안 주의사항
+
+- 암호는 프로그램 실행 중에만 사용하며 파일로 저장하지 않습니다.
+- `config/devices.yaml`은 내부 IP/호스트명을 포함할 수 있으므로 외부 공유 전 확인해야 합니다.
+- `outputs/`에는 장비 상태 출력이 포함되므로 외부 반출 대상에서 제외하는 것이 좋습니다.
+- ZIP 릴리즈 스크립트는 `.git`, `outputs/`, `config/devices.yaml`을 자동 제외합니다.
+
+## 10. 문제 해결
+
+| 증상 | 확인 사항 |
+| --- | --- |
+| 접속 실패 | IP, SSH 포트, 계정, 방화벽, 장비 SSH 활성화 여부 확인 |
+| 인증 실패 | 계정/암호 확인 |
+| 명령 실패 | 장비 OS와 명령 지원 여부 확인 |
+| HTML 리포트가 열리지 않음 | `Open Outputs`로 폴더를 열고 HTML 파일을 직접 실행 |
+| XLSX 생성 실패 | `openpyxl` 설치 여부 확인 |
+

@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 
 
-APP_VERSION = "0.1.0"
+from .version import APP_NAME, APP_VERSION
 
 
 @dataclass
@@ -132,6 +132,8 @@ class DiffSummary:
     base_snapshot: str
     target_snapshot: str
     generated_at: str
+    app_name: str = APP_NAME
+    app_version: str = APP_VERSION
     items: list[DiffItem] = field(default_factory=list)
 
     @property

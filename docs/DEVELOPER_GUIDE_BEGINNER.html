@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backbone State Tracker 초급 개발자 가이드</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", "Malgun Gothic", Arial, sans-serif; color: #1f2328; background: #f6f8fa; line-height: 1.6; }
+    main { max-width: 980px; margin: 0 auto; padding: 32px 24px; background: #fff; min-height: 100vh; }
+    h1 { margin-top: 0; font-size: 30px; }
+    h2 { margin-top: 30px; border-bottom: 1px solid #d0d7de; padding-bottom: 6px; }
+    code, pre { font-family: Consolas, "Courier New", monospace; }
+    pre { background: #0d1117; color: #e6edf3; padding: 14px; border-radius: 6px; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 14px 0; }
+    th, td { border: 1px solid #d0d7de; padding: 8px 10px; vertical-align: top; }
+    th { background: #eef3f8; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Backbone State Tracker 초급 개발자 가이드</h1>
+  <p><strong>버전:</strong> v0.2.0<br><strong>대상:</strong> Python 초급 개발자 또는 내부 유지보수 담당자</p>
+
+  <h2>1. 프로젝트 구조</h2>
+  <pre>backbone_state_tracker\
+  app.py
+  requirements.txt
+  config\
+    commands.yaml
+    devices.example.yaml
+  core\
+    collector.py
+    config.py
+    diff_engine.py
+    gui.py
+    models.py
+    reporter.py
+    snapshot.py
+    version.py
+  docs\
+  tests\
+  tools\</pre>
+
+  <h2>2. 핵심 모듈</h2>
+  <table>
+    <thead><tr><th>파일</th><th>역할</th></tr></thead>
+    <tbody>
+      <tr><td><code>app.py</code></td><td>GUI 실행 진입점</td></tr>
+      <tr><td><code>core/gui.py</code></td><td>Tkinter 기반 화면과 버튼 동작</td></tr>
+      <tr><td><code>core/collector.py</code></td><td>Netmiko SSH 접속 및 명령 실행</td></tr>
+      <tr><td><code>core/snapshot.py</code></td><td>스냅샷 폴더와 원본 출력 저장</td></tr>
+      <tr><td><code>core/diff_engine.py</code></td><td>기준/대상 스냅샷 비교</td></tr>
+      <tr><td><code>core/reporter.py</code></td><td>HTML, XLSX, JSON 리포트 생성</td></tr>
+      <tr><td><code>core/version.py</code></td><td>프로그램 이름, 버전, 릴리즈 날짜</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. 개발 환경 준비</h2>
+  <pre>cd "D:\Codex Project\Network\backbone_state_tracker"
+python -m pip install -r requirements.txt</pre>
+
+  <h2>4. 점검 명령 추가 방법</h2>
+  <p>명령은 <code>config/commands.yaml</code>에 추가합니다.</p>
+  <pre>- id: ospf_peer
+  command: display ospf peer
+  description: OSPF neighbor state. Full state should remain stable.
+  category: routing
+  allow_failure: true
+  timeout: 45</pre>
+  <table>
+    <thead><tr><th>필드</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>명령 결과 파일명과 비교 기준으로 쓰는 고유 ID</td></tr>
+      <tr><td><code>command</code></td><td>장비에서 실행할 읽기 전용 명령</td></tr>
+      <tr><td><code>category</code></td><td>비교 등급 분류에 사용하는 범주</td></tr>
+      <tr><td><code>allow_failure</code></td><td>장비에서 지원하지 않아도 전체 수집을 계속할지 여부</td></tr>
+      <tr><td><code>timeout</code></td><td>명령별 대기 시간</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. 비교 등급 조정</h2>
+  <ul>
+    <li><code>VOLATILE_PATTERNS</code>: 시간, uptime 등 비교 제외 줄</li>
+    <li><code>CRITICAL_PATTERNS</code>: Critical 키워드</li>
+    <li><code>WARNING_PATTERNS</code>: Warning 키워드</li>
+    <li><code>classify_change()</code>: 범주와 변경 내용으로 등급 결정</li>
+  </ul>
+
+  <h2>6. 버전과 ZIP</h2>
+  <pre># 버전 변경
+notepad core\version.py
+
+# 테스트
+$env:PYTHONPATH = (Split-Path (Get-Location) -Parent)
+python -m unittest discover -s tests
+
+# ZIP 생성
+powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1</pre>
+
+  <h2>7. Git 운영 방식</h2>
+  <pre>git checkout main
+git checkout -b feature/my-change
+git add .
+git commit -m "Describe my change"
+git checkout main
+git merge --no-ff feature/my-change</pre>
+
+  <h2>8. 주의사항</h2>
+  <ul>
+    <li>장비 설정 변경 명령을 추가하지 않습니다.</li>
+    <li>계정/암호를 코드, 문서, 테스트, 로그에 남기지 않습니다.</li>
+    <li>실제 장비 출력이 포함된 <code>outputs/</code> 폴더는 배포 ZIP에 포함하지 않습니다.</li>
+  </ul>
+</main>
+</body>
+</html>
+
