@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.4
+문서 버전: v0.8.5
 작성일: 2026-06-11
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -76,6 +76,7 @@ v0.8.1부터 `tools/verify_release_package.py`가 배포 ZIP의 sidecar 해시, 
 v0.8.2부터 `tools/verify_release_package.ps1`가 버전명 포함 PowerShell 검증 스크립트로 `dist/`에 함께 생성됩니다. 이 스크립트는 Python 환경 없이 반입된 ZIP, `.sha256.txt`, `release_manifest.txt`를 검증합니다.
 v0.8.3부터 수집/비교/샘플 검증 중복 실행을 GUI 진입점에서 차단합니다. 관련 회귀 테스트는 `tests/test_gui_formatting.py`의 busy guard 테스트입니다.
 v0.8.4부터 `docs/COMMAND_GUIDE.md`와 `docs/COMMAND_GUIDE.html`이 배포 필수 문서에 포함됩니다. 패키지 검증 기준도 두 파일을 확인합니다.
+v0.8.5부터 GUI의 도움말 메뉴와 상태 수집 화면에서 `COMMAND_GUIDE.html`을 바로 열 수 있습니다. 명령어 문서 파일명을 변경할 때는 `core/gui.py`의 `open_doc()` 호출도 함께 확인합니다.
 
 ## 5. UI 유지보수 기준
 
@@ -86,6 +87,7 @@ v0.8.4부터 `docs/COMMAND_GUIDE.md`와 `docs/COMMAND_GUIDE.html`이 배포 필�
 - 대시보드: 긴급/주의/정보/변경없음 지표와 최근 스냅샷/리포트
 - 작업 진행 마법사: 장비 설정 확인부터 최종 확인까지 다음 액션 안내
 - 비교 결과: 최근 변경 상세 목록, 판단/라인/변경 내용, 선택한 변경 행의 운영 메모
+- 도움말/상태 수집 화면: 사용자 가이드, 명령어 가이드, 버전 변경내역 문서 접근
 - 색상 기준: 초록 계열 강조색, 흰색 표면, 회색 경계선, 위험/주의/정보 색상 분리
 
 UI를 수정할 때는 `core/gui.py`의 수집/비교 메서드 계약을 깨지 않도록 합니다.
