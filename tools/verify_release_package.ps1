@@ -123,6 +123,24 @@ function Get-ManifestPackageRecords {
     return $records
 }
 
+function Get-DuplicateManifestPackageRecordErrors {
+    param([string]$ManifestText)
+
+    $recordErrors = New-Object System.Collections.Generic.List[string]
+    $seen = @{}
+    foreach ($line in ($ManifestText -split "`r?`n")) {
+        if ($line -match "^- Package: (?<name>.+)$") {
+            $packageRecordName = $Matches["name"]
+            if ($seen.ContainsKey($packageRecordName)) {
+                $recordErrors.Add("Duplicate release manifest package record found: $packageRecordName")
+            } else {
+                $seen[$packageRecordName] = $true
+            }
+        }
+    }
+    return @($recordErrors.ToArray())
+}
+
 $resolvedPackage = (Resolve-Path -LiteralPath $Package).Path
 $packageItem = Get-Item -LiteralPath $resolvedPackage
 $packageName = $packageItem.Name
@@ -271,6 +289,9 @@ if ([string]::IsNullOrWhiteSpace($manifestName)) {
         }
     } else {
         $manifestText = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8
+        foreach ($manifestRecordError in (Get-DuplicateManifestPackageRecordErrors -ManifestText $manifestText)) {
+            $errors.Add($manifestRecordError)
+        }
         if ($packageIdentity) {
             $multiline = [System.Text.RegularExpressions.RegexOptions]::Multiline
             $manifestVersionMatch = [regex]::Match($manifestText, "^Version = (?<version>v?\d+\.\d+\.\d+)\r?$", $multiline)

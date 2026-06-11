@@ -153,6 +153,21 @@ def parse_manifest_package_records(manifest_text: str) -> dict[str, dict[str, st
     return records
 
 
+def duplicate_manifest_package_record_errors(manifest_text: str) -> list[str]:
+    errors: list[str] = []
+    seen: set[str] = set()
+    for line in manifest_text.splitlines():
+        package_match = MANIFEST_PACKAGE_LINE.match(line)
+        if not package_match:
+            continue
+        package_name = package_match.group("name")
+        if package_name in seen:
+            errors.append(f"Duplicate release manifest package record found: {package_name}")
+        else:
+            seen.add(package_name)
+    return errors
+
+
 def normalized_zip_names(package_path: Path) -> tuple[set[str], list[str]]:
     errors: list[str] = []
     names: set[str] = set()
@@ -278,6 +293,7 @@ def verify_release_package(
             warnings.append(message)
     else:
         manifest_text = manifest_path.read_text(encoding="utf-8")
+        errors.extend(duplicate_manifest_package_record_errors(manifest_text))
         if expected_version is not None:
             manifest_version_match = VERSION_LINE.search(manifest_text)
             manifest_version = (
