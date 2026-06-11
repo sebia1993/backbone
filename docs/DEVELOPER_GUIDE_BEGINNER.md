@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.6
+문서 버전: v0.8.7
 작성일: 2026-06-11
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -37,11 +37,12 @@
 ## 3. 개발 환경 준비
 
 ```powershell
-cd "D:\Codex Project\Network\backbone_state_tracker"
+cd "<folder-that-contains-backbone_state_tracker>\backbone_state_tracker"
 python -m pip install -r requirements.txt
 ```
 
 소스에서 실행할 때는 프로젝트 상위 폴더가 `PYTHONPATH`에 들어가야 합니다.
+`<folder-that-contains-backbone_state_tracker>`는 실제 압축 해제 위치 또는 내부 작업 폴더로 바꿔 실행합니다.
 
 ```powershell
 $env:PYTHONPATH=(Split-Path (Get-Location) -Parent)
@@ -78,6 +79,7 @@ v0.8.3부터 수집/비교/샘플 검증 중복 실행을 GUI 진입점에서 �
 v0.8.4부터 `docs/COMMAND_GUIDE.md`와 `docs/COMMAND_GUIDE.html`이 배포 필수 문서에 포함됩니다. 패키지 검증 기준도 두 파일을 확인합니다.
 v0.8.5부터 GUI의 도움말 메뉴와 상태 수집 화면에서 `COMMAND_GUIDE.html`을 바로 열 수 있습니다. 명령어 문서 파일명을 변경할 때는 `core/gui.py`의 `open_doc()` 호출도 함께 확인합니다.
 v0.8.6부터 비교 상세 선택 행에서 기준/비교 `raw/*.txt`를 바로 열고, 마스킹된 선택 상세를 클립보드로 복사할 수 있습니다. 원본 파일 경로는 `DiffSummary.base_snapshot`, `DiffSummary.target_snapshot`, `DiffItem.base_raw_file`, `DiffItem.target_raw_file` 조합으로 계산합니다.
+v0.8.7부터 README와 가이드는 특정 개발 PC의 절대 경로 대신 `<folder-that-contains-backbone_state_tracker>` 형태의 휴대 가능한 예시를 사용합니다. 문서를 수정할 때는 로컬 작업 경로가 배포 ZIP에 들어가지 않도록 확인합니다.
 
 ## 5. UI 유지보수 기준
 
@@ -138,3 +140,4 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 - GUI 검색/필터를 수정할 때는 검색 대상에 민감값 원문이 들어가지 않는지 확인합니다.
 - 수집 전 검증 규칙을 완화할 때는 변경성 명령이 통과하지 않는지 테스트를 함께 보강합니다.
 - 장비 변경 명령은 `config/commands.yaml`에 추가하지 않습니다.
+- README와 docs에는 개인 개발 PC 경로나 사내 특정 경로를 직접 적지 않습니다.

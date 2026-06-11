@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.6</title>
+  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.7</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -17,7 +17,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p>문서 버전: v0.8.6<br>작성일: 2026-06-11<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
+  <p>문서 버전: v0.8.7<br>작성일: 2026-06-11<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
 
   <h2>1. 프로젝트 목적</h2>
   <p>백본 3/4호기의 작업 전후 상태를 수집하고 특정 시점끼리 비교해 변경점을 추적하는 Windows GUI 프로그램입니다. 장비 설정 변경이 아니라 읽기 전용 점검과 리포트 생성을 목표로 합니다.</p>
@@ -48,10 +48,11 @@
   </ul>
 
   <h2>3. 개발 환경 준비</h2>
-  <pre><code>cd "D:\Codex Project\Network\backbone_state_tracker"
+  <pre><code>cd "&lt;folder-that-contains-backbone_state_tracker&gt;\backbone_state_tracker"
 python -m pip install -r requirements.txt
 $env:PYTHONPATH=(Split-Path (Get-Location) -Parent)
 python app.py</code></pre>
+  <p><code>&lt;folder-that-contains-backbone_state_tracker&gt;</code>는 실제 압축 해제 위치 또는 내부 작업 폴더로 바꿔 실행합니다.</p>
 
   <h2>4. 테스트와 Smoke Check</h2>
   <pre><code>$env:PYTHONDONTWRITEBYTECODE='1'
@@ -76,6 +77,7 @@ python app.py --smoke-check</code></pre>
   <p>v0.8.4부터 <code>docs/COMMAND_GUIDE.md</code>와 <code>docs/COMMAND_GUIDE.html</code>이 배포 필수 문서에 포함됩니다. 패키지 검증 기준도 두 파일을 확인합니다.</p>
   <p>v0.8.5부터 GUI의 도움말 메뉴와 상태 수집 화면에서 <code>COMMAND_GUIDE.html</code>을 바로 열 수 있습니다. 명령어 문서 파일명을 변경할 때는 <code>core/gui.py</code>의 <code>open_doc()</code> 호출도 함께 확인합니다.</p>
   <p>v0.8.6부터 비교 상세 선택 행에서 기준/비교 <code>raw/*.txt</code>를 바로 열고, 마스킹된 선택 상세를 클립보드로 복사할 수 있습니다. 원본 파일 경로는 <code>DiffSummary.base_snapshot</code>, <code>DiffSummary.target_snapshot</code>, <code>DiffItem.base_raw_file</code>, <code>DiffItem.target_raw_file</code> 조합으로 계산합니다.</p>
+  <p>v0.8.7부터 README와 가이드는 특정 개발 PC의 절대 경로 대신 <code>&lt;folder-that-contains-backbone_state_tracker&gt;</code> 형태의 휴대 가능한 예시를 사용합니다. 문서를 수정할 때는 로컬 작업 경로가 배포 ZIP에 들어가지 않도록 확인합니다.</p>
 
   <h2>5. UI 유지보수 기준</h2>
   <ul>
@@ -119,6 +121,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1</code></p
     <li>GUI 검색/필터를 수정할 때는 검색 대상에 민감값 원문이 들어가지 않는지 확인합니다.</li>
     <li>수집 전 검증 규칙을 완화할 때는 변경성 명령이 통과하지 않는지 테스트를 함께 보강합니다.</li>
     <li>장비 변경 명령은 <code>config/commands.yaml</code>에 추가하지 않습니다.</li>
+    <li>README와 docs에는 개인 개발 PC 경로나 사내 특정 경로를 직접 적지 않습니다.</li>
   </ul>
 </main>
 </body>

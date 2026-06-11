@@ -27,11 +27,11 @@ def file_sha256(path: Path) -> str:
 
 
 def package_record(path: Path) -> dict[str, str | int]:
-    resolved = path.resolve()
+    package = Path(path)
     return {
-        "name": resolved.name,
-        "size_bytes": resolved.stat().st_size,
-        "sha256": file_sha256(resolved),
+        "name": package.name,
+        "size_bytes": package.stat().st_size,
+        "sha256": file_sha256(package),
     }
 
 
@@ -40,7 +40,7 @@ def write_package_checksum(
     version: str,
     generated_at: str | None = None,
 ) -> Path:
-    package_path = package_path.resolve()
+    package_path = Path(package_path)
     if not package_path.is_file():
         raise FileNotFoundError(f"Package does not exist: {package_path}")
 
@@ -73,11 +73,11 @@ def write_release_manifest(
     package_paths: Iterable[Path] | None = None,
     generated_at: str | None = None,
 ) -> Path:
-    dist_dir = dist_dir.resolve()
+    dist_dir = Path(dist_dir)
     if package_paths is None:
         packages = find_release_packages(project_name, version, date_stamp, dist_dir)
     else:
-        packages = sorted(Path(path).resolve() for path in package_paths)
+        packages = sorted(Path(path) for path in package_paths)
 
     missing = [str(path) for path in packages if not path.is_file()]
     if missing:

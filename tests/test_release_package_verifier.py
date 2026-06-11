@@ -47,6 +47,7 @@ def _source_entries() -> dict[str, str]:
             "backbone_state_tracker/tools/write_release_manifest.py": "manifest tool",
             "backbone_state_tracker/tools/verify_release_package.py": "verifier",
             "backbone_state_tracker/tools/verify_release_package.ps1": "powershell verifier",
+            "backbone_state_tracker/tests/test_documentation.py": "documentation tests",
             "backbone_state_tracker/tests/test_release_manifest.py": "manifest tests",
             "backbone_state_tracker/tests/test_release_package_verifier.py": "verifier tests",
         }
