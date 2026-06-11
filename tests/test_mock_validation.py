@@ -22,6 +22,9 @@ class MockValidationTests(unittest.TestCase):
             self.assertTrue(result.off_report.exists())
             self.assertTrue(result.restore_report.exists())
             self.assertTrue(result.restore_from_off_report.exists())
+            self.assertTrue(result.off_share_zip.exists())
+            self.assertTrue(result.restore_share_zip.exists())
+            self.assertTrue(result.restore_from_off_share_zip.exists())
 
             self.assertGreaterEqual(result.off_summary.counts["Critical"], 1)
             failed = [

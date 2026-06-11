@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.7.7 - 2026-06-11
+
+- Added an automatically generated shared report ZIP for each snapshot comparison.
+- The shared ZIP includes redacted report files and operator/version guides, while excluding snapshot raw output folders.
+- Added dashboard and comparison-screen buttons to open the latest shared ZIP.
+- Extended offline sample validation so sample comparisons also produce shared ZIP bundles.
+- Added regression tests for shared ZIP contents and excluded raw/device/executable files.
+
 ## v0.7.6 - 2026-06-11
 
 - Added shared sensitive-string redaction for GUI logs, snapshot metadata, and comparison report exports.

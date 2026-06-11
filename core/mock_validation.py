@@ -24,6 +24,9 @@ class MockValidationResult:
     off_report: Path
     restore_report: Path
     restore_from_off_report: Path
+    off_share_zip: Path
+    restore_share_zip: Path
+    restore_from_off_share_zip: Path
 
 
 def create_mock_validation_artifacts(snapshot_store: SnapshotStore) -> MockValidationResult:
@@ -70,6 +73,9 @@ def create_mock_validation_artifacts(snapshot_store: SnapshotStore) -> MockValid
         off_report=off_paths["html"],
         restore_report=restore_paths["html"],
         restore_from_off_report=restore_from_off_paths["html"],
+        off_share_zip=off_paths["share_zip"],
+        restore_share_zip=restore_paths["share_zip"],
+        restore_from_off_share_zip=restore_from_off_paths["share_zip"],
     )
 
 
