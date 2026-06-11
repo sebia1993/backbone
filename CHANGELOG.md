@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.0 - 2026-06-11
+
+- Redesigned the GUI into a bright Korean operations console inspired by HPE/Aruba-style network dashboards.
+- Added left navigation for dashboard, status collection, comparison results, device settings, and logs.
+- Added top status summary, dashboard metric cards, recent snapshot/report indicators, and clearer comparison state labels.
+- Preserved the existing read-only collection, automatic comparison, report generation, and Korean workflow behavior.
+- Updated README, user guide, beginner developer guide, and version history in Markdown and HTML.
+
 ## v0.4.0 - 2026-06-11
 
 - Redesigned the GUI as a Korean three-step workflow.
@@ -39,4 +47,3 @@
 - Added snapshot comparison with Critical, Warning, Info, and Unchanged classification.
 - Added HTML, XLSX, and JSON comparison reports.
 - Added basic unit tests for snapshots and diff classification.
-
