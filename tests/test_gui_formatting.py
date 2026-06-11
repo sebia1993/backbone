@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
 from backbone_state_tracker.core.gui import BackboneStateTrackerApp
-from backbone_state_tracker.core.models import DiffItem, DiffLine
+from backbone_state_tracker.core.models import DiffItem, DiffLine, DiffSummary
 
 
 class GuiDiffFormattingTests(unittest.TestCase):
@@ -94,6 +95,33 @@ class GuiDiffFormattingTests(unittest.TestCase):
         self.assertFalse(BackboneStateTrackerApp._diff_row_matches_filter(item, line, "", "VerySecret"))
         self.assertFalse(BackboneStateTrackerApp._diff_row_matches_filter(item, line, "", "OtherSecret"))
         self.assertTrue(BackboneStateTrackerApp._diff_row_matches_filter(item, line, "", "password ***"))
+
+    def test_selected_raw_file_path_resolves_from_summary_snapshots(self) -> None:
+        summary = DiffSummary(
+            base_snapshot=str(Path("outputs") / "snapshots" / "pre"),
+            target_snapshot=str(Path("outputs") / "snapshots" / "off"),
+            generated_at="2026-06-11T20:30:00",
+        )
+        item = DiffItem(
+            device_name="backbone4",
+            command_id="interface_brief",
+            command="display interface brief",
+            category="interface",
+            severity="Critical",
+            status="changed",
+            summary="Critical state keyword detected in changed output.",
+            base_raw_file=str(Path("raw") / "backbone4" / "interface_brief.txt"),
+            target_raw_file=str(Path("raw") / "backbone4" / "interface_brief.txt"),
+        )
+
+        self.assertEqual(
+            BackboneStateTrackerApp._resolve_raw_file_path(summary, item, "base"),
+            Path("outputs") / "snapshots" / "pre" / "raw" / "backbone4" / "interface_brief.txt",
+        )
+        self.assertEqual(
+            BackboneStateTrackerApp._resolve_raw_file_path(summary, item, "target"),
+            Path("outputs") / "snapshots" / "off" / "raw" / "backbone4" / "interface_brief.txt",
+        )
 
     def test_busy_guard_blocks_collection_before_validation(self) -> None:
         app = BackboneStateTrackerApp()

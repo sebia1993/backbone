@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.6 - 2026-06-11
+
+- Added comparison-detail actions to open the selected row's base raw output and target raw output directly from the GUI.
+- Added a button to copy the selected comparison detail text to the clipboard using the existing redacted display text.
+- Added a regression test for resolving selected raw output paths from the comparison summary.
+- Updated operator, developer, and version history guides for the new evidence-tracing buttons.
+
 ## v0.8.5 - 2026-06-11
 
 - Added a Help menu entry that opens the Korean command guide directly from the app.

@@ -103,6 +103,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.last_counts = {key: 0 for key in SEVERITY_META}
         self.last_diff_summary: DiffSummary | None = None
         self.diff_detail_rows: list[tuple[DiffItem, DiffLine]] = []
+        self.selected_diff_detail: tuple[DiffItem, DiffLine] | None = None
         self.workflow_busy = False
         self.off_review_confirmed = False
         self.final_review_confirmed = False
@@ -751,7 +752,8 @@ class BackboneStateTrackerApp(tk.Tk):
         detail_body.grid(row=1, column=0, sticky="nsew")
         detail_body.rowconfigure(0, weight=0)
         detail_body.rowconfigure(1, weight=1)
-        detail_body.rowconfigure(2, weight=1)
+        detail_body.rowconfigure(2, weight=0)
+        detail_body.rowconfigure(3, weight=1)
         detail_body.columnconfigure(0, weight=1)
 
         filter_bar = tk.Frame(detail_body, bg=PALETTE["surface"])
@@ -801,6 +803,30 @@ class BackboneStateTrackerApp(tk.Tk):
         self.diff_tree.configure(yscrollcommand=tree_scroll.set)
         self.diff_tree.bind("<<TreeviewSelect>>", self._on_diff_detail_selected)
 
+        detail_actions = tk.Frame(detail_body, bg=PALETTE["surface"])
+        detail_actions.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(10, 0))
+        self.open_base_raw_button = ttk.Button(
+            detail_actions,
+            text="기준 원본 열기",
+            style="Secondary.TButton",
+            command=lambda: self.open_selected_raw_file("base"),
+        )
+        self.open_base_raw_button.pack(side="left")
+        self.open_target_raw_button = ttk.Button(
+            detail_actions,
+            text="비교 원본 열기",
+            style="Secondary.TButton",
+            command=lambda: self.open_selected_raw_file("target"),
+        )
+        self.open_target_raw_button.pack(side="left", padx=(8, 0))
+        self.copy_diff_detail_button = ttk.Button(
+            detail_actions,
+            text="선택 상세 복사",
+            style="Secondary.TButton",
+            command=self.copy_selected_diff_detail,
+        )
+        self.copy_diff_detail_button.pack(side="left", padx=(8, 0))
+
         self.diff_detail_text = tk.Text(
             detail_body,
             height=8,
@@ -812,7 +838,8 @@ class BackboneStateTrackerApp(tk.Tk):
             pady=10,
             font=("Consolas", 10),
         )
-        self.diff_detail_text.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(10, 0))
+        self.diff_detail_text.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(8, 0))
+        self._set_diff_detail_actions_enabled(False)
         self._set_diff_detail_text("비교 완료 후 변경된 라인을 선택하면 변경 전/후 값이 여기에 표시됩니다.")
 
     def _update_diff_details(self, summary: DiffSummary | None) -> None:
@@ -824,6 +851,8 @@ class BackboneStateTrackerApp(tk.Tk):
             return
         self.diff_tree.delete(*self.diff_tree.get_children())
         self.diff_detail_rows = []
+        self.selected_diff_detail = None
+        self._set_diff_detail_actions_enabled(False)
         summary = self.last_diff_summary
         if summary is None:
             self.diff_filter_status_var.set("필터: -")
@@ -913,7 +942,51 @@ class BackboneStateTrackerApp(tk.Tk):
             item, line = self.diff_detail_rows[int(selected[0])]
         except (IndexError, ValueError):
             return
+        self.selected_diff_detail = (item, line)
+        self._set_diff_detail_actions_enabled(True)
         self._set_diff_detail_text(self._format_selected_diff_detail(item, line))
+
+    def _set_diff_detail_actions_enabled(self, enabled: bool) -> None:
+        state = "normal" if enabled else "disabled"
+        for name in ("open_base_raw_button", "open_target_raw_button", "copy_diff_detail_button"):
+            button = getattr(self, name, None)
+            if button is not None:
+                button.configure(state=state)
+
+    def open_selected_raw_file(self, side: str) -> None:
+        if not self.last_diff_summary or not self.selected_diff_detail:
+            messagebox.showinfo("선택 없음", "먼저 변경 상세 행을 선택하세요.")
+            return
+        item, _line = self.selected_diff_detail
+        path = self._resolve_raw_file_path(self.last_diff_summary, item, side)
+        if path and path.exists():
+            os.startfile(path)
+            return
+        label = "기준" if side == "base" else "비교"
+        messagebox.showinfo("원본 없음", f"{label} 원본 파일을 찾을 수 없습니다.")
+
+    def copy_selected_diff_detail(self) -> None:
+        if not self.selected_diff_detail:
+            messagebox.showinfo("선택 없음", "먼저 변경 상세 행을 선택하세요.")
+            return
+        item, line = self.selected_diff_detail
+        self.clipboard_clear()
+        self.clipboard_append(self._format_selected_diff_detail(item, line))
+        self.compare_status_var.set("선택 변경 상세를 클립보드에 복사했습니다.")
+
+    @staticmethod
+    def _resolve_raw_file_path(summary: DiffSummary, item: DiffItem, side: str) -> Path | None:
+        if side == "base":
+            snapshot = summary.base_snapshot
+            raw_file = item.base_raw_file
+        elif side == "target":
+            snapshot = summary.target_snapshot
+            raw_file = item.target_raw_file
+        else:
+            raise ValueError(f"알 수 없는 원본 구분입니다: {side}")
+        if not snapshot or not raw_file:
+            return None
+        return Path(snapshot) / raw_file
 
     def _set_diff_detail_text(self, text: str) -> None:
         self.diff_detail_text.configure(state="normal")
