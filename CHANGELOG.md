@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.0 - 2026-06-11
+
+- Redesigned the GUI as a Korean three-step workflow.
+- Added work-stage snapshot names: `작업 전`, `백본3 OFF 중`, `복구 후`, and `사용자 지정`.
+- Added automatic comparison against the latest `작업 전` snapshot after non-baseline collection.
+- Added Korean GUI labels, menu bar, log messages, and comparison report labels.
+- Added workflow unit tests for stage resolution and baseline snapshot selection.
+
 ## v0.3.0 - 2026-06-11
 
 - Added Windows executable ZIP packaging with `tools/build_windows_exe.ps1`.

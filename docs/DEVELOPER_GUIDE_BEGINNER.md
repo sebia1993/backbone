@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-버전: v0.3.0  
+버전: v0.4.0  
 대상: Python 초급 개발자 또는 내부 유지보수 담당자
 
 ## 1. 프로젝트 구조
@@ -22,6 +22,7 @@ backbone_state_tracker\
     reporter.py
     snapshot.py
     version.py
+    workflow.py
   docs\
   tests\
   tools\
@@ -39,6 +40,7 @@ backbone_state_tracker\
 | `core/diff_engine.py` | 기준/대상 스냅샷 비교 |
 | `core/reporter.py` | HTML, XLSX, JSON 리포트 생성 |
 | `core/version.py` | 프로그램 이름, 버전, 릴리즈 날짜 |
+| `core/workflow.py` | 작업 단계명, 자동 비교 기준 선택, 한국어 표시 매핑 |
 
 ## 3. 개발 환경 준비
 
@@ -107,8 +109,8 @@ python -m unittest discover -s tests
 
 ```powershell
 git add .
-git commit -m "Release v0.3.0"
-git tag v0.3.0
+git commit -m "Release v0.4.0"
+git tag v0.4.0
 ```
 
 ## 7. ZIP 생성
@@ -130,8 +132,8 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 생성 위치:
 
 ```text
-dist\backbone_state_tracker_v0.3.0_YYYYMMDD_source.zip
-dist\backbone_state_tracker_v0.3.0_YYYYMMDD_windows_exe.zip
+dist\backbone_state_tracker_v0.4.0_YYYYMMDD_source.zip
+dist\backbone_state_tracker_v0.4.0_YYYYMMDD_windows_exe.zip
 ```
 
 ZIP 제외 대상:

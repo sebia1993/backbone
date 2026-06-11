@@ -111,6 +111,8 @@ class Snapshot:
     created_at: str
     devices: list[dict[str, Any]]
     results: list[CommandResult]
+    stage_name: str = ""
+    stage_slug: str = ""
 
 
 @dataclass
