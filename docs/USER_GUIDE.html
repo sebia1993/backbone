@@ -20,7 +20,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 사용자 가이드</h1>
-  <p><strong>버전:</strong> v0.3.0<br><strong>대상:</strong> 백본 3호기 / 백본 4호기 상태 수집 및 비교 담당자</p>
+  <p><strong>버전:</strong> v0.4.0<br><strong>대상:</strong> 백본 3호기 / 백본 4호기 상태 수집 및 비교 담당자</p>
 
   <h2>1. 목적</h2>
   <p>Backbone State Tracker는 백본 3/4호기에서 읽기 전용 점검 명령을 실행하고, 작업 전/중/후 스냅샷을 비교해 달라진 점을 추적하는 Windows용 GUI 도구입니다.</p>
@@ -48,6 +48,14 @@ python -m pip install -r requirements.txt</pre>
   <h2>4. 실행</h2>
   <p>실행파일 패키지는 <code>BackboneStateTracker.exe</code>를 실행합니다. 소스 패키지는 <code>python app.py</code>로 실행합니다.</p>
   <table>
+    <thead><tr><th>단계</th><th>목적</th></tr></thead>
+    <tbody>
+      <tr><td>1. 장비 및 접속 설정</td><td>접속 계정, 암호, 백본 3/4호기 정보를 입력</td></tr>
+      <tr><td>2. 작업 단계 선택 및 상태 수집</td><td>작업 전, 백본3 OFF 중, 복구 후 상태 수집</td></tr>
+      <tr><td>3. 자동 비교 및 결과 확인</td><td>작업 전 기준으로 자동 비교된 리포트 확인</td></tr>
+    </tbody>
+  </table>
+  <table>
     <thead><tr><th>항목</th><th>설명</th></tr></thead>
     <tbody>
       <tr><td>Username</td><td>백본 장비 SSH 접속 계정</td></tr>
@@ -58,25 +66,26 @@ python -m pip install -r requirements.txt</pre>
     </tbody>
   </table>
 
-  <h2>4. 스냅샷 수집</h2>
+  <h2>5. 스냅샷 수집</h2>
   <ol>
     <li>장비 정보와 계정 정보를 입력합니다.</li>
-    <li><strong>Snapshot label</strong>에 수집 시점 이름을 입력합니다.</li>
-    <li><strong>Collect Snapshot</strong>을 누릅니다.</li>
+    <li>작업 단계를 선택합니다: <code>작업 전</code>, <code>백본3 OFF 중</code>, <code>복구 후</code>, <code>사용자 지정</code>.</li>
+    <li><strong>상태 수집 시작</strong>을 누릅니다.</li>
     <li>하단 Run log에서 진행 상황을 확인합니다.</li>
   </ol>
   <pre>outputs\snapshots\YYYYMMDD_HHMMSS_스냅샷명\</pre>
 
-  <h2>5. 스냅샷 비교</h2>
+  <h2>6. 스냅샷 비교</h2>
+  <p><code>백본3 OFF 중</code>, <code>복구 후</code>, <code>사용자 지정</code> 단계는 수집 완료 후 자동으로 최신 <code>작업 전</code> 스냅샷과 비교합니다.</p>
   <ol>
-    <li><strong>Refresh</strong>로 스냅샷 목록을 갱신합니다.</li>
-    <li>Baseline에 기준 스냅샷을 선택합니다.</li>
-    <li>Target에 비교 대상 스냅샷을 선택합니다.</li>
-    <li><strong>Compare Selected</strong>를 누릅니다.</li>
+    <li><strong>목록 새로고침</strong>으로 스냅샷 목록을 갱신합니다.</li>
+    <li><strong>기준 스냅샷(작업 전)</strong>에 기준 스냅샷을 선택합니다.</li>
+    <li><strong>비교 스냅샷</strong>에 비교 대상 스냅샷을 선택합니다.</li>
+    <li><strong>선택 항목 다시 비교</strong>를 누릅니다.</li>
   </ol>
   <pre>outputs\snapshots\&lt;target&gt;\comparisons\vs_&lt;baseline&gt;\</pre>
 
-  <h2>6. 리포트 해석</h2>
+  <h2>7. 리포트 해석</h2>
   <table>
     <thead><tr><th>등급</th><th>의미</th><th>예시</th></tr></thead>
     <tbody>
@@ -87,7 +96,7 @@ python -m pip install -r requirements.txt</pre>
     </tbody>
   </table>
 
-  <h2>7. 작업 권장 흐름</h2>
+  <h2>8. 작업 권장 흐름</h2>
   <ol>
     <li>작업 전: <code>pre</code> 스냅샷 수집</li>
     <li>백본 3호기 OFF 중: <code>bb3_off</code> 스냅샷 수집</li>
@@ -96,7 +105,7 @@ python -m pip install -r requirements.txt</pre>
     <li><code>pre</code>와 <code>post_restore</code> 비교</li>
   </ol>
 
-  <h2>8. 보안 주의사항</h2>
+  <h2>9. 보안 주의사항</h2>
   <ul>
     <li>암호는 프로그램 실행 중에만 사용하며 파일로 저장하지 않습니다.</li>
     <li><code>config/devices.yaml</code>은 내부 IP/호스트명을 포함할 수 있으므로 외부 공유 전 확인해야 합니다.</li>

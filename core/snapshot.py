@@ -31,10 +31,13 @@ class SnapshotStore:
         label: str,
         devices: list[Device],
         results_by_device: dict[str, list[CommandResult]],
+        folder_label: str | None = None,
+        stage_name: str = "",
+        stage_slug: str = "",
     ) -> Path:
         created_at = datetime.now().isoformat(timespec="seconds")
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        safe_label = sanitize_filename(label, "snapshot")
+        safe_label = sanitize_filename(folder_label or label, "snapshot")
         snapshot_dir = self.root_dir / f"{stamp}_{safe_label}"
         raw_dir = snapshot_dir / "raw"
         raw_dir.mkdir(parents=True, exist_ok=True)
@@ -72,6 +75,8 @@ class SnapshotStore:
             "app_name": APP_NAME,
             "app_version": APP_VERSION,
             "label": label,
+            "stage_name": stage_name or label,
+            "stage_slug": stage_slug,
             "created_at": created_at,
             "devices": [device.to_safe_dict() for device in devices],
             "results": metadata_results,
@@ -96,4 +101,6 @@ class SnapshotStore:
             created_at=str(payload.get("created_at", "")),
             devices=list(payload.get("devices", [])),
             results=results,
+            stage_name=str(payload.get("stage_name", payload.get("label", ""))),
+            stage_slug=str(payload.get("stage_slug", "")),
         )

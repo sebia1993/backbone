@@ -9,6 +9,18 @@ from pathlib import Path
 from .models import DiffSummary
 from .snapshot import sanitize_filename
 from .version import APP_NAME, APP_VERSION
+from .workflow import severity_to_korean, status_to_korean
+
+
+SUMMARY_LABELS_KO = {
+    "No meaningful change detected.": "의미 있는 변경 없음",
+    "Target snapshot command failed.": "비교 스냅샷에서 명령 실행 실패",
+    "Critical state keyword detected in changed output.": "변경 출력에서 긴급 상태 키워드 감지",
+    "New critical-looking log line detected.": "신규 긴급 의심 로그 감지",
+    "Warning keyword detected in changed output.": "변경 출력에서 주의 키워드 감지",
+    "Operational state changed.": "운영 상태 변경 감지",
+    "Output changed.": "출력 변경 감지",
+}
 
 
 class ReportWriter:
@@ -116,31 +128,34 @@ class ReportWriter:
         }
         for index, item in enumerate(summary.items, start=1):
             detail_id = f"diff-{index}"
+            severity_label = severity_to_korean(item.severity)
+            status_label = status_to_korean(item.status)
+            summary_label = SUMMARY_LABELS_KO.get(item.summary, item.summary)
             rows_html.append(
                 "<tr>"
-                f"<td><span class='badge' style='background:{colors.get(item.severity, '#667085')}'>{escape(item.severity)}</span></td>"
-                f"<td>{escape(item.status)}</td>"
+                f"<td><span class='badge' style='background:{colors.get(item.severity, '#667085')}'>{escape(severity_label)}</span></td>"
+                f"<td>{escape(status_label)}</td>"
                 f"<td>{escape(item.device_name)}</td>"
                 f"<td>{escape(item.command_id)}</td>"
                 f"<td>{escape(item.category)}</td>"
-                f"<td>{escape(item.summary)}</td>"
-                f"<td><a href='#{detail_id}'>diff</a></td>"
+                f"<td>{escape(summary_label)}</td>"
+                f"<td><a href='#{detail_id}'>상세</a></td>"
                 "</tr>"
             )
             details_html.append(
                 f"<section class='diff-block' id='{detail_id}'>"
                 f"<h2>{escape(item.device_name)} / {escape(item.command_id)}</h2>"
-                f"<p>{escape(item.summary)}</p>"
-                f"<pre>{escape(item.diff or 'No diff body.')}</pre>"
+                f"<p>{escape(summary_label)}</p>"
+                f"<pre>{escape(item.diff or '상세 diff 없음')}</pre>"
                 "</section>"
             )
 
         html = f"""<!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{escape(APP_NAME)} v{escape(APP_VERSION)} Snapshot Diff</title>
+  <title>{escape(APP_NAME)} v{escape(APP_VERSION)} 스냅샷 비교 리포트</title>
   <style>
     :root {{
       --bg: #f4f6f8;
@@ -207,26 +222,26 @@ class ReportWriter:
 <body>
   <div class="wrap">
     <header>
-      <h1>{escape(APP_NAME)} Snapshot Diff</h1>
-      <div class="meta">Version: v{escape(APP_VERSION)} | Base: {escape(Path(summary.base_snapshot).name)} | Target: {escape(Path(summary.target_snapshot).name)} | Generated: {escape(summary.generated_at)}</div>
+      <h1>{escape(APP_NAME)} 스냅샷 비교 리포트</h1>
+      <div class="meta">버전: v{escape(APP_VERSION)} | 기준: {escape(Path(summary.base_snapshot).name)} | 비교: {escape(Path(summary.target_snapshot).name)} | 생성: {escape(summary.generated_at)}</div>
     </header>
     <section class="counts">
-      <div class="count">Critical<strong>{counts.get('Critical', 0)}</strong></div>
-      <div class="count">Warning<strong>{counts.get('Warning', 0)}</strong></div>
-      <div class="count">Info<strong>{counts.get('Info', 0)}</strong></div>
-      <div class="count">Unchanged<strong>{counts.get('Unchanged', 0)}</strong></div>
+      <div class="count">긴급<strong>{counts.get('Critical', 0)}</strong></div>
+      <div class="count">주의<strong>{counts.get('Warning', 0)}</strong></div>
+      <div class="count">정보<strong>{counts.get('Info', 0)}</strong></div>
+      <div class="count">변경없음<strong>{counts.get('Unchanged', 0)}</strong></div>
     </section>
     <section class="table-panel">
       <table>
         <thead>
           <tr>
-            <th>Severity</th>
-            <th>Status</th>
-            <th>Device</th>
-            <th>Command</th>
-            <th>Category</th>
-            <th>Summary</th>
-            <th>Detail</th>
+            <th>등급</th>
+            <th>상태</th>
+            <th>장비</th>
+            <th>명령</th>
+            <th>분류</th>
+            <th>요약</th>
+            <th>상세</th>
           </tr>
         </thead>
         <tbody>{''.join(rows_html)}</tbody>
