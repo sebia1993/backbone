@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.8.0 - 2026-06-11
+
+- Added SHA256 sidecar files for source and Windows EXE ZIP release packages.
+- Added a version-level release manifest that lists package names, byte sizes, and SHA256 values.
+- Added `PACKAGE_INFO.txt` inside each release ZIP so operators can identify package type, contents, exclusions, and verification steps after transfer.
+- Ensures Windows EXE ZIP staging removes local `config/devices.yaml` if that file exists.
+- Added `tools/write_release_manifest.py` and unit tests for release checksum and manifest generation.
+- Updated release scripts and documentation for offline/internal transfer verification.
+
 ## v0.7.9 - 2026-06-11
 
 - Added a local preflight configuration check before collection.

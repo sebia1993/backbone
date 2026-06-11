@@ -116,9 +116,36 @@ try {
     New-Item -ItemType Directory -Force -Path $PayloadRoot | Out-Null
     Copy-Item -LiteralPath $ExePath -Destination (Join-Path $PayloadRoot "${ExeName}.exe") -Force
     Copy-DirectoryContent -Source (Join-Path $ProjectRoot "config") -Destination (Join-Path $PayloadRoot "config")
+    $LocalDevicesConfig = Join-Path $PayloadRoot "config\devices.yaml"
+    if (Test-Path -LiteralPath $LocalDevicesConfig) {
+        Remove-Item -LiteralPath $LocalDevicesConfig -Force
+    }
     Copy-DirectoryContent -Source (Join-Path $ProjectRoot "docs") -Destination (Join-Path $PayloadRoot "docs")
     Copy-Item -LiteralPath (Join-Path $ProjectRoot "README.md") -Destination (Join-Path $PayloadRoot "README.md") -Force
     Copy-Item -LiteralPath (Join-Path $ProjectRoot "CHANGELOG.md") -Destination (Join-Path $PayloadRoot "CHANGELOG.md") -Force
+
+    $packageInfoText = @"
+Backbone State Tracker v$Version
+Package type: Windows EXE ZIP
+Created: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")
+
+Contents:
+- BackboneStateTracker.exe
+- Config examples
+- Operator and developer guides
+- Version history and changelog
+
+Excluded:
+- Runtime outputs
+- Local config\devices.yaml secrets
+- Source repository metadata
+- Build work folders
+
+Verification:
+- Compare this ZIP file SHA256 with the matching .sha256.txt file in dist.
+- A version-level release_manifest.txt file is also generated in dist.
+"@
+    Set-Content -LiteralPath (Join-Path $PayloadRoot "PACKAGE_INFO.txt") -Value $packageInfoText -Encoding UTF8
 
     $runText = @"
 Backbone State Tracker v$Version
@@ -142,6 +169,12 @@ Security note:
     if (Test-Path -LiteralPath $StagingRoot) {
         Remove-Item -LiteralPath $StagingRoot -Recurse -Force
     }
+}
+
+$ManifestTool = Join-Path $ProjectRoot "tools\write_release_manifest.py"
+python $ManifestTool --project-name $ProjectName --version $Version --date-stamp $DateStamp --dist-dir $DistDir --package $ZipPath
+if ($LASTEXITCODE -ne 0) {
+    throw "Release manifest generation failed with exit code $LASTEXITCODE"
 }
 
 Write-Host "Windows EXE ZIP created: $ZipPath"
