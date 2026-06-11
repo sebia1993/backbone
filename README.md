@@ -1,6 +1,6 @@
 # Backbone State Tracker
 
-Version: `v0.2.0`
+Version: `v0.2.1`
 
 Small Windows GUI utility for collecting read-only status snapshots from backbone
 3 and 4, then comparing snapshots to track operational changes.
@@ -55,3 +55,5 @@ local `config\devices.yaml`, caches, and virtual environments.
 - `docs\USER_GUIDE.html`
 - `docs\DEVELOPER_GUIDE_BEGINNER.md`
 - `docs\DEVELOPER_GUIDE_BEGINNER.html`
+- `docs\VERSION_HISTORY.md`
+- `docs\VERSION_HISTORY.html`

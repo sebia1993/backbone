@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-버전: v0.2.0  
+버전: v0.2.1  
 대상: Python 초급 개발자 또는 내부 유지보수 담당자
 
 ## 1. 프로젝트 구조
@@ -105,8 +105,8 @@ python -m unittest discover -s tests
 
 ```powershell
 git add .
-git commit -m "Release v0.2.0"
-git tag v0.2.0
+git commit -m "Release v0.2.1"
+git tag v0.2.1
 ```
 
 ## 7. ZIP 생성
@@ -119,7 +119,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
 생성 위치:
 
 ```text
-dist\backbone_state_tracker_v0.2.0_YYYYMMDD_source.zip
+dist\backbone_state_tracker_v0.2.1_YYYYMMDD_source.zip
 ```
 
 ZIP 제외 대상:

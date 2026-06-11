@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.1 - 2026-06-11
+
+- Added Markdown and HTML version history documents for operator-friendly release notes.
+- Updated README guide links to include version history.
+- Updated application version metadata to v0.2.1.
+
 ## v0.2.0 - 2026-06-11
 
 - Added independent local Git tracking and release packaging workflow.
