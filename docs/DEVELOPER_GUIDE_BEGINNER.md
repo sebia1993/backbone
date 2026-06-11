@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.3
+문서 버전: v0.8.4
 작성일: 2026-06-11
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -26,6 +26,7 @@
 - `core/version.py`: 프로그램 버전 정보입니다.
 - `config/commands.yaml`: 장비에 실행할 읽기 전용 점검 명령입니다.
 - `config/devices.example.yaml`: 장비 설정 예시입니다.
+- `docs/COMMAND_GUIDE.md`, `docs/COMMAND_GUIDE.html`: 운영자용 명령어 의미와 확인 포인트입니다.
 - `tests/`: 단위 테스트입니다.
 - `tools/build_release.ps1`: 소스 ZIP 생성 스크립트입니다.
 - `tools/build_windows_exe.ps1`: Windows EXE ZIP 생성 스크립트입니다.
@@ -74,6 +75,7 @@ v0.8.0부터 `tools/write_release_manifest.py`가 소스 ZIP과 Windows EXE ZIP�
 v0.8.1부터 `tools/verify_release_package.py`가 배포 ZIP의 sidecar 해시, manifest 기록, 필수 파일, 금지 파일 포함 여부를 검증합니다. 관련 테스트는 `tests/test_release_package_verifier.py`입니다.
 v0.8.2부터 `tools/verify_release_package.ps1`가 버전명 포함 PowerShell 검증 스크립트로 `dist/`에 함께 생성됩니다. 이 스크립트는 Python 환경 없이 반입된 ZIP, `.sha256.txt`, `release_manifest.txt`를 검증합니다.
 v0.8.3부터 수집/비교/샘플 검증 중복 실행을 GUI 진입점에서 차단합니다. 관련 회귀 테스트는 `tests/test_gui_formatting.py`의 busy guard 테스트입니다.
+v0.8.4부터 `docs/COMMAND_GUIDE.md`와 `docs/COMMAND_GUIDE.html`이 배포 필수 문서에 포함됩니다. 패키지 검증 기준도 두 파일을 확인합니다.
 
 ## 5. UI 유지보수 기준
 

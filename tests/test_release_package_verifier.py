@@ -27,6 +27,8 @@ def _common_entries() -> dict[str, str]:
         "backbone_state_tracker/config/devices.example.yaml": "devices example",
         "backbone_state_tracker/docs/USER_GUIDE.md": "user md",
         "backbone_state_tracker/docs/USER_GUIDE.html": "user html",
+        "backbone_state_tracker/docs/COMMAND_GUIDE.md": "command md",
+        "backbone_state_tracker/docs/COMMAND_GUIDE.html": "command html",
         "backbone_state_tracker/docs/DEVELOPER_GUIDE_BEGINNER.md": "dev md",
         "backbone_state_tracker/docs/DEVELOPER_GUIDE_BEGINNER.html": "dev html",
         "backbone_state_tracker/docs/VERSION_HISTORY.md": "history md",
