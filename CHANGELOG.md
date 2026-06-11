@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.6.0 - 2026-06-11
+
+- Added structured line-level diff details for snapshot comparisons.
+- Added before/after changed line display to the GUI comparison screen.
+- Added `change_count`, `change_preview`, and `changed_lines` to comparison manifest data.
+- Updated HTML reports with a changed-line detail table and collapsible raw unified diff.
+- Added `diff_detail` worksheet to XLSX reports for device, command, line number, before value, and after value tracking.
+- Added tests for changed, added, removed, HTML, and XLSX line-level comparison output.
+
 ## v0.5.0 - 2026-06-11
 
 - Redesigned the GUI into a bright Korean operations console inspired by HPE/Aruba-style network dashboards.

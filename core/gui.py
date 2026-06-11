@@ -11,7 +11,7 @@ from tkinter import filedialog, messagebox, ttk
 from .collector import SnapshotCollector
 from .config import load_commands, load_devices, save_devices
 from .diff_engine import DiffEngine
-from .models import Device
+from .models import Device, DiffItem, DiffLine, DiffSummary
 from .paths import resource_root, runtime_root
 from .reporter import ReportWriter
 from .snapshot import SnapshotStore
@@ -23,6 +23,7 @@ from .workflow import (
     build_snapshot_folder_label,
     find_latest_pre_work_snapshot,
     resolve_stage,
+    severity_to_korean,
 )
 
 
@@ -80,6 +81,8 @@ class BackboneStateTrackerApp(tk.Tk):
         self.nav_buttons: dict[str, tk.Button] = {}
         self.current_page = "dashboard"
         self.last_counts = {key: 0 for key in SEVERITY_META}
+        self.last_diff_summary: DiffSummary | None = None
+        self.diff_detail_rows: list[tuple[DiffItem, DiffLine]] = []
 
         self._ensure_runtime_config_files()
 
@@ -436,7 +439,7 @@ class BackboneStateTrackerApp(tk.Tk):
 
     def _build_compare_page(self) -> None:
         page = self._make_page("compare")
-        page.rowconfigure(1, weight=1)
+        page.rowconfigure(2, weight=1)
 
         compare = self._make_section(page, "스냅샷 비교", 0)
         form = tk.Frame(compare, bg=PALETTE["surface"], padx=16, pady=16)
@@ -467,6 +470,144 @@ class BackboneStateTrackerApp(tk.Tk):
         for column, key in enumerate(["Critical", "Warning", "Info", "Unchanged"]):
             label, accent, soft = SEVERITY_META[key]
             self._metric_card(result_body, column, label, self.metric_vars[key], accent, soft)
+
+        detail = self._make_section(page, "최근 변경 상세", 2)
+        detail.rowconfigure(1, weight=1)
+        detail_body = tk.Frame(detail, bg=PALETTE["surface"], padx=16, pady=16)
+        detail_body.grid(row=1, column=0, sticky="nsew")
+        detail_body.rowconfigure(0, weight=1)
+        detail_body.rowconfigure(1, weight=1)
+        detail_body.columnconfigure(0, weight=1)
+
+        columns = ("severity", "device", "command", "kind", "base_line", "target_line", "preview")
+        self.diff_tree = ttk.Treeview(detail_body, columns=columns, show="headings", height=8, selectmode="browse")
+        headings = {
+            "severity": ("등급", 72),
+            "device": ("장비", 120),
+            "command": ("명령", 160),
+            "kind": ("유형", 70),
+            "base_line": ("기준 라인", 78),
+            "target_line": ("비교 라인", 78),
+            "preview": ("변경 내용", 420),
+        }
+        for column, (label, width) in headings.items():
+            self.diff_tree.heading(column, text=label)
+            self.diff_tree.column(column, width=width, minwidth=50, stretch=column == "preview")
+        self.diff_tree.grid(row=0, column=0, sticky="nsew")
+        tree_scroll = ttk.Scrollbar(detail_body, orient="vertical", command=self.diff_tree.yview)
+        tree_scroll.grid(row=0, column=1, sticky="ns")
+        self.diff_tree.configure(yscrollcommand=tree_scroll.set)
+        self.diff_tree.bind("<<TreeviewSelect>>", self._on_diff_detail_selected)
+
+        self.diff_detail_text = tk.Text(
+            detail_body,
+            height=8,
+            wrap="word",
+            bg="#F8FBFC",
+            fg=PALETTE["text"],
+            relief="flat",
+            padx=12,
+            pady=10,
+            font=("Consolas", 10),
+        )
+        self.diff_detail_text.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=(10, 0))
+        self._set_diff_detail_text("비교 완료 후 변경된 라인을 선택하면 변경 전/후 값이 여기에 표시됩니다.")
+
+    def _update_diff_details(self, summary: DiffSummary | None) -> None:
+        self.last_diff_summary = summary
+        if not hasattr(self, "diff_tree"):
+            return
+        self.diff_tree.delete(*self.diff_tree.get_children())
+        self.diff_detail_rows = []
+        if summary is None:
+            self._set_diff_detail_text("비교 완료 후 변경된 라인을 선택하면 변경 전/후 값이 여기에 표시됩니다.")
+            return
+
+        for item in summary.items:
+            if item.status == "unchanged":
+                continue
+            for line in item.changed_lines:
+                if line.kind == "context":
+                    continue
+                row_index = len(self.diff_detail_rows)
+                self.diff_detail_rows.append((item, line))
+                self.diff_tree.insert(
+                    "",
+                    "end",
+                    iid=str(row_index),
+                    values=(
+                        severity_to_korean(item.severity),
+                        item.device_name,
+                        item.command_id,
+                        self._change_kind_to_korean(line.kind),
+                        self._format_line_no(line.base_line_no),
+                        self._format_line_no(line.target_line_no),
+                        self._shorten(self._format_line_preview(line), 120),
+                    ),
+                )
+
+        if self.diff_detail_rows:
+            self._set_diff_detail_text("위 목록에서 변경 행을 선택하면 기준/비교 값을 확인할 수 있습니다.")
+        else:
+            self._set_diff_detail_text("표시할 행 단위 변경 상세가 없습니다. 전체 원본 diff는 HTML 리포트에서 확인하세요.")
+
+    def _on_diff_detail_selected(self, _event: tk.Event) -> None:
+        selected = self.diff_tree.selection()
+        if not selected:
+            return
+        try:
+            item, line = self.diff_detail_rows[int(selected[0])]
+        except (IndexError, ValueError):
+            return
+        self._set_diff_detail_text(self._format_selected_diff_detail(item, line))
+
+    def _set_diff_detail_text(self, text: str) -> None:
+        self.diff_detail_text.configure(state="normal")
+        self.diff_detail_text.delete("1.0", "end")
+        self.diff_detail_text.insert("1.0", text)
+        self.diff_detail_text.configure(state="disabled")
+
+    def _format_selected_diff_detail(self, item: DiffItem, line: DiffLine) -> str:
+        return (
+            f"등급: {severity_to_korean(item.severity)}\n"
+            f"장비: {item.device_name}\n"
+            f"명령: {item.command_id} / {item.command}\n"
+            f"분류: {item.category}\n"
+            f"유형: {self._change_kind_to_korean(line.kind)}\n"
+            f"기준 라인: {self._format_line_no(line.base_line_no)}\n"
+            f"변경 전:\n{line.base_text or '-'}\n\n"
+            f"비교 라인: {self._format_line_no(line.target_line_no)}\n"
+            f"변경 후:\n{line.target_text or '-'}"
+        )
+
+    @staticmethod
+    def _change_kind_to_korean(kind: str) -> str:
+        return {
+            "changed": "변경",
+            "added": "추가",
+            "removed": "삭제",
+            "context": "문맥",
+        }.get(kind, kind)
+
+    @staticmethod
+    def _format_line_no(value: int | None) -> str:
+        return "-" if value is None else str(value)
+
+    @staticmethod
+    def _format_line_preview(line: DiffLine) -> str:
+        if line.kind == "changed":
+            return f"{line.base_text} -> {line.target_text}"
+        if line.kind == "added":
+            return f"추가: {line.target_text}"
+        if line.kind == "removed":
+            return f"삭제: {line.base_text}"
+        return line.target_text or line.base_text
+
+    @staticmethod
+    def _shorten(value: str, limit: int) -> str:
+        if len(value) <= limit:
+            return value
+        return value[: max(limit - 1, 0)] + "…"
 
     def _build_settings_page(self) -> None:
         page = self._make_page("settings")
@@ -698,6 +839,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.baseline_var.set(snapshot_dir.name)
         self.compare_status_var.set("작업 전 기준 스냅샷이 준비되었습니다.")
         self.status_chip_var.set("기준 준비")
+        self._update_diff_details(None)
         self._update_dashboard_metrics()
 
     def _set_failed_status(self, status: str) -> None:
@@ -728,11 +870,11 @@ class BackboneStateTrackerApp(tk.Tk):
         self.thread_log(f"HTML 리포트: {paths['html']}")
         self.after(
             0,
-            lambda counts=dict(counts), html_path=paths["html"]: self._select_compared_snapshots(
+            lambda summary=summary, html_path=paths["html"]: self._select_compared_snapshots(
                 baseline_dir.name,
                 target_dir.name,
                 "자동 비교 완료",
-                counts,
+                summary,
                 html_path,
             ),
         )
@@ -742,7 +884,7 @@ class BackboneStateTrackerApp(tk.Tk):
         baseline_name: str,
         target_name: str,
         status: str,
-        counts: dict[str, int] | None = None,
+        summary: DiffSummary | None = None,
         report_path: Path | None = None,
     ) -> None:
         self.refresh_snapshots(log_message=False)
@@ -750,8 +892,8 @@ class BackboneStateTrackerApp(tk.Tk):
         self.target_var.set(target_name)
         self.compare_status_var.set(status)
         self.status_chip_var.set("비교 완료")
-        if counts is not None:
-            self._apply_compare_counts(counts)
+        if summary is not None:
+            self._apply_compare_summary(summary)
         if report_path is not None:
             self.latest_report = report_path
             self.latest_report_var.set(report_path.name)
@@ -796,7 +938,7 @@ class BackboneStateTrackerApp(tk.Tk):
                 self.thread_log(f"HTML 리포트: {paths['html']}")
                 self.after(
                     0,
-                    lambda counts=dict(counts), html_path=paths["html"]: self._finish_manual_compare(counts, html_path),
+                    lambda summary=summary, html_path=paths["html"]: self._finish_manual_compare(summary, html_path),
                 )
             except Exception:
                 self.thread_log(traceback.format_exc())
@@ -805,13 +947,17 @@ class BackboneStateTrackerApp(tk.Tk):
         self.log(f"선택 항목을 비교합니다: {base_name} -> {target_name}")
         threading.Thread(target=worker, daemon=True).start()
 
-    def _finish_manual_compare(self, counts: dict[str, int], report_path: Path) -> None:
+    def _finish_manual_compare(self, summary: DiffSummary, report_path: Path) -> None:
         self.latest_report = report_path
         self.latest_report_var.set(report_path.name)
         self.compare_status_var.set("선택 항목 비교 완료")
         self.status_chip_var.set("비교 완료")
-        self._apply_compare_counts(counts)
+        self._apply_compare_summary(summary)
         self._update_dashboard_metrics()
+
+    def _apply_compare_summary(self, summary: DiffSummary) -> None:
+        self._apply_compare_counts(summary.counts)
+        self._update_diff_details(summary)
 
     def _apply_compare_counts(self, counts: dict[str, int]) -> None:
         self.last_counts = {key: int(counts.get(key, 0)) for key in SEVERITY_META}
