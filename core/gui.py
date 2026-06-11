@@ -13,7 +13,7 @@ from .config import load_commands, load_devices, save_devices
 from .diff_engine import DiffEngine
 from .models import Device, DiffItem, DiffLine, DiffSummary
 from .paths import resource_root, runtime_root
-from .reporter import ReportWriter
+from .reporter import ReportWriter, change_type_label, summary_label
 from .snapshot import SnapshotStore
 from .version import APP_NAME, APP_VERSION
 from .workflow import (
@@ -669,20 +669,22 @@ class BackboneStateTrackerApp(tk.Tk):
         detail_body.rowconfigure(1, weight=1)
         detail_body.columnconfigure(0, weight=1)
 
-        columns = ("severity", "device", "command", "kind", "base_line", "target_line", "preview")
+        columns = ("severity", "device", "command", "impact", "kind", "line", "preview")
         self.diff_tree = ttk.Treeview(detail_body, columns=columns, show="headings", height=8, selectmode="browse")
         headings = {
             "severity": ("등급", 72),
             "device": ("장비", 120),
-            "command": ("명령", 160),
-            "kind": ("유형", 70),
-            "base_line": ("기준 라인", 78),
-            "target_line": ("비교 라인", 78),
-            "preview": ("변경 내용", 420),
+            "command": ("명령", 145),
+            "impact": ("판단", 175),
+            "kind": ("유형", 64),
+            "line": ("라인", 92),
+            "preview": ("변경 내용", 390),
         }
         for column, (label, width) in headings.items():
             self.diff_tree.heading(column, text=label)
             self.diff_tree.column(column, width=width, minwidth=50, stretch=column == "preview")
+        for severity, (_label, accent, soft) in SEVERITY_META.items():
+            self.diff_tree.tag_configure(f"severity_{severity}", foreground=accent, background=soft)
         self.diff_tree.grid(row=0, column=0, sticky="nsew")
         tree_scroll = ttk.Scrollbar(detail_body, orient="vertical", command=self.diff_tree.yview)
         tree_scroll.grid(row=0, column=1, sticky="ns")
@@ -729,11 +731,12 @@ class BackboneStateTrackerApp(tk.Tk):
                         severity_to_korean(item.severity),
                         item.device_name,
                         item.command_id,
-                        self._change_kind_to_korean(line.kind),
-                        self._format_line_no(line.base_line_no),
-                        self._format_line_no(line.target_line_no),
+                        self._shorten(summary_label(item), 80),
+                        change_type_label(line.kind),
+                        self._format_line_location(line),
                         self._shorten(self._format_line_preview(line), 120),
                     ),
+                    tags=(f"severity_{item.severity}",),
                 )
 
         if self.diff_detail_rows:
@@ -757,41 +760,58 @@ class BackboneStateTrackerApp(tk.Tk):
         self.diff_detail_text.insert("1.0", text)
         self.diff_detail_text.configure(state="disabled")
 
-    def _format_selected_diff_detail(self, item: DiffItem, line: DiffLine) -> str:
+    @staticmethod
+    def _format_selected_diff_detail(item: DiffItem, line: DiffLine) -> str:
         return (
-            f"등급: {severity_to_korean(item.severity)}\n"
-            f"장비: {item.device_name}\n"
-            f"명령: {item.command_id} / {item.command}\n"
-            f"분류: {item.category}\n"
-            f"유형: {self._change_kind_to_korean(line.kind)}\n"
-            f"기준 라인: {self._format_line_no(line.base_line_no)}\n"
-            f"변경 전:\n{line.base_text or '-'}\n\n"
-            f"비교 라인: {self._format_line_no(line.target_line_no)}\n"
-            f"변경 후:\n{line.target_text or '-'}"
+            "핵심 판단\n"
+            f"- 등급: {severity_to_korean(item.severity)}\n"
+            f"- 판단: {summary_label(item)}\n"
+            f"- 장비/명령: {item.device_name} / {item.command_id}\n"
+            f"- 위치: {BackboneStateTrackerApp._format_line_location(line)}\n"
+            f"- 유형: {change_type_label(line.kind)}\n\n"
+            "변경값\n"
+            f"기준: {line.base_text or '-'}\n"
+            f"비교: {line.target_text or '-'}\n\n"
+            "추적 포인트\n"
+            f"- 명령 원문: {item.command}\n"
+            f"- 분류: {item.category}\n"
+            f"- 기준 원본: {item.base_raw_file or '-'}\n"
+            f"- 비교 원본: {item.target_raw_file or '-'}\n"
+            f"- 운영 메모: {BackboneStateTrackerApp._severity_guidance(item.severity)}"
         )
 
     @staticmethod
     def _change_kind_to_korean(kind: str) -> str:
-        return {
-            "changed": "변경",
-            "added": "추가",
-            "removed": "삭제",
-            "context": "문맥",
-        }.get(kind, kind)
+        return change_type_label(kind)
 
     @staticmethod
     def _format_line_no(value: int | None) -> str:
         return "-" if value is None else str(value)
 
+    @classmethod
+    def _format_line_location(cls, line: DiffLine) -> str:
+        base_line_no = cls._format_line_no(line.base_line_no)
+        target_line_no = cls._format_line_no(line.target_line_no)
+        return f"{base_line_no} → {target_line_no}"
+
     @staticmethod
     def _format_line_preview(line: DiffLine) -> str:
         if line.kind == "changed":
-            return f"{line.base_text} -> {line.target_text}"
+            return f"{line.base_text} → {line.target_text}"
         if line.kind == "added":
             return f"추가: {line.target_text}"
         if line.kind == "removed":
             return f"삭제: {line.base_text}"
         return line.target_text or line.base_text
+
+    @staticmethod
+    def _severity_guidance(severity: str) -> str:
+        return {
+            "Critical": "작업 영향 가능성이 높으므로 장비 상태와 이중화 경로를 즉시 확인하세요.",
+            "Warning": "승인된 작업 범위 안의 변화인지 확인하고 필요 시 원본 리포트에서 주변 문맥을 봅니다.",
+            "Info": "상태 변화로 기록하고, 복구 완료 여부나 예상 변화인지 확인합니다.",
+            "Unchanged": "의미 있는 변경이 감지되지 않았습니다.",
+        }.get(severity, "리포트 원본과 장비 출력을 함께 확인하세요.")
 
     @staticmethod
     def _shorten(value: str, limit: int) -> str:

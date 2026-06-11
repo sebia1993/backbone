@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.4 - 2026-06-11
+
+- Improved the GUI comparison detail list with an operational impact column and compact `base → target` line location display.
+- Added severity-colored comparison rows so Critical, Warning, Info, and Unchanged results are easier to scan.
+- Redesigned the selected change detail panel to lead with core judgment, exact before/after values, raw file pointers, and severity-specific follow-up guidance.
+- Added GUI formatting tests for inline line mapping and selected change detail content.
+
 ## v0.7.3 - 2026-06-11
 
 - Added unique snapshot folder allocation when the same stage is collected more than once in the same second.
