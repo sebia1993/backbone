@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.7.0
+문서 버전: v0.7.1
 작성일: 2026-06-11
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -53,6 +53,7 @@ python app.py --smoke-check
 `--smoke-check`는 GUI를 실제로 생성했다가 닫으며, 주요 페이지가 만들어지는지 확인합니다.
 
 v0.6.0부터 비교 결과는 `DiffItem.diff` 원본 unified diff와 함께 `changed_lines`, `change_count`, `change_preview`를 저장합니다. 리포트나 GUI를 수정할 때는 두 표현이 모두 유지되는지 확인합니다.
+v0.7.1부터 HTML 리포트의 변경 상세는 `유형`, `라인`, `변경 내용` 3열 구조입니다. GUI와 XLSX는 기존 분리 필드를 유지하므로 HTML 가독성 수정이 다른 출력 형식을 깨지 않는지 테스트로 확인합니다.
 
 ## 5. UI 유지보수 기준
 
