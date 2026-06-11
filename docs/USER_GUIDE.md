@@ -1,6 +1,6 @@
 # Backbone State Tracker 사용자 가이드
 
-문서 버전: v0.8.4
+문서 버전: v0.8.5
 작성일: 2026-06-11
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
@@ -8,7 +8,7 @@
 
 - 먼저 `작업 전` 상태를 수집합니다. 이후 `백본3 OFF 중`, `복구 후`, `사용자 지정` 단계는 최신 `작업 전` 스냅샷과 자동 비교됩니다.
 - 장비 변경 명령은 실행하지 않습니다. `config/commands.yaml`에 정의된 읽기 전용 점검 명령만 실행합니다.
-- 각 점검 명령의 의미와 정상/주의 포인트는 `docs/COMMAND_GUIDE.md` 또는 `docs/COMMAND_GUIDE.html`에서 확인합니다.
+- 각 점검 명령의 의미와 정상/주의 포인트는 앱의 `도움말 > 점검 명령어 가이드 열기`, 상태 수집 화면의 `명령어 가이드 열기`, 또는 `docs/COMMAND_GUIDE.md/html`에서 확인합니다.
 - 수집 전 `설정 점검`으로 장비 목록, 포트, 명령 ID 중복, 변경성 명령 의심 항목을 먼저 확인합니다.
 - 수집, 비교, 샘플 검증이 진행 중일 때는 같은 작업을 다시 시작할 수 없습니다. 현재 작업이 끝난 뒤 다음 수집 또는 비교를 실행합니다.
 - 암호는 저장하지 않습니다. 프로그램 종료 후 다시 입력해야 합니다.
@@ -116,7 +116,7 @@
 ## 8. 배포 ZIP 무결성 확인
 
 - v0.8.0부터 `dist/`에 ZIP 파일과 같은 이름의 `.sha256.txt` 파일이 함께 생성됩니다.
-- `dist/backbone_state_tracker_v0.8.4_YYYYMMDD_release_manifest.txt`에는 같은 버전의 소스 ZIP과 Windows EXE ZIP 이름, 크기, SHA256 값이 정리됩니다.
+- `dist/backbone_state_tracker_v0.8.5_YYYYMMDD_release_manifest.txt`에는 같은 버전의 소스 ZIP과 Windows EXE ZIP 이름, 크기, SHA256 값이 정리됩니다.
 - v0.8.3부터는 빌드 후 `dist/latest/`와 `dist/CURRENT_RELEASE.txt`가 최신 반입 대상 파일 목록으로 갱신됩니다.
 - ZIP 내부의 `PACKAGE_INFO.txt`에서 패키지 종류, 포함 파일, 제외 항목, 검증 방법을 다시 확인할 수 있습니다.
 - 사내 반입 후 PowerShell에서 아래 명령을 실행하고, 결과 해시가 `.sha256.txt` 또는 `release_manifest.txt`의 SHA256 값과 같은지 비교합니다.
@@ -124,9 +124,9 @@
 - v0.8.2부터는 ZIP 파일만 반입한 환경에서도 `*_verify_release_package.ps1` PowerShell 스크립트로 같은 검증을 수행할 수 있습니다.
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.4_YYYYMMDD_windows_exe.zip
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.5_YYYYMMDD_windows_exe.zip
 # 아래 명령은 소스/배포 작업 폴더에서 실행합니다.
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.4_YYYYMMDD_windows_exe.zip --require-manifest
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.5_YYYYMMDD_windows_exe.zip --require-manifest
 # 아래 명령은 ZIP 파일과 같은 폴더의 독립 PowerShell 검증 스크립트를 사용합니다.
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.4_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.4_YYYYMMDD_windows_exe.zip -RequireManifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.5_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.5_YYYYMMDD_windows_exe.zip -RequireManifest
 ```

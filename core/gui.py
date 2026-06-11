@@ -183,6 +183,7 @@ class BackboneStateTrackerApp(tk.Tk):
 
         help_menu = tk.Menu(menu_bar, tearoff=False)
         help_menu.add_command(label="사용자 가이드 열기", command=lambda: self.open_doc("USER_GUIDE.html"))
+        help_menu.add_command(label="점검 명령어 가이드 열기", command=lambda: self.open_doc("COMMAND_GUIDE.html"))
         help_menu.add_command(label="버전 변경내역 열기", command=lambda: self.open_doc("VERSION_HISTORY.html"))
         menu_bar.add_cascade(label="도움말", menu=help_menu)
 
@@ -690,11 +691,18 @@ class BackboneStateTrackerApp(tk.Tk):
         command_body.columnconfigure(0, weight=1)
         text = (
             "수집 시 config\\commands.yaml의 읽기 전용 점검 명령을 실행합니다.\n"
-            "기본 명령은 인터페이스, 라우팅/이웃, LACP, 로그, 하드웨어 상태를 확인하도록 구성되어 있습니다."
+            "기본 명령은 인터페이스, 라우팅/이웃, LACP, 로그, 하드웨어 상태를 확인하도록 구성되어 있습니다.\n"
+            "명령어별 의미와 정상/주의 포인트는 명령어 가이드에서 확인할 수 있습니다."
         )
         tk.Label(command_body, text=text, bg=PALETTE["surface"], fg=PALETTE["muted"], justify="left").grid(row=0, column=0, sticky="w")
+        ttk.Button(
+            command_body,
+            text="명령어 가이드 열기",
+            style="Secondary.TButton",
+            command=lambda: self.open_doc("COMMAND_GUIDE.html"),
+        ).grid(row=0, column=1, sticky="e", padx=(0, 8))
         ttk.Button(command_body, text="장비 설정으로 이동", style="Secondary.TButton", command=lambda: self.show_page("settings")).grid(
-            row=0, column=1, sticky="e"
+            row=0, column=2, sticky="e"
         )
 
     def _build_compare_page(self) -> None:

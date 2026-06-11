@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.5 - 2026-06-11
+
+- Added a Help menu entry that opens the Korean command guide directly from the app.
+- Added a command guide button on the status collection screen next to the command-set summary.
+- Updated operator, developer, and version history guides to document the in-app command guide access path.
+- No device collection commands, comparison logic, or report formats were changed.
+
 ## v0.8.4 - 2026-06-11
 
 - Added `docs/COMMAND_GUIDE.md` and `docs/COMMAND_GUIDE.html` with Korean explanations for each bundled HPE/Comware read-only check command.
