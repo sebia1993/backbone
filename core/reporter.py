@@ -20,6 +20,8 @@ SUMMARY_LABELS_KO = {
     "Warning keyword detected in changed output.": "변경 출력에서 주의 키워드 감지",
     "Operational state changed.": "운영 상태 변경 감지",
     "Output changed.": "출력 변경 감지",
+    "Target device connection failed.": "비교 시점 장비 접속 실패",
+    "Target device connection restored.": "비교 시점 장비 접속 복구",
 }
 
 CHANGE_TYPE_LABELS_KO = {

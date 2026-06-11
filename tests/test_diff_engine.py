@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from backbone_state_tracker.core.connectivity import DEVICE_CONNECTIVITY_COMMAND_ID, make_connectivity_result_for_device
 from backbone_state_tracker.core.diff_engine import DiffEngine
 from backbone_state_tracker.core.models import CommandResult, Device
 from backbone_state_tracker.core.snapshot import SnapshotStore
@@ -13,7 +14,16 @@ class DiffEngineTests(unittest.TestCase):
     def _snapshot(self, root: Path, label: str, output: str, command_id: str = "interface_brief") -> Path:
         store = SnapshotStore(root)
         device = Device(name="backbone4", host="192.0.2.4")
-        result = CommandResult(
+        result = self._command_result(device, command_id=command_id, output=output)
+        return store.write_snapshot(label, [device], {device.name: [result]})
+
+    def _command_result(
+        self,
+        device: Device,
+        command_id: str = "interface_brief",
+        output: str = "GE1/0/1 UP",
+    ) -> CommandResult:
+        return CommandResult(
             device_name=device.name,
             host=device.host,
             command_id=command_id,
@@ -26,7 +36,6 @@ class DiffEngineTests(unittest.TestCase):
             started_at="2026-06-11T10:00:00",
             ended_at="2026-06-11T10:00:01",
         )
-        return store.write_snapshot(label, [device], {device.name: [result]})
 
     def test_ignores_clock_like_noise(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -36,7 +45,7 @@ class DiffEngineTests(unittest.TestCase):
 
             summary = DiffEngine().compare(base, target)
 
-        self.assertEqual(summary.counts["Unchanged"], 1)
+        self.assertEqual(summary.counts["Unchanged"], 2)
         self.assertEqual(summary.counts["Critical"], 0)
 
     def test_interface_down_is_critical(self) -> None:
@@ -91,6 +100,102 @@ class DiffEngineTests(unittest.TestCase):
         self.assertEqual(removed_lines[0].kind, "removed")
         self.assertEqual(removed_lines[0].base_line_no, 2)
         self.assertEqual(removed_lines[0].base_text, "B")
+
+    def test_unreachable_target_device_is_single_critical_connectivity_item(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            store = SnapshotStore(root)
+            device = Device(name="backbone3", host="192.0.2.3")
+            base = store.write_snapshot(
+                "base",
+                [device],
+                {device.name: [self._command_result(device, output="GE1/0/1 UP")]},
+            )
+            target = store.write_snapshot(
+                "target",
+                [device],
+                {
+                    device.name: [
+                        make_connectivity_result_for_device(
+                            device_name=device.name,
+                            host=device.host,
+                            success=False,
+                            reason="timeout",
+                            started_at="2026-06-11T10:05:00",
+                            ended_at="2026-06-11T10:05:00",
+                        )
+                    ]
+                },
+            )
+
+            summary = DiffEngine().compare(base, target)
+
+        connectivity = next(item for item in summary.items if item.command_id == DEVICE_CONNECTIVITY_COMMAND_ID)
+        self.assertEqual(connectivity.severity, "Critical")
+        self.assertEqual(connectivity.summary, "Target device connection failed.")
+        self.assertEqual(connectivity.change_count, 1)
+        self.assertEqual(connectivity.changed_lines[0].base_text, "reachable")
+        self.assertEqual(connectivity.changed_lines[0].target_text, "unreachable: timeout")
+        self.assertFalse(any(item.command_id == "interface_brief" and item.status == "removed" for item in summary.items))
+
+    def test_restored_target_device_is_info_without_added_command_noise(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            store = SnapshotStore(root)
+            device = Device(name="backbone3", host="192.0.2.3")
+            base = store.write_snapshot(
+                "base",
+                [device],
+                {
+                    device.name: [
+                        make_connectivity_result_for_device(
+                            device_name=device.name,
+                            host=device.host,
+                            success=False,
+                            reason="timeout",
+                            started_at="2026-06-11T10:00:00",
+                            ended_at="2026-06-11T10:00:00",
+                        )
+                    ]
+                },
+            )
+            target = store.write_snapshot(
+                "target",
+                [device],
+                {device.name: [self._command_result(device, output="GE1/0/1 UP")]},
+            )
+
+            summary = DiffEngine().compare(base, target)
+
+        connectivity = next(item for item in summary.items if item.command_id == DEVICE_CONNECTIVITY_COMMAND_ID)
+        self.assertEqual(connectivity.severity, "Info")
+        self.assertEqual(connectivity.summary, "Target device connection restored.")
+        self.assertEqual(connectivity.changed_lines[0].base_text, "unreachable: timeout")
+        self.assertEqual(connectivity.changed_lines[0].target_text, "reachable")
+        self.assertFalse(any(item.command_id == "interface_brief" and item.status == "added" for item in summary.items))
+
+    def test_still_unreachable_target_device_remains_critical(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            store = SnapshotStore(root)
+            device = Device(name="backbone3", host="192.0.2.3")
+            failure = lambda: make_connectivity_result_for_device(
+                device_name=device.name,
+                host=device.host,
+                success=False,
+                reason="timeout",
+                started_at="2026-06-11T10:00:00",
+                ended_at="2026-06-11T10:00:00",
+            )
+            base = store.write_snapshot("base", [device], {device.name: [failure()]})
+            target = store.write_snapshot("target", [device], {device.name: [failure()]})
+
+            summary = DiffEngine().compare(base, target)
+
+        connectivity = next(item for item in summary.items if item.command_id == DEVICE_CONNECTIVITY_COMMAND_ID)
+        self.assertEqual(connectivity.severity, "Critical")
+        self.assertEqual(connectivity.summary, "Target device connection failed.")
+        self.assertEqual(connectivity.change_count, 1)
 
 
 if __name__ == "__main__":

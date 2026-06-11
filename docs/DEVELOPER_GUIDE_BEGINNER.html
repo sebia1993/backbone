@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 초급 개발자 가이드 v0.7.1</title>
+  <title>Backbone State Tracker 초급 개발자 가이드 v0.7.2</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -17,7 +17,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p>문서 버전: v0.7.1<br>작성일: 2026-06-11<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
+  <p>문서 버전: v0.7.2<br>작성일: 2026-06-11<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
 
   <h2>1. 프로젝트 목적</h2>
   <p>백본 3/4호기의 작업 전후 상태를 수집하고 특정 시점끼리 비교해 변경점을 추적하는 Windows GUI 프로그램입니다. 장비 설정 변경이 아니라 읽기 전용 점검과 리포트 생성을 목표로 합니다.</p>
@@ -27,6 +27,7 @@
     <li><code>app.py</code>: 프로그램 시작점</li>
     <li><code>core/gui.py</code>: Tkinter GUI 화면과 사용자 이벤트 처리</li>
     <li><code>core/collector.py</code>: Netmiko 기반 SSH 명령 수집</li>
+    <li><code>core/connectivity.py</code>: 장비별 접속 상태 내부 결과 생성</li>
     <li><code>core/snapshot.py</code>: 스냅샷 저장과 로드</li>
     <li><code>core/diff_engine.py</code>: 스냅샷 비교 엔진</li>
     <li><code>core/reporter.py</code>: HTML, XLSX, JSON 리포트 생성</li>
@@ -52,6 +53,7 @@ python app.py --smoke-check</code></pre>
   <p><code>--smoke-check</code>는 GUI를 실제로 생성했다가 닫으며 주요 페이지가 만들어지는지 확인합니다.</p>
   <p>v0.6.0부터 비교 결과는 <code>DiffItem.diff</code> 원본 unified diff와 함께 <code>changed_lines</code>, <code>change_count</code>, <code>change_preview</code>를 저장합니다. 리포트나 GUI를 수정할 때는 두 표현이 모두 유지되는지 확인합니다.</p>
   <p>v0.7.1부터 HTML 리포트의 변경 상세는 <code>유형</code>, <code>라인</code>, <code>변경 내용</code> 3열 구조입니다. GUI와 XLSX는 기존 분리 필드를 유지하므로 HTML 가독성 수정이 다른 출력 형식을 깨지 않는지 테스트로 확인합니다.</p>
+  <p>v0.7.2부터 모든 수집은 장비별 <code>device_connectivity</code> 결과를 포함합니다. 이 항목은 <code>config/commands.yaml</code>에 넣는 사용자 점검 명령이 아니라 접속 성공/실패를 비교군에 넣기 위한 내부 결과입니다. 장비가 접속 불가이면 비교 엔진은 일반 명령 누락 노이즈를 숨기고 <code>device_connectivity</code> 한 건을 Critical로 표시합니다.</p>
 
   <h2>5. UI 유지보수 기준</h2>
   <ul>

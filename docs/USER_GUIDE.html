@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 사용자 가이드 v0.7.1</title>
+  <title>Backbone State Tracker 사용자 가이드 v0.7.2</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -16,7 +16,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 사용자 가이드</h1>
-  <p>문서 버전: v0.7.1<br>작성일: 2026-06-11<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
+  <p>문서 버전: v0.7.2<br>작성일: 2026-06-11<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
   <h2>1. 핵심 운영 포인트</h2>
   <div class="core">
@@ -28,6 +28,7 @@
       <li>비교 리포트는 HTML, XLSX, JSON으로 생성됩니다.</li>
       <li>비교 결과에서 변경된 라인의 변경 전/후 값을 직접 확인합니다.</li>
       <li>HTML 리포트는 변경 내용을 <code>기존값 → 신규값</code> 형태로 한 줄에 표시합니다.</li>
+      <li>장비 1대가 접속 불가이면 해당 장비는 <code>device_connectivity</code> 긴급 항목으로 비교 결과에 포함됩니다.</li>
       <li>대시보드의 작업 진행 마법사를 따라가면 다음 단계 버튼으로 작업 흐름을 이어갈 수 있습니다.</li>
     </ul>
   </div>
@@ -37,7 +38,7 @@
     <li><strong>대시보드</strong>의 작업 진행 마법사에서 현재 단계와 다음 액션을 확인합니다.</li>
     <li>필요 시 <strong>장비 설정</strong> 화면에서 백본 3/4호기 IP, 포트, 장비 타입, 접속 계정을 입력합니다.</li>
     <li>프로그램이 SSH로 접속해 읽기 전용 명령을 실행합니다.</li>
-    <li>명령 출력이 시간별 스냅샷 폴더에 저장됩니다.</li>
+    <li>장비별 접속 상태와 명령 출력이 시간별 스냅샷 폴더에 저장됩니다.</li>
     <li>작업 전이 아닌 단계는 최신 <code>작업 전</code> 스냅샷과 자동 비교됩니다.</li>
     <li><strong>비교 결과</strong> 화면 또는 <strong>최근 리포트</strong> 버튼으로 변경점을 확인합니다.</li>
   </ol>
@@ -48,7 +49,7 @@
   <h3>상태 수집</h3>
   <p><code>작업 전</code>, <code>백본3 OFF 중</code>, <code>복구 후</code>, <code>사용자 지정</code> 단계 중 하나를 선택합니다.</p>
   <h3>비교 결과</h3>
-  <p>기준 스냅샷과 비교 스냅샷을 직접 선택해 다시 비교합니다. 최근 변경 상세 목록에서 변경된 행을 선택하면 장비, 명령, 기준 라인, 비교 라인, 변경 전/후 값을 확인할 수 있습니다.</p>
+  <p>기준 스냅샷과 비교 스냅샷을 직접 선택해 다시 비교합니다. 최근 변경 상세 목록에서 변경된 행을 선택하면 장비, 명령, 기준 라인, 비교 라인, 변경 전/후 값을 확인할 수 있습니다. 접속 불가 장비는 일반 명령 누락을 여러 건으로 나열하지 않고 <code>device_connectivity</code> 긴급 항목 한 줄로 표시합니다.</p>
   <h3>장비 설정</h3>
   <p>백본 3/4호기 접속 정보와 SSH 계정을 입력합니다. 암호는 저장하지 않습니다.</p>
   <h3>작업 로그</h3>
@@ -65,7 +66,7 @@
   </ol>
 
   <h2>5. 주의 사항</h2>
-  <p>HTML 리포트는 명령별 변경 상세 테이블과 원본 unified diff를 함께 제공합니다. HTML 변경 상세는 <code>유형</code>, <code>라인</code>, <code>변경 내용</code> 구조이며 변경 행은 <code>기존값 → 신규값</code>, 추가 행은 <code>추가: 신규값</code>, 삭제 행은 <code>삭제: 기존값</code>으로 표시됩니다. 긴 명령 출력은 변경 상세 영역의 가로 스크롤로 확인합니다.</p>
+  <p>HTML 리포트는 명령별 변경 상세 테이블과 원본 unified diff를 함께 제공합니다. HTML 변경 상세는 <code>유형</code>, <code>라인</code>, <code>변경 내용</code> 구조이며 변경 행은 <code>기존값 → 신규값</code>, 추가 행은 <code>추가: 신규값</code>, 삭제 행은 <code>삭제: 기존값</code>으로 표시됩니다. 장비 접속 실패는 <code>reachable → unreachable: timeout</code>처럼 접속 상태 변경으로 표시됩니다. 긴 명령 출력은 변경 상세 영역의 가로 스크롤로 확인합니다.</p>
   <p>XLSX 리포트의 <code>diff_detail</code> 시트는 장비, 명령, 변경 유형, 기준 라인, 비교 라인, 변경 전/후 값을 행 단위로 제공합니다.</p>
   <ul>
     <li>운영 장비 대상이므로 승인된 점검 시간과 접속 권한을 확인합니다.</li>
