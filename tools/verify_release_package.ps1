@@ -65,6 +65,31 @@ function Get-PackageIdentity {
     return $null
 }
 
+function Get-ManifestPackageRecords {
+    param([string]$ManifestText)
+
+    $records = @{}
+    $currentName = $null
+    foreach ($line in ($ManifestText -split "`r?`n")) {
+        if ($line -match "^- Package: (?<name>.+)$") {
+            $currentName = $Matches["name"]
+            $records[$currentName] = @{}
+            continue
+        }
+        if ([string]::IsNullOrWhiteSpace($currentName)) {
+            continue
+        }
+        if ($line -match "^  Size: (?<size>\d+) bytes$") {
+            $records[$currentName]["SizeBytes"] = [int64]$Matches["size"]
+            continue
+        }
+        if ($line -match "^  SHA256: (?<sha256>[0-9a-f]{64})$") {
+            $records[$currentName]["SHA256"] = $Matches["sha256"]
+        }
+    }
+    return $records
+}
+
 $resolvedPackage = (Resolve-Path -LiteralPath $Package).Path
 $packageItem = Get-Item -LiteralPath $resolvedPackage
 $packageName = $packageItem.Name
@@ -93,6 +118,10 @@ if (-not (Test-Path -LiteralPath $sidecarPath)) {
         $errors.Add("Checksum sidecar does not contain a Version line: $(Split-Path $sidecarPath -Leaf)")
     }
     if ($shaMatch.Success) {
+        $sidecarPackageName = $shaMatch.Groups["name"].Value
+        if ($sidecarPackageName -ne $packageName) {
+            $errors.Add("Checksum sidecar package mismatch: expected $packageName, sidecar $sidecarPackageName")
+        }
         $expectedSha = $shaMatch.Groups["sha256"].Value
         $actualSha = (Get-FileHash -Algorithm SHA256 -LiteralPath $resolvedPackage).Hash.ToLowerInvariant()
         if ($actualSha -ne $expectedSha) {
@@ -202,12 +231,6 @@ if ([string]::IsNullOrWhiteSpace($manifestName)) {
         }
     } else {
         $manifestText = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8
-        if ($manifestText -notmatch [regex]::Escape($packageName)) {
-            $errors.Add("Release manifest does not list package: $packageName")
-        }
-        if ($expectedSha -and $manifestText -notmatch [regex]::Escape($expectedSha)) {
-            $errors.Add("Release manifest does not list package SHA256: $expectedSha")
-        }
         if ($packageIdentity) {
             $multiline = [System.Text.RegularExpressions.RegexOptions]::Multiline
             $manifestVersionMatch = [regex]::Match($manifestText, "^Version = (?<version>v?\d+\.\d+\.\d+)\r?$", $multiline)
@@ -224,6 +247,26 @@ if ([string]::IsNullOrWhiteSpace($manifestName)) {
                 $errors.Add("Release manifest does not contain a Date stamp line: $manifestName")
             } elseif ($manifestDateMatch.Groups["date"].Value -ne $packageIdentity.DateStamp) {
                 $errors.Add("Release manifest date mismatch for ${packageName}: expected $($packageIdentity.DateStamp), manifest $($manifestDateMatch.Groups["date"].Value)")
+            }
+        }
+        $manifestRecords = Get-ManifestPackageRecords -ManifestText $manifestText
+        if (-not $manifestRecords.ContainsKey($packageName)) {
+            $errors.Add("Release manifest does not list package record: $packageName")
+        } else {
+            $packageRecord = $manifestRecords[$packageName]
+            if (-not $packageRecord.ContainsKey("SizeBytes")) {
+                $errors.Add("Release manifest package record does not list size: $packageName")
+            } elseif ($packageRecord["SizeBytes"] -ne $packageItem.Length) {
+                $errors.Add("Release manifest package size mismatch for ${packageName}: expected $($packageItem.Length), manifest $($packageRecord["SizeBytes"])")
+            }
+            if (-not $packageRecord.ContainsKey("SHA256")) {
+                $errors.Add("Release manifest package record does not list SHA256: $packageName")
+            } else {
+                $actualManifestSha = $packageRecord["SHA256"]
+                $actualPackageSha = (Get-FileHash -Algorithm SHA256 -LiteralPath $resolvedPackage).Hash.ToLowerInvariant()
+                if ($actualManifestSha -ne $actualPackageSha) {
+                    $errors.Add("Release manifest package SHA256 mismatch for ${packageName}: expected $actualPackageSha, manifest $actualManifestSha")
+                }
             }
         }
     }

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.10 - 2026-06-12
+
+- Extended Python and PowerShell release package verification to check that the checksum sidecar `SHA256 (...)` package name matches the ZIP filename.
+- Replaced loose release manifest package/SHA checks with package-record checks for the selected ZIP's exact `Package`, `Size`, and `SHA256` values.
+- Added regression tests for sidecar package-name mismatch, manifest package-record SHA mismatch, and manifest package-record size mismatch.
+- Updated README, operator, developer, release checklist, command, and version history documents for v0.8.10.
+- No runtime collection, comparison, report, or GUI workflow behavior changed.
+
 ## v0.8.9 - 2026-06-12
 
 - Extended Python and PowerShell release package verification to compare the ZIP filename version with the checksum sidecar `Version` line.

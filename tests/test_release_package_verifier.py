@@ -152,6 +152,25 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             self.assertFalse(result.ok)
             self.assertTrue(any("Checksum sidecar version mismatch" in error for error in result.errors))
 
+    def test_sidecar_package_name_mismatch_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.10_20260612_source.zip"
+            _write_zip(package, _source_entries())
+            sidecar = write_package_checksum(package, "0.8.10", generated_at="2026-06-12T10:00:00+09:00")
+            sidecar.write_text(
+                sidecar.read_text(encoding="utf-8").replace(
+                    f"SHA256 ({package.name})",
+                    "SHA256 (backbone_state_tracker_v0.8.10_20260612_windows_exe.zip)",
+                ),
+                encoding="utf-8",
+            )
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("Checksum sidecar package mismatch" in error for error in result.errors))
+
     def test_manifest_version_mismatch_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             dist = Path(tmp)
@@ -211,6 +230,71 @@ class ReleasePackageVerifierTests(unittest.TestCase):
 
             self.assertFalse(result.ok)
             self.assertTrue(any("Release manifest date mismatch" in error for error in result.errors))
+
+    def test_manifest_package_record_sha_mismatch_fails_even_if_hash_exists_elsewhere(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.10_20260612_source.zip"
+            _write_zip(package, _source_entries())
+            write_package_checksum(package, "0.8.10", generated_at="2026-06-12T10:00:00+09:00")
+            actual_sha = file_sha256(package)
+            wrong_sha = "0" * 64
+            (dist / "backbone_state_tracker_v0.8.10_20260612_release_manifest.txt").write_text(
+                "\n".join(
+                    [
+                        "Backbone State Tracker Release Manifest",
+                        "Project = backbone_state_tracker",
+                        "Version = v0.8.10",
+                        "Date stamp = 20260612",
+                        "Generated = 2026-06-12T10:01:00+09:00",
+                        "",
+                        "Packages",
+                        f"- Package: {package.name}",
+                        f"  Size: {package.stat().st_size} bytes",
+                        f"  SHA256: {wrong_sha}",
+                        "- Package: unrelated.zip",
+                        "  Size: 1 bytes",
+                        f"  SHA256: {actual_sha}",
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            result = verify_release_package(package, require_manifest=True)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("Release manifest package SHA256 mismatch" in error for error in result.errors))
+
+    def test_manifest_package_record_size_mismatch_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.10_20260612_source.zip"
+            _write_zip(package, _source_entries())
+            write_package_checksum(package, "0.8.10", generated_at="2026-06-12T10:00:00+09:00")
+            (dist / "backbone_state_tracker_v0.8.10_20260612_release_manifest.txt").write_text(
+                "\n".join(
+                    [
+                        "Backbone State Tracker Release Manifest",
+                        "Project = backbone_state_tracker",
+                        "Version = v0.8.10",
+                        "Date stamp = 20260612",
+                        "Generated = 2026-06-12T10:01:00+09:00",
+                        "",
+                        "Packages",
+                        f"- Package: {package.name}",
+                        f"  Size: {package.stat().st_size + 1} bytes",
+                        f"  SHA256: {file_sha256(package)}",
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            result = verify_release_package(package, require_manifest=True)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("Release manifest package size mismatch" in error for error in result.errors))
 
 
 if __name__ == "__main__":

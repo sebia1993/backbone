@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.9
+문서 버전: v0.8.10
 작성일: 2026-06-12
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -83,6 +83,7 @@ v0.8.6부터 비교 상세 선택 행에서 기준/비교 `raw/*.txt`를 바로 
 v0.8.7부터 README와 가이드는 특정 개발 PC의 절대 경로 대신 `<folder-that-contains-backbone_state_tracker>` 형태의 휴대 가능한 예시를 사용합니다. 문서를 수정할 때는 로컬 작업 경로가 배포 ZIP에 들어가지 않도록 확인합니다.
 v0.8.8부터 `docs/RELEASE_CHECKLIST.md/html`이 배포 필수 문서에 포함됩니다. Python/PowerShell 패키지 검증기는 이 문서가 빠진 ZIP을 실패 처리합니다.
 v0.8.9부터 Python/PowerShell 패키지 검증기는 ZIP 파일명 버전과 sidecar `Version`, manifest `Version`, manifest `Date stamp`가 일치하는지 확인합니다.
+v0.8.10부터 Python/PowerShell 패키지 검증기는 sidecar의 대상 ZIP 이름과 manifest의 해당 패키지 `Size`/`SHA256` 레코드가 실제 ZIP과 일치하는지 확인합니다.
 
 ## 5. UI 유지보수 기준
 
@@ -109,7 +110,7 @@ UI를 수정할 때는 `core/gui.py`의 수집/비교 메서드 계약을 깨지
 5. 테스트와 smoke-check를 실행합니다.
 6. 소스 ZIP과 Windows EXE ZIP을 생성합니다.
 7. `dist/`의 ZIP, `.sha256.txt`, `release_manifest.txt`, `CURRENT_RELEASE.txt`, `latest/`를 확인합니다.
-8. `python .\tools\verify_release_package.py .\dist\<package>.zip --require-manifest`로 배포 ZIP을 검증합니다. 파일명 버전과 sidecar/manifest 버전 및 날짜가 맞는지도 확인합니다.
+8. `python .\tools\verify_release_package.py .\dist\<package>.zip --require-manifest`로 배포 ZIP을 검증합니다. 파일명, sidecar, manifest의 버전/날짜/패키지 레코드가 맞는지도 확인합니다.
 9. `powershell -ExecutionPolicy Bypass -File .\dist\<version>_verify_release_package.ps1 -Package .\dist\<package>.zip -RequireManifest`로 독립 PowerShell 검증도 확인합니다.
 10. Git 브랜치, 커밋, 태그를 남깁니다.
 
