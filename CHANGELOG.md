@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.8 - 2026-06-12
+
+- Added `docs/RELEASE_CHECKLIST.md` and `docs/RELEASE_CHECKLIST.html` for Korean internal-transfer and release verification handoff.
+- Promoted the release checklist to a required source and Windows EXE ZIP document in both Python and PowerShell package verifiers.
+- Added a verifier regression test so packages missing the release checklist fail before handoff.
+- Updated README, operator, developer, command, and version history documents for the new release checklist and v0.8.8 package names.
+- No runtime collection, comparison, report, or GUI workflow behavior changed.
+
 ## v0.8.7 - 2026-06-11
 
 - Replaced hardcoded local developer paths in README and beginner developer guide with portable `<folder-that-contains-backbone_state_tracker>` examples.

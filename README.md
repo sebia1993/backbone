@@ -1,6 +1,6 @@
 # Backbone State Tracker
 
-Version: `v0.8.7`
+Version: `v0.8.8`
 
 Windows GUI utility for collecting read-only status snapshots from backbone 3
 and 4, then comparing snapshots to track operational changes during maintenance.
@@ -22,7 +22,7 @@ and 4, then comparing snapshots to track operational changes during maintenance.
 - Automatically compares `백본3 OFF 중`, `복구 후`, and custom snapshots against the latest `작업 전` snapshot.
 - Writes HTML, XLSX, and JSON comparison reports.
 - Creates a shared report ZIP with redacted reports and guides, excluding snapshot raw output folders.
-- Writes SHA256 checksum sidecars, a release manifest, `PACKAGE_INFO.txt`, and Python/PowerShell release ZIP content verification.
+- Writes SHA256 checksum sidecars, a release manifest, `PACKAGE_INFO.txt`, a release import checklist, and Python/PowerShell release ZIP content verification.
 - Provides a Korean bright-console UI with left navigation, dashboard metrics, collection, compare, settings, and log screens.
 - Shows line-level snapshot differences so operators can see the exact before/after output that changed.
 - Filters and searches GUI comparison detail rows by severity, device, command, judgment, line, and changed values.
@@ -54,6 +54,7 @@ maintenance stage. Passwords are never saved to configuration or report files.
 - `docs/COMMAND_GUIDE.md`: Korean command meaning and check-point guide.
 - `docs/DEVELOPER_GUIDE_BEGINNER.md`: beginner developer guide.
 - `docs/VERSION_HISTORY.md`: version-by-version change history.
+- `docs/RELEASE_CHECKLIST.md`: Korean release import and verification checklist.
 
 ## Test
 
@@ -75,8 +76,9 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
 
 The generated ZIP is written to `dist\`. It excludes `.git`, runtime outputs,
 local `config\devices.yaml`, caches, build folders, and virtual environments.
-The ZIP also includes `PACKAGE_INFO.txt`. A matching `.sha256.txt` sidecar and
-version-level `release_manifest.txt` are written to `dist\` for transfer checks.
+The ZIP also includes `PACKAGE_INFO.txt` and `docs\RELEASE_CHECKLIST.md/html`.
+A matching `.sha256.txt` sidecar and version-level `release_manifest.txt` are
+written to `dist\` for transfer checks.
 `dist\latest\` and `dist\CURRENT_RELEASE.txt` are refreshed with the current
 version artifacts so older ZIP files in `dist\` are easier to avoid.
 
@@ -92,23 +94,24 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 The generated ZIP is written to `dist\` as:
 
 ```text
-backbone_state_tracker_v0.8.7_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.8_YYYYMMDD_windows_exe.zip
 ```
 
-The ZIP also includes `PACKAGE_INFO.txt` and `RUN_FIRST.txt`. A matching
-`.sha256.txt` sidecar and version-level `release_manifest.txt` are written to
-`dist\`. After moving a ZIP into the internal environment, verify it with:
+The ZIP also includes `PACKAGE_INFO.txt`, `RUN_FIRST.txt`, and the release
+import checklist under `docs\`. A matching `.sha256.txt` sidecar and
+version-level `release_manifest.txt` are written to `dist\`. After moving a ZIP
+into the internal environment, verify it with:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.7_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.7_YYYYMMDD_windows_exe.zip --require-manifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.8_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.8_YYYYMMDD_windows_exe.zip --require-manifest
 ```
 
 If only the release files were transferred, use the standalone PowerShell helper
 that is written next to the ZIP files:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.7_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.7_YYYYMMDD_windows_exe.zip -RequireManifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.8_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.8_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 Corporate mail systems may block ZIP files containing `.exe`, `.py`, or `.ps1`

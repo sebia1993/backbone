@@ -30,6 +30,8 @@ COMMON_REQUIRED = {
     "backbone_state_tracker/docs/DEVELOPER_GUIDE_BEGINNER.html",
     "backbone_state_tracker/docs/VERSION_HISTORY.md",
     "backbone_state_tracker/docs/VERSION_HISTORY.html",
+    "backbone_state_tracker/docs/RELEASE_CHECKLIST.md",
+    "backbone_state_tracker/docs/RELEASE_CHECKLIST.html",
 }
 
 SOURCE_REQUIRED = COMMON_REQUIRED | {

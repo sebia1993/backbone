@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Backbone State Tracker 릴리스 반입 체크리스트 v0.8.8</title>
+  <style>
+    body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
+    main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
+    h1, h2 { color: #102a43; }
+    h1 { border-bottom: 4px solid #01a982; padding-bottom: 12px; }
+    .core { border-left: 5px solid #01a982; background: #e7f7f2; padding: 14px 18px; }
+    code, pre { background: #eef2f6; }
+    code { padding: 2px 5px; }
+    pre { padding: 14px; overflow-x: auto; }
+    li { margin: 5px 0; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Backbone State Tracker 릴리스 반입 체크리스트</h1>
+  <p>문서 버전: v0.8.8<br>작성일: 2026-06-12<br>대상: 사외 개발 ZIP을 사내 환경으로 반입해 검증하는 운영자와 인수자</p>
+
+  <h2>1. 핵심 확인</h2>
+  <div class="core">
+    <ul>
+      <li><code>dist/latest/</code> 또는 <code>dist/CURRENT_RELEASE.txt</code>가 반입할 최신 버전을 가리키는지 먼저 확인합니다.</li>
+      <li>Windows 실행본이 필요하면 <code>*_windows_exe.zip</code>을 사용합니다. <code>*_source.zip</code>에는 실행 파일이 포함되지 않습니다.</li>
+      <li>ZIP 파일과 같은 폴더에 동일한 이름의 <code>.sha256.txt</code>, 같은 버전의 <code>*_release_manifest.txt</code>, <code>*_verify_release_package.ps1</code>가 있는지 확인합니다.</li>
+      <li>ZIP 내부에는 <code>PACKAGE_INFO.txt</code>, README, CHANGELOG, <code>config/commands.yaml</code>, <code>config/devices.example.yaml</code>, <code>docs/</code> 가이드 문서가 있어야 합니다.</li>
+      <li>ZIP 내부에 <code>config/devices.yaml</code>, <code>outputs/</code>, <code>raw/</code>, <code>.git/</code>, <code>build/</code>, 캐시 파일이 있으면 반입하지 않습니다.</li>
+    </ul>
+  </div>
+
+  <h2>2. 파일 세트 확인</h2>
+  <pre><code>backbone_state_tracker_v0.8.8_YYYYMMDD_source.zip
+backbone_state_tracker_v0.8.8_YYYYMMDD_source.zip.sha256.txt
+backbone_state_tracker_v0.8.8_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.8_YYYYMMDD_windows_exe.zip.sha256.txt
+backbone_state_tracker_v0.8.8_YYYYMMDD_release_manifest.txt
+backbone_state_tracker_v0.8.8_YYYYMMDD_verify_release_package.ps1
+CURRENT_RELEASE.txt</code></pre>
+  <p>소스 ZIP만 전달하는 경우에는 Windows 실행 파일이 없습니다. 현장 운영자가 바로 실행해야 하는 배포물은 Windows EXE ZIP입니다.</p>
+
+  <h2>3. 무결성 확인</h2>
+  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.8_YYYYMMDD_windows_exe.zip</code></pre>
+  <p>출력된 SHA256 값이 같은 이름의 <code>.sha256.txt</code> 또는 <code>*_release_manifest.txt</code>에 기록된 값과 일치해야 합니다.</p>
+  <pre><code>python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.8_YYYYMMDD_windows_exe.zip --require-manifest</code></pre>
+  <pre><code>powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.8_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.8_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
+  <p>정상 결과는 <code>Verification OK</code>입니다.</p>
+
+  <h2>4. ZIP 내부 확인</h2>
+  <ul>
+    <li><code>BackboneStateTracker.exe</code>, <code>RUN_FIRST.txt</code>, <code>PACKAGE_INFO.txt</code>가 있습니다.</li>
+    <li><code>docs/USER_GUIDE</code>, <code>docs/COMMAND_GUIDE</code>, <code>docs/DEVELOPER_GUIDE_BEGINNER</code>, <code>docs/VERSION_HISTORY</code>, <code>docs/RELEASE_CHECKLIST</code> 문서가 각각 MD/HTML로 있습니다.</li>
+    <li><code>config/devices.example.yaml</code>은 있지만 <code>config/devices.yaml</code>은 없습니다.</li>
+  </ul>
+
+  <h2>5. 실행 확인</h2>
+  <pre><code>.\BackboneStateTracker.exe --smoke-check</code></pre>
+  <p>GUI로 실행할 때는 장비 IP, 계정, 비밀번호를 운영자가 직접 입력합니다. 비밀번호는 프로그램 설정 파일, 보고서, 배포 ZIP에 저장하지 않습니다.</p>
+
+  <h2>6. 운영 전 확인</h2>
+  <ul>
+    <li>실제 백본 3/4호기 접속 전 <code>설정 점검</code>을 실행해 장비명, IP, 포트, 명령어 구성을 확인합니다.</li>
+    <li>작업 전 기준 스냅샷, 백본3 OFF 중 스냅샷, 복구 후 스냅샷 순서로 수집합니다.</li>
+    <li>장비 한 대가 접속되지 않아도 비교 결과의 <code>device_connectivity</code> 항목으로 추적합니다.</li>
+    <li>공유용 ZIP은 redacted 보고서와 가이드만 포함하며 raw 원본 출력은 포함하지 않습니다.</li>
+  </ul>
+
+  <h2>7. 실패 시 조치</h2>
+  <ul>
+    <li>SHA256이 다르면 ZIP을 사용하지 말고 원본 배포물을 다시 전달받습니다.</li>
+    <li><code>Missing required ZIP entry</code>가 나오면 ZIP 생성 또는 전달 과정에서 파일이 빠진 것입니다.</li>
+    <li><code>Forbidden ZIP entry found</code>가 나오면 로컬 설정, 출력, 빌드 산출물, raw 원본이 섞인 것입니다.</li>
+    <li>EXE ZIP이 메일에 업로드되지 않으면 사내 승인된 파일 반입 경로를 사용합니다.</li>
+  </ul>
+</main>
+</body>
+</html>

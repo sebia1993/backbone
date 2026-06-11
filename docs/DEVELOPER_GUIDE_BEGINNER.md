@@ -1,7 +1,7 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.7
-작성일: 2026-06-11
+문서 버전: v0.8.8
+작성일: 2026-06-12
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
 ## 1. 프로젝트 목적
@@ -27,6 +27,7 @@
 - `config/commands.yaml`: 장비에 실행할 읽기 전용 점검 명령입니다.
 - `config/devices.example.yaml`: 장비 설정 예시입니다.
 - `docs/COMMAND_GUIDE.md`, `docs/COMMAND_GUIDE.html`: 운영자용 명령어 의미와 확인 포인트입니다.
+- `docs/RELEASE_CHECKLIST.md`, `docs/RELEASE_CHECKLIST.html`: 사내 반입 시 파일 세트, 해시, ZIP 내용, 실행 확인 순서입니다.
 - `tests/`: 단위 테스트입니다.
 - `tools/build_release.ps1`: 소스 ZIP 생성 스크립트입니다.
 - `tools/build_windows_exe.ps1`: Windows EXE ZIP 생성 스크립트입니다.
@@ -80,6 +81,7 @@ v0.8.4부터 `docs/COMMAND_GUIDE.md`와 `docs/COMMAND_GUIDE.html`이 배포 필�
 v0.8.5부터 GUI의 도움말 메뉴와 상태 수집 화면에서 `COMMAND_GUIDE.html`을 바로 열 수 있습니다. 명령어 문서 파일명을 변경할 때는 `core/gui.py`의 `open_doc()` 호출도 함께 확인합니다.
 v0.8.6부터 비교 상세 선택 행에서 기준/비교 `raw/*.txt`를 바로 열고, 마스킹된 선택 상세를 클립보드로 복사할 수 있습니다. 원본 파일 경로는 `DiffSummary.base_snapshot`, `DiffSummary.target_snapshot`, `DiffItem.base_raw_file`, `DiffItem.target_raw_file` 조합으로 계산합니다.
 v0.8.7부터 README와 가이드는 특정 개발 PC의 절대 경로 대신 `<folder-that-contains-backbone_state_tracker>` 형태의 휴대 가능한 예시를 사용합니다. 문서를 수정할 때는 로컬 작업 경로가 배포 ZIP에 들어가지 않도록 확인합니다.
+v0.8.8부터 `docs/RELEASE_CHECKLIST.md/html`이 배포 필수 문서에 포함됩니다. Python/PowerShell 패키지 검증기는 이 문서가 빠진 ZIP을 실패 처리합니다.
 
 ## 5. UI 유지보수 기준
 
@@ -101,7 +103,7 @@ UI를 수정할 때는 `core/gui.py`의 수집/비교 메서드 계약을 깨지
 
 1. `core/version.py`의 `APP_VERSION`을 올립니다.
 2. `CHANGELOG.md`에 새 버전 항목을 추가합니다.
-3. `docs/VERSION_HISTORY.md`와 `docs/VERSION_HISTORY.html`을 업데이트합니다.
+3. `docs/VERSION_HISTORY.md`, `docs/VERSION_HISTORY.html`, `docs/RELEASE_CHECKLIST.md/html`을 업데이트합니다.
 4. 사용자 가이드와 개발자 가이드가 새 기능을 설명하는지 확인합니다.
 5. 테스트와 smoke-check를 실행합니다.
 6. 소스 ZIP과 Windows EXE ZIP을 생성합니다.
