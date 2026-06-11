@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.11 - 2026-06-12
+
+- Extended Python and PowerShell release package verification to reject unsafe ZIP entries, including absolute paths, Windows drive paths, empty path segments, and `..` traversal segments.
+- Added a release package root check so ZIP contents must stay under `backbone_state_tracker/`.
+- Added regression tests for unexpected top-level ZIP entries, traversal entries, and absolute ZIP entries.
+- Updated README, operator, developer, release checklist, command, and version history documents for v0.8.11.
+- No runtime collection, comparison, report, or GUI workflow behavior changed.
+
 ## v0.8.10 - 2026-06-12
 
 - Extended Python and PowerShell release package verification to check that the checksum sidecar `SHA256 (...)` package name matches the ZIP filename.

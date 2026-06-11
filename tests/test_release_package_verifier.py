@@ -106,6 +106,59 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             self.assertFalse(result.ok)
             self.assertTrue(any("Forbidden ZIP entry" in error for error in result.errors))
 
+    def test_unexpected_top_level_zip_entry_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.11_20260612_source.zip"
+            entries = _source_entries()
+            entries["unexpected.txt"] = "unexpected top-level file"
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.11", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(
+                any("Unexpected ZIP root entry found: unexpected.txt" in error for error in result.errors)
+            )
+
+    def test_zip_entry_path_traversal_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.11_20260612_source.zip"
+            entries = _source_entries()
+            entries["backbone_state_tracker/../unexpected.txt"] = "path traversal"
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.11", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(
+                any(
+                    "Unsafe ZIP entry found: backbone_state_tracker/../unexpected.txt" in error
+                    for error in result.errors
+                )
+            )
+
+    def test_absolute_zip_entries_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.11_20260612_source.zip"
+            entries = _source_entries()
+            entries["/tmp/unexpected.txt"] = "absolute path"
+            entries["C:/temp/unexpected.txt"] = "windows drive path"
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.11", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("Unsafe ZIP entry found: /tmp/unexpected.txt" in error for error in result.errors))
+            self.assertTrue(
+                any("Unsafe ZIP entry found: C:/temp/unexpected.txt" in error for error in result.errors)
+            )
+
     def test_requires_matching_version_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             dist = Path(tmp)

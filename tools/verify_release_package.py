@@ -22,6 +22,9 @@ MANIFEST_SHA_LINE = re.compile(r"^  SHA256: (?P<sha256>[0-9a-f]{64})$")
 PACKAGE_PREFIX = re.compile(
     r"^(?P<prefix>.+_v(?P<version>\d+\.\d+\.\d+)_(?P<date>\d{8}))_(source|windows_exe)\.zip$"
 )
+PACKAGE_ROOT = "backbone_state_tracker/"
+PACKAGE_ROOT_NAME = "backbone_state_tracker"
+WINDOWS_DRIVE_PREFIX = re.compile(r"^[A-Za-z]:/")
 
 COMMON_REQUIRED = {
     "backbone_state_tracker/PACKAGE_INFO.txt",
@@ -162,6 +165,26 @@ def normalized_zip_names(package_path: Path) -> tuple[set[str], list[str]]:
     return names, errors
 
 
+def zip_entry_safety_errors(names: set[str]) -> list[str]:
+    errors: list[str] = []
+    for name in sorted(names):
+        normalized = name.replace("\\", "/")
+        stripped = normalized.rstrip("/")
+        parts = stripped.split("/") if stripped else []
+        unsafe = (
+            normalized.startswith("/")
+            or WINDOWS_DRIVE_PREFIX.match(normalized) is not None
+            or not stripped
+            or any(part in ("", ".", "..") for part in parts)
+        )
+        if unsafe:
+            errors.append(f"Unsafe ZIP entry found: {name}")
+            continue
+        if stripped != PACKAGE_ROOT_NAME and not normalized.startswith(PACKAGE_ROOT):
+            errors.append(f"Unexpected ZIP root entry found: {name}")
+    return errors
+
+
 def required_entries_for(package_type: str) -> set[str]:
     if package_type == "source":
         return SOURCE_REQUIRED
@@ -224,6 +247,8 @@ def verify_release_package(
     names, zip_errors = normalized_zip_names(package_path)
     errors.extend(zip_errors)
     if names:
+        errors.extend(zip_entry_safety_errors(names))
+
         required_entries = required_entries_for(resolved_type)
         missing = sorted(required_entries - names)
         errors.extend(f"Missing required ZIP entry: {entry}" for entry in missing)
