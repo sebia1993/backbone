@@ -1,6 +1,6 @@
 # Backbone State Tracker
 
-Version: `v0.7.3`
+Version: `v0.7.4`
 
 Windows GUI utility for collecting read-only status snapshots from backbone 3
 and 4, then comparing snapshots to track operational changes during maintenance.
@@ -17,6 +17,7 @@ and 4, then comparing snapshots to track operational changes during maintenance.
 - Writes HTML, XLSX, and JSON comparison reports.
 - Provides a Korean bright-console UI with left navigation, dashboard metrics, collection, compare, settings, and log screens.
 - Shows line-level snapshot differences so operators can see the exact before/after output that changed.
+- Highlights GUI comparison rows with impact, line location, before/after values, and severity-specific follow-up guidance.
 - Shows HTML comparison details in one-line inline form, such as `old value → new value`, with horizontal scrolling for long command output.
 - Guides the operator through a dashboard workflow wizard: device check, pre-work collection, BB3 OFF collection, OFF review, restore collection, and final review.
 
@@ -73,7 +74,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 The generated ZIP is written to `dist\` as:
 
 ```text
-backbone_state_tracker_v0.7.3_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.7.4_YYYYMMDD_windows_exe.zip
 ```
 
 Corporate mail systems may block ZIP files containing `.exe`, `.py`, or `.ps1`
