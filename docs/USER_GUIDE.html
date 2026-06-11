@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 사용자 가이드 v0.7.2</title>
+  <title>Backbone State Tracker 사용자 가이드 v0.7.3</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -16,7 +16,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 사용자 가이드</h1>
-  <p>문서 버전: v0.7.2<br>작성일: 2026-06-11<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
+  <p>문서 버전: v0.7.3<br>작성일: 2026-06-11<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
   <h2>1. 핵심 운영 포인트</h2>
   <div class="core">
@@ -29,6 +29,7 @@
       <li>비교 결과에서 변경된 라인의 변경 전/후 값을 직접 확인합니다.</li>
       <li>HTML 리포트는 변경 내용을 <code>기존값 → 신규값</code> 형태로 한 줄에 표시합니다.</li>
       <li>장비 1대가 접속 불가이면 해당 장비는 <code>device_connectivity</code> 긴급 항목으로 비교 결과에 포함됩니다.</li>
+      <li>같은 단계의 스냅샷을 같은 초에 다시 수집해도 기존 폴더를 덮지 않고 <code>_001</code> 같은 별도 폴더로 저장합니다.</li>
       <li>대시보드의 작업 진행 마법사를 따라가면 다음 단계 버튼으로 작업 흐름을 이어갈 수 있습니다.</li>
     </ul>
   </div>
@@ -38,7 +39,7 @@
     <li><strong>대시보드</strong>의 작업 진행 마법사에서 현재 단계와 다음 액션을 확인합니다.</li>
     <li>필요 시 <strong>장비 설정</strong> 화면에서 백본 3/4호기 IP, 포트, 장비 타입, 접속 계정을 입력합니다.</li>
     <li>프로그램이 SSH로 접속해 읽기 전용 명령을 실행합니다.</li>
-    <li>장비별 접속 상태와 명령 출력이 시간별 스냅샷 폴더에 저장됩니다.</li>
+    <li>장비별 접속 상태와 명령 출력이 시간별 스냅샷 폴더에 저장됩니다. 같은 초에 동일 단계가 다시 저장되면 폴더명 뒤에 <code>_001</code>, <code>_002</code> 순번이 붙습니다.</li>
     <li>작업 전이 아닌 단계는 최신 <code>작업 전</code> 스냅샷과 자동 비교됩니다.</li>
     <li><strong>비교 결과</strong> 화면 또는 <strong>최근 리포트</strong> 버튼으로 변경점을 확인합니다.</li>
   </ol>

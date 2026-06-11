@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.3 - 2026-06-11
+
+- Added unique snapshot folder allocation when the same stage is collected more than once in the same second.
+- Preserves the original timestamped folder name for the first snapshot and appends `_001`, `_002`, and later suffixes only when needed.
+- Added a regression test to verify same-label same-second snapshots do not overwrite or merge previous outputs.
+- Updated source and Windows EXE release documents for the v0.7.3 package.
+
 ## v0.7.2 - 2026-06-11
 
 - Added per-device `device_connectivity` snapshot records for SSH connection success and failure.

@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.7.2
+문서 버전: v0.7.3
 작성일: 2026-06-11
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -56,6 +56,7 @@ python app.py --smoke-check
 v0.6.0부터 비교 결과는 `DiffItem.diff` 원본 unified diff와 함께 `changed_lines`, `change_count`, `change_preview`를 저장합니다. 리포트나 GUI를 수정할 때는 두 표현이 모두 유지되는지 확인합니다.
 v0.7.1부터 HTML 리포트의 변경 상세는 `유형`, `라인`, `변경 내용` 3열 구조입니다. GUI와 XLSX는 기존 분리 필드를 유지하므로 HTML 가독성 수정이 다른 출력 형식을 깨지 않는지 테스트로 확인합니다.
 v0.7.2부터 모든 수집은 장비별 `device_connectivity` 결과를 포함합니다. 이 항목은 `config/commands.yaml`에 넣는 사용자 점검 명령이 아니라, 접속 성공/실패를 비교군에 넣기 위한 내부 결과입니다. 장비가 접속 불가이면 비교 엔진은 일반 명령 누락 노이즈를 숨기고 `device_connectivity` 한 건을 Critical로 표시합니다.
+v0.7.3부터 `SnapshotStore._unique_snapshot_dir()`가 같은 초에 동일 단계 스냅샷을 여러 번 저장해도 폴더를 덮어쓰지 않도록 `_001`, `_002` 순번 폴더를 할당합니다. 관련 회귀 테스트는 `tests/test_snapshot.py`의 `test_write_snapshot_allocates_unique_folder_when_name_exists`입니다.
 
 ## 5. UI 유지보수 기준
 

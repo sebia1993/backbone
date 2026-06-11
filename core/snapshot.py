@@ -35,10 +35,11 @@ class SnapshotStore:
         stage_name: str = "",
         stage_slug: str = "",
     ) -> Path:
-        created_at = datetime.now().isoformat(timespec="seconds")
-        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        now = datetime.now()
+        created_at = now.isoformat(timespec="seconds")
+        stamp = now.strftime("%Y%m%d_%H%M%S")
         safe_label = sanitize_filename(folder_label or label, "snapshot")
-        snapshot_dir = self.root_dir / f"{stamp}_{safe_label}"
+        snapshot_dir = self._unique_snapshot_dir(stamp, safe_label)
         raw_dir = snapshot_dir / "raw"
         raw_dir.mkdir(parents=True, exist_ok=True)
 
@@ -86,6 +87,18 @@ class SnapshotStore:
             encoding="utf-8",
         )
         return snapshot_dir
+
+    def _unique_snapshot_dir(self, stamp: str, safe_label: str) -> Path:
+        base_name = f"{stamp}_{safe_label}"
+        candidate = self.root_dir / base_name
+        if not candidate.exists():
+            return candidate
+
+        for index in range(1, 1000):
+            candidate = self.root_dir / f"{base_name}_{index:03d}"
+            if not candidate.exists():
+                return candidate
+        raise RuntimeError(f"Unable to allocate a unique snapshot folder for {base_name}")
 
     def list_snapshots(self) -> list[Path]:
         snapshots = [path for path in self.root_dir.iterdir() if (path / "snapshot.json").exists()]
