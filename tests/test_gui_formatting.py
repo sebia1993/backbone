@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from backbone_state_tracker.core.gui import BackboneStateTrackerApp
 from backbone_state_tracker.core.models import DiffItem, DiffLine
@@ -93,6 +94,21 @@ class GuiDiffFormattingTests(unittest.TestCase):
         self.assertFalse(BackboneStateTrackerApp._diff_row_matches_filter(item, line, "", "VerySecret"))
         self.assertFalse(BackboneStateTrackerApp._diff_row_matches_filter(item, line, "", "OtherSecret"))
         self.assertTrue(BackboneStateTrackerApp._diff_row_matches_filter(item, line, "", "password ***"))
+
+    def test_busy_guard_blocks_collection_before_validation(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            app.workflow_busy = True
+            with patch("backbone_state_tracker.core.gui.messagebox.showwarning") as warning:
+                with patch.object(app, "_read_devices_from_form") as read_devices:
+                    app.collect_snapshot()
+
+            read_devices.assert_not_called()
+            warning.assert_called_once()
+            self.assertEqual(app.compare_status_var.get(), "진행 중")
+        finally:
+            app.destroy()
 
 
 if __name__ == "__main__":

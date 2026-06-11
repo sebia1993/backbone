@@ -62,6 +62,49 @@ function Copy-DirectoryContent {
     }
 }
 
+function Update-LatestReleaseArtifacts {
+    param(
+        [string]$ProjectName,
+        [string]$Version,
+        [string]$DateStamp,
+        [string]$DistDir
+    )
+
+    $LatestDir = Join-Path $DistDir "latest"
+    if (Test-Path -LiteralPath $LatestDir) {
+        Remove-Item -LiteralPath $LatestDir -Recurse -Force
+    }
+    New-Item -ItemType Directory -Force -Path $LatestDir | Out-Null
+
+    $prefix = "${ProjectName}_v${Version}_${DateStamp}_"
+    $artifacts = @(
+        Get-ChildItem -LiteralPath $DistDir -File |
+            Where-Object { $_.Name -like "$prefix*" } |
+            Sort-Object Name
+    )
+
+    foreach ($artifact in $artifacts) {
+        Copy-Item -LiteralPath $artifact.FullName -Destination (Join-Path $LatestDir $artifact.Name) -Force
+    }
+
+    $currentReleaseLines = @(
+        "Backbone State Tracker current release",
+        "Version = v$Version",
+        "DateStamp = $DateStamp",
+        "Created = $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")",
+        "",
+        "Use the files in dist\latest for internal transfer when multiple historical ZIP files exist.",
+        "",
+        "Artifacts:"
+    )
+    foreach ($artifact in $artifacts) {
+        $currentReleaseLines += " - $($artifact.Name) ($($artifact.Length) bytes)"
+    }
+
+    Set-Content -LiteralPath (Join-Path $DistDir "CURRENT_RELEASE.txt") -Value $currentReleaseLines -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $LatestDir "CURRENT_RELEASE.txt") -Value $currentReleaseLines -Encoding UTF8
+}
+
 if (-not $SkipTests) {
     Invoke-SourceValidation
 }
@@ -186,5 +229,6 @@ if ($LASTEXITCODE -ne 0) {
 $PowerShellVerifierSource = Join-Path $ProjectRoot "tools\verify_release_package.ps1"
 $PowerShellVerifierTarget = Join-Path $DistDir "${ProjectName}_v${Version}_${DateStamp}_verify_release_package.ps1"
 Copy-Item -LiteralPath $PowerShellVerifierSource -Destination $PowerShellVerifierTarget -Force
+Update-LatestReleaseArtifacts -ProjectName $ProjectName -Version $Version -DateStamp $DateStamp -DistDir $DistDir
 
 Write-Host "Windows EXE ZIP created: $ZipPath"

@@ -107,6 +107,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.off_review_confirmed = False
         self.final_review_confirmed = False
         self.workflow_step_widgets: list[dict[str, tk.Widget]] = []
+        self.busy_sensitive_widgets: list[tk.Widget] = []
         self.current_wizard_state: WorkflowWizardState | None = None
 
         self._ensure_runtime_config_files()
@@ -431,10 +432,12 @@ class BackboneStateTrackerApp(tk.Tk):
         ttk.Button(quick, text="최근 리포트", style="Secondary.TButton", command=self.open_last_report).pack(side="left", padx=(8, 0))
         ttk.Button(quick, text="공유 ZIP", style="Secondary.TButton", command=self.open_last_share_bundle).pack(side="left", padx=(8, 0))
         ttk.Button(quick, text="결과 폴더", style="Secondary.TButton", command=self.open_outputs).pack(side="left", padx=(8, 0))
-        ttk.Button(quick, text="샘플 검증 생성", style="Secondary.TButton", command=self.create_mock_validation).pack(
+        sample_button = ttk.Button(quick, text="샘플 검증 생성", style="Secondary.TButton", command=self.create_mock_validation)
+        sample_button.pack(
             side="left",
             padx=(8, 0),
         )
+        self._track_busy_sensitive(sample_button)
 
     def _build_wizard_step_cards(self) -> None:
         self.workflow_step_widgets = []
@@ -491,9 +494,11 @@ class BackboneStateTrackerApp(tk.Tk):
         tk.Label(item, text=description, bg=PALETTE["surface_alt"], fg=PALETTE["muted"], font=("Segoe UI", 9)).grid(
             row=1, column=1, sticky="w", padx=12, pady=(2, 10)
         )
-        ttk.Button(item, text="수집", style="Secondary.TButton", command=lambda value=title: self.collect_stage(value)).grid(
+        collect_button = ttk.Button(item, text="수집", style="Secondary.TButton", command=lambda value=title: self.collect_stage(value))
+        collect_button.grid(
             row=0, column=2, rowspan=2, sticky="e", padx=12, pady=10
         )
+        self._track_busy_sensitive(collect_button)
 
     def _refresh_wizard(self) -> None:
         if not hasattr(self, "wizard_next_button"):
@@ -513,6 +518,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.wizard_message_var.set(state.message)
         self.wizard_next_label_var.set(state.next_label)
         self.wizard_next_button.configure(state="normal" if state.next_enabled else "disabled")
+        self._refresh_busy_sensitive_widgets()
 
         for step, widgets in zip(state.steps, self.workflow_step_widgets):
             colors = self._wizard_status_colors(step.status)
@@ -521,6 +527,31 @@ class BackboneStateTrackerApp(tk.Tk):
             widgets["marker"].configure(bg=colors["accent"])
             widgets["title"].configure(text=step.title, fg=colors["fg"])
             widgets["status"].configure(text=f"{self._wizard_status_label(step.status)} · {step.detail}", fg=colors["muted"])
+
+    def _track_busy_sensitive(self, widget: tk.Widget) -> None:
+        self.busy_sensitive_widgets.append(widget)
+
+    def _refresh_busy_sensitive_widgets(self) -> None:
+        state = "disabled" if self.workflow_busy else "normal"
+        for widget in self.busy_sensitive_widgets:
+            try:
+                widget.configure(state=state)
+            except tk.TclError:
+                continue
+
+    def _reject_if_busy(self, action_name: str) -> bool:
+        if not self.workflow_busy:
+            return False
+        message = self._operation_busy_message(action_name)
+        self.compare_status_var.set("진행 중")
+        self.log(message)
+        messagebox.showwarning("작업 진행 중", message)
+        self._refresh_wizard()
+        return True
+
+    @staticmethod
+    def _operation_busy_message(action_name: str) -> str:
+        return f"현재 수집 또는 비교가 진행 중입니다. 완료 후 {action_name}을 다시 실행하세요."
 
     def _run_wizard_next_action(self) -> None:
         state = self.current_wizard_state
@@ -642,7 +673,9 @@ class BackboneStateTrackerApp(tk.Tk):
             sticky="e",
             padx=(0, 8),
         )
-        ttk.Button(form, text="상태 수집 시작", style="Primary.TButton", command=self.collect_snapshot).grid(row=1, column=5, sticky="e")
+        collect_button = ttk.Button(form, text="상태 수집 시작", style="Primary.TButton", command=self.collect_snapshot)
+        collect_button.grid(row=1, column=5, sticky="e")
+        self._track_busy_sensitive(collect_button)
         tk.Label(form, textvariable=self.preflight_status_var, bg=PALETTE["surface"], fg=PALETTE["muted"]).grid(
             row=2,
             column=0,
@@ -684,8 +717,12 @@ class BackboneStateTrackerApp(tk.Tk):
 
         actions = tk.Frame(form, bg=PALETTE["surface"])
         actions.grid(row=1, column=0, columnspan=5, sticky="ew", pady=(14, 0))
-        ttk.Button(actions, text="선택 항목 비교", style="Primary.TButton", command=self.compare_selected).pack(side="left")
-        ttk.Button(actions, text="샘플 검증 생성", style="Secondary.TButton", command=self.create_mock_validation).pack(side="left", padx=(8, 0))
+        compare_button = ttk.Button(actions, text="선택 항목 비교", style="Primary.TButton", command=self.compare_selected)
+        compare_button.pack(side="left")
+        self._track_busy_sensitive(compare_button)
+        sample_button = ttk.Button(actions, text="샘플 검증 생성", style="Secondary.TButton", command=self.create_mock_validation)
+        sample_button.pack(side="left", padx=(8, 0))
+        self._track_busy_sensitive(sample_button)
         ttk.Button(actions, text="최근 리포트", style="Secondary.TButton", command=self.open_last_report).pack(side="left", padx=(8, 0))
         ttk.Button(actions, text="공유 ZIP", style="Secondary.TButton", command=self.open_last_share_bundle).pack(side="left", padx=(8, 0))
         ttk.Button(actions, text="결과 폴더", style="Secondary.TButton", command=self.open_outputs).pack(side="left", padx=(8, 0))
@@ -1141,6 +1178,8 @@ class BackboneStateTrackerApp(tk.Tk):
         self.collect_snapshot()
 
     def collect_snapshot(self) -> None:
+        if self._reject_if_busy("상태 수집"):
+            return
         try:
             devices = self._read_devices_from_form()
             commands = load_commands(COMMANDS_PATH)
@@ -1292,6 +1331,8 @@ class BackboneStateTrackerApp(tk.Tk):
         self._refresh_wizard()
 
     def compare_selected(self) -> None:
+        if self._reject_if_busy("스냅샷 비교"):
+            return
         base_name = self.baseline_var.get()
         target_name = self.target_var.get()
         if not base_name or not target_name:
@@ -1331,8 +1372,12 @@ class BackboneStateTrackerApp(tk.Tk):
         threading.Thread(target=worker, daemon=True).start()
 
     def create_mock_validation(self) -> None:
+        if self._reject_if_busy("샘플 검증 생성"):
+            return
         self.status_chip_var.set("샘플 생성 중")
         self.compare_status_var.set("샘플 검증 데이터 생성 중")
+        self.workflow_busy = True
+        self._refresh_wizard()
         try:
             result = create_mock_validation_artifacts(self.snapshot_store)
         except Exception:
