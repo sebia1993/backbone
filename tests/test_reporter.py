@@ -13,7 +13,16 @@ from backbone_state_tracker.core.snapshot import SnapshotStore
 
 
 class ReportWriterTests(unittest.TestCase):
-    def _snapshot(self, root: Path, label: str, output: str) -> Path:
+    def _snapshot(
+        self,
+        root: Path,
+        label: str,
+        output: str,
+        *,
+        folder_label: str | None = None,
+        stage_name: str = "",
+        stage_slug: str = "",
+    ) -> Path:
         store = SnapshotStore(root)
         device = Device(name="backbone4", host="192.0.2.4")
         result = CommandResult(
@@ -29,7 +38,14 @@ class ReportWriterTests(unittest.TestCase):
             started_at="2026-06-11T10:00:00",
             ended_at="2026-06-11T10:00:01",
         )
-        return store.write_snapshot(label, [device], {device.name: [result]})
+        return store.write_snapshot(
+            label,
+            [device],
+            {device.name: [result]},
+            folder_label=folder_label,
+            stage_name=stage_name,
+            stage_slug=stage_slug,
+        )
 
     def test_html_and_xlsx_include_line_level_diff_details(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -90,6 +106,34 @@ class ReportWriterTests(unittest.TestCase):
             self.assertIn("<details class='diff-block filter-entry'", html)
             self.assertIn("data-severity='Unchanged'", html)
             self.assertIn("collapsed-head", html)
+
+    def test_html_meta_labels_sample_snapshots(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(
+                root,
+                "[샘플] 작업 전",
+                "GE1/0/1 UP",
+                folder_label="sample_pre_work",
+                stage_name="[샘플] 작업 전",
+                stage_slug="sample_pre_work",
+            )
+            target = self._snapshot(
+                root,
+                "작업 전",
+                "GE1/0/1 DOWN",
+                folder_label="pre_work",
+                stage_name="작업 전",
+                stage_slug="pre_work",
+            )
+            summary = DiffEngine().compare(base, target)
+
+            paths = ReportWriter().write_reports(summary)
+
+            html = paths["html"].read_text(encoding="utf-8")
+            self.assertIn(f"기준: 샘플: {base.name}", html)
+            self.assertIn(f"비교: {target.name}", html)
+            self.assertNotIn(f"비교: 샘플: {target.name}", html)
 
     def test_reports_redact_sensitive_values_but_keep_raw_output(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

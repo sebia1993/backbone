@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.22 - 2026-06-12
+
+- Labeled sample snapshots as `샘플:` in the HTML comparison report header metadata so shared sample validation reports are easier to distinguish from real maintenance evidence.
+- Added reporter regression coverage for sample snapshot display names in generated HTML.
+- Updated README, operator, developer, release checklist, and version history documents for v0.8.22.
+
 ## v0.8.21 - 2026-06-12
 
 - Labeled sample snapshots as `샘플:` in the top runtime summary so sample validation comparisons are easier to distinguish from real maintenance baselines.
