@@ -181,6 +181,7 @@ class ReportWriter:
         counts = summary.counts
         base_display_name = snapshot_display_name(Path(summary.base_snapshot))
         target_display_name = snapshot_display_name(Path(summary.target_snapshot))
+        changed_jump_buttons_html = []
         summary_cards_html = []
         unchanged_summary_cards_html = []
         details_html = []
@@ -219,8 +220,34 @@ class ReportWriter:
                 unchanged_summary_cards_html.append(card_html)
             else:
                 summary_cards_html.append(card_html)
+                changed_jump_buttons_html.append(
+                    "<button class='jump-button' type='button' "
+                    f"data-jump-target='{detail_id}' data-jump-severity='{escape(item.severity)}'>"
+                    f"<span class='jump-severity' style='background:{colors.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
+                    f"<span class='jump-main'>{escape(item.device_name)} / {escape(item.command_id)}</span>"
+                    f"<span class='jump-count'>{item.change_count}건</span>"
+                    "</button>"
+                )
             details_html.append(render_diff_block(item, detail_id, severity_label, status_label, item_summary))
 
+        changed_jump_html = (
+            "<section class='jump-list' aria-label='변경 항목 바로가기'>"
+            "<div class='jump-head'>"
+            "<strong>변경 항목 바로가기</strong>"
+            "<span class='meta'>장비명 / 명령어 기준으로 변경이 있는 항목만 표시합니다.</span>"
+            "</div>"
+            f"<div class='jump-actions'>{''.join(changed_jump_buttons_html)}</div>"
+            "</section>"
+            if changed_jump_buttons_html
+            else (
+                "<section class='jump-list' aria-label='변경 항목 바로가기'>"
+                "<div class='jump-head'>"
+                "<strong>변경 항목 바로가기</strong>"
+                "<span class='meta'>변경 항목 없음</span>"
+                "</div>"
+                "</section>"
+            )
+        )
         visible_summary_html = "".join(summary_cards_html) or "<p class='meta'>긴급/주의/정보 변경 요약 없음</p>"
         unchanged_summary_html = ""
         if unchanged_summary_cards_html:
@@ -284,6 +311,52 @@ class ReportWriter:
     }}
     .count strong {{ display: block; font-size: 24px; margin-top: 4px; }}
     .count.is-active {{ outline: 2px solid #01a982; border-color: #01a982; }}
+    .jump-list {{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      margin: 0 0 16px;
+    }}
+    .jump-head {{
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }}
+    .jump-head strong {{ font-size: 15px; }}
+    .jump-actions {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }}
+    .jump-button {{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 100%;
+      border: 1px solid #d0d7de;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      padding: 6px 10px;
+      text-align: left;
+    }}
+    .jump-button:hover {{ border-color: #01a982; box-shadow: 0 0 0 2px rgba(1, 169, 130, 0.12); }}
+    .jump-severity {{
+      color: #fff;
+      border-radius: 999px;
+      padding: 2px 7px;
+      font-size: 12px;
+      font-weight: 700;
+      flex: 0 0 auto;
+    }}
+    .jump-main {{ overflow-wrap: anywhere; }}
+    .jump-count {{ color: var(--muted); font-size: 12px; flex: 0 0 auto; }}
     .summary-list, .diff-block {{
       background: var(--panel);
       border: 1px solid var(--line);
@@ -361,6 +434,7 @@ class ReportWriter:
     th {{ background: #eef3f8; }}
     .badge {{ color: #fff; border-radius: 999px; padding: 3px 8px; font-size: 12px; font-weight: 700; }}
     .diff-block {{ padding: 14px; }}
+    .diff-block.is-jump-target {{ outline: 3px solid rgba(1, 169, 130, 0.32); border-color: #01a982; }}
     .diff-block h2 {{ margin: 0 0 6px; font-size: 17px; }}
     details.diff-block > summary {{
       cursor: pointer;
@@ -446,6 +520,8 @@ class ReportWriter:
       .summary-meta {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .summary-field {{ display: block; }}
       .summary-link {{ margin-left: 0; }}
+      .jump-head {{ display: block; }}
+      .jump-button {{ width: 100%; border-radius: 8px; }}
     }}
   </style>
 </head>
@@ -461,6 +537,7 @@ class ReportWriter:
       <button class="count" type="button" data-filter="Info">정보<strong>{counts.get('Info', 0)}</strong></button>
       <button class="count" type="button" data-filter="Unchanged">변경없음<strong>{counts.get('Unchanged', 0)}</strong></button>
     </section>
+    {changed_jump_html}
     <section class="summary-list" aria-label="비교 요약">
       {visible_summary_html}
     </section>
@@ -471,8 +548,19 @@ class ReportWriter:
     const filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
     const filterEntries = Array.from(document.querySelectorAll(".diff-block[data-severity]"));
     const summaryLinks = Array.from(document.querySelectorAll("[data-target-severity]"));
+    const jumpButtons = Array.from(document.querySelectorAll("[data-jump-target]"));
     const unchangedSummary = document.querySelector("[data-summary-severity='Unchanged']");
     let activeFilter = "";
+    function focusTarget(target) {{
+      if (!target) return;
+      if (target.tagName.toLowerCase() === "details") {{
+        target.open = true;
+      }}
+      target.classList.add("is-jump-target");
+      target.scrollIntoView({{ behavior: "smooth", block: "start" }});
+      target.focus({{ preventScroll: true }});
+      window.setTimeout(() => target.classList.remove("is-jump-target"), 1800);
+    }}
     function setFilter(nextFilter) {{
       activeFilter = nextFilter;
       filterButtons.forEach((button) => {{
@@ -493,6 +581,13 @@ class ReportWriter:
     filterButtons.forEach((button) => {{
       button.addEventListener("click", () => applyFilter(button.dataset.filter));
     }});
+    jumpButtons.forEach((button) => {{
+      button.addEventListener("click", () => {{
+        setFilter(button.dataset.jumpSeverity);
+        const target = document.getElementById(button.dataset.jumpTarget);
+        focusTarget(target);
+      }});
+    }});
     summaryLinks.forEach((link) => {{
       link.addEventListener("click", () => {{
         if (link.dataset.targetSeverity === "Unchanged" && unchangedSummary) {{
@@ -504,9 +599,7 @@ class ReportWriter:
         const targetId = link.getAttribute("href");
         if (targetId && targetId.startsWith("#")) {{
           const target = document.querySelector(targetId);
-          if (target && target.tagName.toLowerCase() === "details") {{
-            target.open = true;
-          }}
+          focusTarget(target);
         }}
       }});
     }});
@@ -567,7 +660,7 @@ def render_diff_block(item: DiffItem, detail_id: str, severity_label: str, statu
     )
     if item.severity == "Unchanged":
         return (
-            f"<details class='diff-block filter-entry' id='{detail_id}' data-severity='{escape(item.severity)}'>"
+            f"<details class='diff-block filter-entry' id='{detail_id}' data-severity='{escape(item.severity)}' tabindex='-1'>"
             "<summary>"
             "<span class='collapsed-head'>"
             "<span class='badge' style='background:#667085'>변경없음</span>"
@@ -579,7 +672,7 @@ def render_diff_block(item: DiffItem, detail_id: str, severity_label: str, statu
             "</details>"
         )
     return (
-        f"<section class='diff-block filter-entry' id='{detail_id}' data-severity='{escape(item.severity)}'>"
+        f"<section class='diff-block filter-entry' id='{detail_id}' data-severity='{escape(item.severity)}' tabindex='-1'>"
         f"<h2>{escape(item.device_name)} / {escape(item.command_id)}</h2>"
         f"{body}"
         "</section>"
