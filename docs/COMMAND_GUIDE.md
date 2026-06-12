@@ -1,6 +1,6 @@
 # Backbone State Tracker 점검 명령어 가이드
 
-문서 버전: v0.8.28
+문서 버전: v0.8.29
 작성일: 2026-06-12  
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
@@ -19,7 +19,7 @@
 | `system_clock` | `display clock` | 장비 시간 확인 | 시간 자체는 비교 노이즈로 제외됩니다. |
 | `system_version` | `display version` | OS, 부팅 이미지, uptime 확인 | 예기치 않은 재부팅 또는 이미지 변화를 봅니다. |
 | `device_status` | `display device` | 섀시/슬롯/모듈 상태 확인 | Fault, Abnormal, Offline, Missing 변화는 긴급입니다. |
-| `power_status` | `display power` | 전원 상태 확인 | failure, absent, abnormal 변화를 봅니다. |
+| `power_status` | `display power` | 전원 상태 확인 | State가 Normal이 아니면 긴급입니다. |
 | `fan_status` | `display fan` | 팬 상태 확인 | fan failure, stopped, abnormal 변화를 봅니다. |
 | `environment_status` | `display environment` | 온도/센서 확인 | temperature alarm, over threshold 변화를 봅니다. |
 | `alarm_status` | `display alarm` | 현재 알람 확인 | major alarm은 긴급, minor alarm은 주의입니다. |
@@ -31,15 +31,15 @@
 | `ospf_peer` | `display ospf peer` | OSPF neighbor 확인 | Full 이탈, Init, ExStart, Loading은 긴급입니다. |
 | `ospf_routes` | `display ip routing-table protocol ospf` | OSPF 경로 확인 | 주요 경로 삭제와 next-hop 변화를 봅니다. |
 | `cpu_usage` | `display cpu-usage` | CPU 상태 확인 | 지속 고부하 또는 급격한 변화는 주의입니다. |
-| `memory_usage` | `display memory` | 메모리 상태 확인 | 여유 메모리 급감과 allocation failure를 봅니다. |
+| `memory_usage` | `display memory` | 메모리 상태 확인 | FreeRatio 30% 이하는 긴급, 31~40%는 주의입니다. |
 | `recent_log` | `display logbuffer` | 최근 시스템 로그 확인 | link down, neighbor down, alarm, error, failure 로그를 우선 확인합니다. |
 
 ## 3. 등급 기준
 
 | 등급 | 기준 |
 | --- | --- |
-| 긴급 | 장비 접속 실패, 명령 실패, 인터페이스 Down, LACP selected 수 감소, OSPF Full 이탈, major alarm, fault, abnormal, offline, missing |
-| 주의 | minor alarm, warning, error, 라우팅/STP/로그/리소스 변화 중 긴급 키워드가 없는 변화 |
+| 긴급 | 장비 접속 실패, 명령 실패, 인터페이스 Down, LACP selected 수 감소, OSPF Full 이탈, memory FreeRatio 30% 이하, power State 비정상, major alarm, fault, abnormal, offline, missing |
+| 주의 | memory FreeRatio 31~40%, minor alarm, warning, error, 라우팅/STP/로그/리소스 변화 중 긴급 키워드가 없는 변화 |
 | 정보 | 접속 복구 또는 긴급/주의로 단정하지 않는 일반 변경 |
 | 변경없음 | 의미 있는 변경이 없는 항목 |
 
@@ -47,6 +47,6 @@
 
 | 시점 | 확인 내용 |
 | --- | --- |
-| 작업 전 | 백본3/4 접속 가능, OSPF Full, LACP selected 수, 주요 인터페이스 UP, 하드웨어/알람 정상 여부 |
+| 작업 전 | 백본3/4 접속 가능, OSPF Full, LACP selected 수, 주요 인터페이스 UP, power State Normal, memory FreeRatio 40% 초과, 하드웨어/알람 정상 여부 |
 | 백본3 OFF 중 | 백본3 접속 실패가 `device_connectivity`로 잡히는지, 백본4 경로가 예상대로 유지되는지 |
-| 복구 후 | 백본3 접속 복구, OSPF Full, LACP selected 수 회복, 신규 알람 없음 |
+| 복구 후 | 백본3 접속 복구, OSPF Full, LACP selected 수 회복, power State Normal, memory FreeRatio 40% 초과, 신규 알람 없음 |

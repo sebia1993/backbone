@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 점검 명령어 가이드 v0.8.28</title>
+  <title>Backbone State Tracker 점검 명령어 가이드 v0.8.29</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -14,7 +14,7 @@
 </head>
 <body>
   <h1>Backbone State Tracker 점검 명령어 가이드</h1>
-  <p>문서 버전: v0.8.28<br>작성일: 2026-06-12<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
+  <p>문서 버전: v0.8.29<br>작성일: 2026-06-12<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
   <h2>1. 기본 원칙</h2>
   <ul>
@@ -30,21 +30,22 @@
     <tr><td><code>disable_paging</code></td><td><code>screen-length disable</code></td><td>페이지 넘김 해제</td><td>출력이 중간에 끊기지 않도록 합니다.</td></tr>
     <tr><td><code>system_version</code></td><td><code>display version</code></td><td>OS, 부팅 이미지, uptime 확인</td><td>예기치 않은 재부팅 또는 이미지 변화를 봅니다.</td></tr>
     <tr><td><code>device_status</code></td><td><code>display device</code></td><td>섀시/슬롯/모듈 상태</td><td>Fault, Abnormal, Offline, Missing 변화는 긴급입니다.</td></tr>
-    <tr><td><code>power_status</code></td><td><code>display power</code></td><td>전원 상태</td><td>failure, absent, abnormal 변화를 봅니다.</td></tr>
+    <tr><td><code>power_status</code></td><td><code>display power</code></td><td>전원 상태</td><td>State가 Normal이 아니면 긴급입니다.</td></tr>
     <tr><td><code>fan_status</code></td><td><code>display fan</code></td><td>팬 상태</td><td>fan failure, stopped, abnormal 변화를 봅니다.</td></tr>
     <tr><td><code>alarm_status</code></td><td><code>display alarm</code></td><td>현재 알람</td><td>major alarm은 긴급, minor alarm은 주의입니다.</td></tr>
     <tr><td><code>interface_brief</code></td><td><code>display interface brief</code></td><td>인터페이스 up/down 요약</td><td>작업 계획과 무관한 Down은 긴급입니다.</td></tr>
     <tr><td><code>link_aggregation_summary</code></td><td><code>display link-aggregation summary</code></td><td>LACP selected 수</td><td>selected 수 감소, unselected, not selected는 긴급입니다.</td></tr>
     <tr><td><code>stp_brief</code></td><td><code>display stp brief</code></td><td>STP 역할/상태</td><td>root, blocked, forwarding 변화를 확인합니다.</td></tr>
     <tr><td><code>ospf_peer</code></td><td><code>display ospf peer</code></td><td>OSPF neighbor</td><td>Full 이탈, Init, ExStart, Loading은 긴급입니다.</td></tr>
+    <tr><td><code>memory_usage</code></td><td><code>display memory</code></td><td>메모리 상태</td><td>FreeRatio 30% 이하는 긴급, 31~40%는 주의입니다.</td></tr>
     <tr><td><code>recent_log</code></td><td><code>display logbuffer</code></td><td>최근 시스템 로그</td><td>link down, neighbor down, alarm, error, failure 로그를 우선 확인합니다.</td></tr>
   </table>
 
   <h2>3. 등급 기준</h2>
   <table>
     <tr><th>등급</th><th>기준</th></tr>
-    <tr><td>긴급</td><td>장비 접속 실패, 명령 실패, 인터페이스 Down, LACP selected 수 감소, OSPF Full 이탈, major alarm, fault, abnormal, offline, missing</td></tr>
-    <tr><td>주의</td><td>minor alarm, warning, error, 라우팅/STP/로그/리소스 변화 중 긴급 키워드가 없는 변화</td></tr>
+    <tr><td>긴급</td><td>장비 접속 실패, 명령 실패, 인터페이스 Down, LACP selected 수 감소, OSPF Full 이탈, memory FreeRatio 30% 이하, power State 비정상, major alarm, fault, abnormal, offline, missing</td></tr>
+    <tr><td>주의</td><td>memory FreeRatio 31~40%, minor alarm, warning, error, 라우팅/STP/로그/리소스 변화 중 긴급 키워드가 없는 변화</td></tr>
     <tr><td>정보</td><td>접속 복구 또는 긴급/주의로 단정하지 않는 일반 변경</td></tr>
     <tr><td>변경없음</td><td>의미 있는 변경이 없는 항목</td></tr>
   </table>

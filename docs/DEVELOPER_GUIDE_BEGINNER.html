@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.28</title>
+  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.29</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -15,7 +15,7 @@
 </head>
 <body>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p>문서 버전: v0.8.28<br>작성일: 2026-06-12<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
+  <p>문서 버전: v0.8.29<br>작성일: 2026-06-12<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
 
   <h2>1. 프로젝트 목적</h2>
   <p>백본 3/4호기의 작업 전후 상태를 읽기 전용 명령으로 수집하고, 스냅샷 간 변경점을 GUI와 HTML/XLSX/JSON 리포트로 확인하는 Windows 운영 도구입니다.</p>
@@ -58,8 +58,8 @@ python app.py --smoke-check</code></pre>
   <h2>5. 등급 분류 기준</h2>
   <table>
     <tr><th>등급</th><th>기준</th></tr>
-    <tr><td>Critical</td><td>장비 접속 실패, 명령 실패, 인터페이스 Down, LACP selected 수 감소, OSPF Full 이탈, major alarm, fault, abnormal, offline, missing</td></tr>
-    <tr><td>Warning</td><td>minor alarm, warning, error, 라우팅/STP/로그/리소스 변화</td></tr>
+    <tr><td>Critical</td><td>장비 접속 실패, 명령 실패, 인터페이스 Down, LACP selected 수 감소, OSPF Full 이탈, <code>memory_usage</code> FreeRatio 30% 이하, <code>power_status</code> State 비정상, major alarm, fault, abnormal, offline, missing</td></tr>
+    <tr><td>Warning</td><td><code>memory_usage</code> FreeRatio 31~40%, minor alarm, warning, error, 라우팅/STP/로그/리소스 변화</td></tr>
     <tr><td>Info</td><td>접속 복구 또는 일반 출력 변화</td></tr>
     <tr><td>Unchanged</td><td>정규화 후 의미 있는 변화가 없는 항목</td></tr>
   </table>

@@ -56,6 +56,8 @@ HEALTHY_ALERT_PATTERNS = [
 ]
 
 MAX_CHANGED_LINES = 500
+MEMORY_CRITICAL_FREE_RATIO = 30.0
+MEMORY_WARNING_FREE_RATIO = 40.0
 
 
 class DiffEngine:
@@ -103,8 +105,29 @@ class DiffEngine:
             target_lines = normalize_output_lines(target_text, command_id=target_result.command_id)
             base_normalized = "\n".join(line for _, line in base_lines).strip()
             target_normalized = "\n".join(line for _, line in target_lines).strip()
+            health = assess_target_health(target_result, target_lines)
 
             if base_normalized == target_normalized and base_result.success == target_result.success:
+                if health is not None:
+                    severity, summary, health_line = health
+                    change_count, changed_lines, change_preview = summarize_changed_lines([health_line])
+                    items.append(
+                        DiffItem(
+                            device_name=target_result.device_name,
+                            command_id=target_result.command_id,
+                            command=target_result.command,
+                            category=target_result.category,
+                            severity=severity,
+                            status="changed",
+                            summary=summary,
+                            base_raw_file=base_result.raw_file,
+                            target_raw_file=target_result.raw_file,
+                            changed_lines=changed_lines,
+                            change_count=change_count,
+                            change_preview=change_preview,
+                        )
+                    )
+                    continue
                 items.append(
                     DiffItem(
                         device_name=target_result.device_name,
@@ -130,7 +153,10 @@ class DiffEngine:
                 )
             )
             added_lines = [line[1:] for line in diff_text.splitlines() if line.startswith("+") and not line.startswith("+++")]
-            severity, summary = classify_change(target_result, added_lines, diff_text)
+            if health is not None:
+                severity, summary, _health_line = health
+            else:
+                severity, summary = classify_change(target_result, added_lines, diff_text)
             changed_lines = build_changed_lines(base_lines, target_lines)
             change_count, changed_lines, change_preview = summarize_changed_lines(changed_lines)
             items.append(
@@ -501,6 +527,76 @@ def classify_connectivity_change(base_result: CommandResult, target_result: Comm
     return "Info", "Output changed."
 
 
+def assess_target_health(result: CommandResult, target_lines: list[tuple[int, str]]) -> tuple[str, str, DiffLine] | None:
+    if not result.success:
+        message = result.error_message or "command failed"
+        return (
+            "Critical",
+            "Target snapshot command failed.",
+            DiffLine(
+                kind="changed",
+                target_line_no=1,
+                base_text="expected command success",
+                target_text=f"command failed: {message}",
+            ),
+        )
+
+    if result.command_id == "memory_usage":
+        return assess_memory_free_ratio(target_lines)
+    if result.command_id == "power_status":
+        return assess_power_state(target_lines)
+    return None
+
+
+def assess_memory_free_ratio(target_lines: list[tuple[int, str]]) -> tuple[str, str, DiffLine] | None:
+    parsed = find_memory_free_ratio(target_lines)
+    if parsed is None:
+        return None
+
+    line_no, value, source = parsed
+    display_value = format_threshold_number(value)
+    if value <= MEMORY_CRITICAL_FREE_RATIO:
+        return (
+            "Critical",
+            "Memory FreeRatio is 30% or lower.",
+            DiffLine(
+                kind="changed",
+                target_line_no=line_no,
+                base_text="expected FreeRatio > 40%",
+                target_text=f"current FreeRatio {display_value}% ({source})",
+            ),
+        )
+    if value <= MEMORY_WARNING_FREE_RATIO:
+        return (
+            "Warning",
+            "Memory FreeRatio is between 31% and 40%.",
+            DiffLine(
+                kind="changed",
+                target_line_no=line_no,
+                base_text="expected FreeRatio > 40%",
+                target_text=f"current FreeRatio {display_value}% ({source})",
+            ),
+        )
+    return None
+
+
+def assess_power_state(target_lines: list[tuple[int, str]]) -> tuple[str, str, DiffLine] | None:
+    states = find_power_states(target_lines)
+    for line_no, state, source in states:
+        if state.lower() != "normal":
+            return (
+                "Critical",
+                "Power State is not Normal.",
+                DiffLine(
+                    kind="changed",
+                    target_line_no=line_no,
+                    base_text="expected State: Normal",
+                    target_text=f"current State: {state} ({source})",
+                ),
+            )
+    return None
+
+
 def classify_change(result: CommandResult, added_lines: list[str], diff_text: str) -> tuple[str, str]:
     if not result.success:
         return "Critical", "Target snapshot command failed."
@@ -567,3 +663,108 @@ def selected_counts(lines: list[str]) -> list[int]:
         ):
             counts.extend(int(match.group(1)) for match in pattern.finditer(line))
     return counts
+
+
+def find_memory_free_ratio(lines: list[tuple[int, str]]) -> tuple[int, float, str] | None:
+    for line_no, line in lines:
+        direct = re.search(r"\bfree\s*ratio\b\s*[:=]?\s*([0-9]+(?:\.[0-9]+)?)\s*%?", line, re.IGNORECASE)
+        if direct:
+            return line_no, float(direct.group(1)), line
+
+        same_line = re.search(r"\bfree\s*ratio\b.*?([0-9]+(?:\.[0-9]+)?)\s*%?", line, re.IGNORECASE)
+        if same_line:
+            return line_no, float(same_line.group(1)), line
+
+    header_index: int | None = None
+    for line_no, line in lines:
+        tokens = split_status_tokens(line)
+        if not tokens:
+            continue
+        if header_index is None:
+            header_index = next((index for index, token in enumerate(tokens) if normalized_header_token(token) == "freeratio"), None)
+            continue
+        if is_separator_line(line):
+            continue
+        if len(tokens) > header_index:
+            value = parse_numeric_token(tokens[header_index])
+            if value is not None:
+                return line_no, value, line
+    return None
+
+
+def find_power_states(lines: list[tuple[int, str]]) -> list[tuple[int, str, str]]:
+    states: list[tuple[int, str, str]] = []
+    state_column: int | None = None
+
+    for line_no, line in lines:
+        direct = re.search(r"\bstate\b\s*[:=]\s*(.+?)\s*$", line, re.IGNORECASE)
+        if direct:
+            state = clean_state_value(direct.group(1))
+            if state:
+                states.append((line_no, state, line))
+            continue
+
+        tokens = split_status_tokens(line)
+        if not tokens:
+            continue
+        if state_column is None:
+            state_column = next((index for index, token in enumerate(tokens) if normalized_header_token(token) == "state"), None)
+            if state_column is not None:
+                continue
+        if (
+            state_column is not None
+            and not is_separator_line(line)
+            and len(tokens) > state_column
+            and is_likely_power_data_row(tokens)
+        ):
+            state = clean_state_value(tokens[state_column])
+            if state:
+                states.append((line_no, state, line))
+            continue
+
+        simple = re.search(r"^\s*(?:Power|PSU|PWR)\s+\d+\b.*?([A-Za-z][A-Za-z0-9_/-]*)\s*$", line, re.IGNORECASE)
+        if simple:
+            state = clean_state_value(simple.group(1))
+            if state:
+                states.append((line_no, state, line))
+            continue
+
+        colon = re.search(r"^\s*(?:Power|PSU|PWR)\b.*:\s*(.+?)\s*$", line, re.IGNORECASE)
+        if colon:
+            state = clean_state_value(colon.group(1))
+            if state:
+                states.append((line_no, state, line))
+
+    return states
+
+
+def split_status_tokens(line: str) -> list[str]:
+    return [token for token in re.split(r"\s+", line.strip()) if token]
+
+
+def normalized_header_token(token: str) -> str:
+    return re.sub(r"[^A-Za-z]", "", token).lower()
+
+
+def parse_numeric_token(token: str) -> float | None:
+    match = re.search(r"([0-9]+(?:\.[0-9]+)?)\s*%?", token)
+    return float(match.group(1)) if match else None
+
+
+def clean_state_value(value: str) -> str:
+    return value.strip().strip(".,;|")
+
+
+def is_separator_line(line: str) -> bool:
+    return bool(re.fullmatch(r"[\s\-+=|:]+", line))
+
+
+def is_likely_power_data_row(tokens: list[str]) -> bool:
+    if not tokens:
+        return False
+    first = tokens[0].lower()
+    return first.startswith(("power", "psu", "pwr")) or any(char.isdigit() for char in first)
+
+
+def format_threshold_number(value: float) -> str:
+    return str(int(value)) if value.is_integer() else f"{value:g}"

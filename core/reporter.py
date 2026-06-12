@@ -24,6 +24,9 @@ SUMMARY_LABELS_KO = {
     "Output changed.": "출력 변경 감지",
     "Target device connection failed.": "비교 시점 장비 접속 실패",
     "Target device connection restored.": "비교 시점 장비 접속 복구",
+    "Memory FreeRatio is 30% or lower.": "메모리 FreeRatio 30% 이하",
+    "Memory FreeRatio is between 31% and 40%.": "메모리 FreeRatio 31~40%",
+    "Power State is not Normal.": "전원 State 비정상",
 }
 
 CHANGE_TYPE_LABELS_KO = {
