@@ -106,6 +106,13 @@ class ReportWriterTests(unittest.TestCase):
             self.assertIn("<details class='diff-block filter-entry'", html)
             self.assertIn("data-severity='Unchanged'", html)
             self.assertIn("collapsed-head", html)
+            self.assertIn("<details class='summary-list unchanged-summary' data-summary-severity='Unchanged'>", html)
+            self.assertIn("변경없음 2건 - 필요 시 펼쳐서 확인", html)
+            self.assertIn("<div class='unchanged-summary-body'>", html)
+            self.assertIn("const unchangedSummary", html)
+            self.assertIn('unchangedSummary.open = activeFilter === "Unchanged";', html)
+            self.assertIn("target.open = true;", html)
+            self.assertNotIn("<details class='summary-list unchanged-summary' data-summary-severity='Unchanged' open", html)
 
     def test_html_meta_labels_sample_snapshots(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

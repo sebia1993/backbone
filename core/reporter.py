@@ -182,6 +182,7 @@ class ReportWriter:
         base_display_name = snapshot_display_name(Path(summary.base_snapshot))
         target_display_name = snapshot_display_name(Path(summary.target_snapshot))
         summary_cards_html = []
+        unchanged_summary_cards_html = []
         details_html = []
         colors = {
             "Critical": "#b42318",
@@ -195,7 +196,7 @@ class ReportWriter:
             status_label = status_to_korean(item.status)
             item_summary = redact_sensitive_text(summary_label(item))
             change_preview = redact_sensitive_text(item.change_preview or "-")
-            summary_cards_html.append(
+            card_html = (
                 f"<article class='summary-card' aria-labelledby='summary-{index}'>"
                 "<div class='summary-card-head'>"
                 f"<span class='badge' style='background:{colors.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
@@ -214,7 +215,27 @@ class ReportWriter:
                 f"<div class='summary-field'><span class='summary-label'>요약</span><span class='summary-value'>{escape(item_summary)}</span></div>"
                 "</article>"
             )
+            if item.severity == "Unchanged":
+                unchanged_summary_cards_html.append(card_html)
+            else:
+                summary_cards_html.append(card_html)
             details_html.append(render_diff_block(item, detail_id, severity_label, status_label, item_summary))
+
+        visible_summary_html = "".join(summary_cards_html) or "<p class='meta'>긴급/주의/정보 변경 요약 없음</p>"
+        unchanged_summary_html = ""
+        if unchanged_summary_cards_html:
+            unchanged_count = counts.get("Unchanged", 0)
+            unchanged_summary_html = (
+                "<details class='summary-list unchanged-summary' data-summary-severity='Unchanged'>"
+                "<summary>"
+                "<span class='collapsed-head'>"
+                "<span class='badge' style='background:#667085'>변경없음</span>"
+                f"<span>변경없음 {unchanged_count}건 - 필요 시 펼쳐서 확인</span>"
+                "</span>"
+                "</summary>"
+                f"<div class='unchanged-summary-body'>{''.join(unchanged_summary_cards_html)}</div>"
+                "</details>"
+            )
 
         html = f"""<!doctype html>
 <html lang="ko">
@@ -271,6 +292,14 @@ class ReportWriter:
       margin-bottom: 16px;
     }}
     .summary-list {{ padding: 12px; }}
+    .unchanged-summary {{ padding: 0; }}
+    .unchanged-summary > summary {{
+      cursor: pointer;
+      list-style: none;
+      padding: 14px;
+    }}
+    .unchanged-summary > summary::-webkit-details-marker {{ display: none; }}
+    .unchanged-summary-body {{ padding: 0 12px 12px; }}
     .summary-card {{
       border: 1px solid #e3e8ee;
       border-radius: 8px;
@@ -433,14 +462,16 @@ class ReportWriter:
       <button class="count" type="button" data-filter="Unchanged">변경없음<strong>{counts.get('Unchanged', 0)}</strong></button>
     </section>
     <section class="summary-list" aria-label="비교 요약">
-      {''.join(summary_cards_html)}
+      {visible_summary_html}
     </section>
+    {unchanged_summary_html}
     {''.join(details_html)}
   </div>
   <script>
     const filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
     const filterEntries = Array.from(document.querySelectorAll(".diff-block[data-severity]"));
     const summaryLinks = Array.from(document.querySelectorAll("[data-target-severity]"));
+    const unchangedSummary = document.querySelector("[data-summary-severity='Unchanged']");
     let activeFilter = "";
     function setFilter(nextFilter) {{
       activeFilter = nextFilter;
@@ -451,6 +482,10 @@ class ReportWriter:
         const visible = !activeFilter || entry.dataset.severity === activeFilter;
         entry.hidden = !visible;
       }});
+      if (unchangedSummary) {{
+        unchangedSummary.hidden = Boolean(activeFilter && activeFilter !== "Unchanged");
+        unchangedSummary.open = activeFilter === "Unchanged";
+      }}
     }}
     function applyFilter(nextFilter) {{
       setFilter(activeFilter === nextFilter ? "" : nextFilter);
@@ -460,8 +495,18 @@ class ReportWriter:
     }});
     summaryLinks.forEach((link) => {{
       link.addEventListener("click", () => {{
+        if (link.dataset.targetSeverity === "Unchanged" && unchangedSummary) {{
+          unchangedSummary.open = true;
+        }}
         if (activeFilter && activeFilter !== link.dataset.targetSeverity) {{
           setFilter(link.dataset.targetSeverity);
+        }}
+        const targetId = link.getAttribute("href");
+        if (targetId && targetId.startsWith("#")) {{
+          const target = document.querySelector(targetId);
+          if (target && target.tagName.toLowerCase() === "details") {{
+            target.open = true;
+          }}
         }}
       }});
     }});

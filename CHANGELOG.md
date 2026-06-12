@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.23 - 2026-06-12
+
+- Collapsed `변경없음` summary cards in HTML comparison reports by default, not only the lower detail blocks.
+- Opened the collapsed `변경없음` summary section automatically when the `변경없음` severity filter or matching detail links are used.
+- Added reporter regression coverage for collapsed unchanged summary sections.
+- Updated README, operator, developer, release checklist, and version history documents for v0.8.23.
+
 ## v0.8.22 - 2026-06-12
 
 - Labeled sample snapshots as `샘플:` in the HTML comparison report header metadata so shared sample validation reports are easier to distinguish from real maintenance evidence.

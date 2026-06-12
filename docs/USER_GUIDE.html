@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 사용자 가이드 v0.8.22</title>
+  <title>Backbone State Tracker 사용자 가이드 v0.8.23</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -16,7 +16,7 @@
 </head>
 <body>
   <h1>Backbone State Tracker 사용자 가이드</h1>
-  <p>문서 버전: v0.8.22<br>작성일: 2026-06-12<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
+  <p>문서 버전: v0.8.23<br>작성일: 2026-06-12<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
   <h2>1. 핵심 흐름</h2>
   <ol>
@@ -59,7 +59,7 @@
     <tr><td>긴급</td><td>장비 접속 실패, 명령 실패, 인터페이스 Down, LACP selected 수 감소, OSPF Full 이탈, major alarm, fault, abnormal, offline, missing</td></tr>
     <tr><td>주의</td><td>minor alarm, warning, error, 라우팅/STP/로그/리소스 변화처럼 영향 확인이 필요한 변화</td></tr>
     <tr><td>정보</td><td>접속 복구 또는 긴급/주의 키워드가 없는 일반 출력 변화</td></tr>
-    <tr><td>변경없음</td><td>의미 있는 변경이 감지되지 않은 항목</td></tr>
+    <tr><td>변경없음</td><td>의미 있는 변경이 감지되지 않은 항목. HTML 리포트에서는 요약 카드와 상세 블록이 기본으로 접혀 있습니다.</td></tr>
   </table>
 
   <h2>6. HTML 리포트</h2>
@@ -67,14 +67,14 @@
     <li>HTML 리포트 상단의 등급 카드도 필터로 동작하며, 필터 중에도 다른 등급 카드는 계속 표시됩니다.</li>
     <li>요약 카드의 <code>상세 보기</code>를 누르면 현재 다른 등급 필터가 켜져 있어도 해당 상세가 보이도록 필터가 자동으로 맞춰집니다.</li>
     <li>HTML 리포트 상단의 <code>기준</code> 또는 <code>비교</code>에 샘플 스냅샷이 들어가면 <code>샘플:</code> 접두어로 실제 작업 증적과 구분합니다.</li>
-    <li><code>변경없음</code> 블록은 기본으로 접혀 있습니다.</li>
+    <li><code>변경없음</code> 요약 카드 묶음과 명령별 상세 블록은 제목만 보이고 기본으로 접혀 있습니다.</li>
     <li>변경 표는 각 행 안에 등급, 장비, 명령, 분류, 변경 수, 첫 변경, 요약을 함께 보여줍니다.</li>
   </ul>
 
   <h2>7. 배포 ZIP 확인</h2>
   <p>샘플 검증 스냅샷은 실제 작업 전 기준으로 사용되지 않습니다. 샘플만 있는 상태에서 첫 실제 수집을 시작하면 <code>작업 전</code> 기준으로 저장됩니다. 샘플 스냅샷이 프로그램 상단 <code>기준</code>/<code>비교 대상</code> 또는 HTML 리포트 상단 <code>기준</code>/<code>비교</code>에 표시될 때는 <code>샘플:</code> 접두어가 붙습니다.</p>
-  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.22_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.22_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.22_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.22_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
+  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.23_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.23_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.23_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.23_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
 </body>
 </html>
