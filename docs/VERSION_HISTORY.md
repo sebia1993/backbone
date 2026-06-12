@@ -1,21 +1,23 @@
 # Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.8.24  
+문서 버전: v0.8.25  
 작성일: 2026-06-12  
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
 
-### v0.8.24 - 2026-06-12
+### v0.8.25 - 2026-06-12
 
-- HTML 비교 리포트 상단에 `변경 항목 바로가기` 버튼 영역을 추가했습니다.
-- `긴급`, `주의`, `정보`처럼 변경이 있는 장비/명령만 버튼으로 표시하고, 누르면 해당 명령별 상세 블록으로 바로 이동합니다.
-- 변경 항목 바로가기와 목적지 강조 동작에 대한 회귀 테스트를 추가했습니다.
+- `장비 설정`의 대상 장비 영역에 `장비 추가` 버튼을 추가했습니다.
+- 기본 2개 장비 행은 유지하면서 필요 시 추가 장비를 같은 화면에서 입력할 수 있습니다.
+- 장비 YAML에 3대 이상이 들어 있어도 필요한 만큼 행을 자동으로 만들고, 짧은 목록을 다시 불러오면 남는 행을 빈 기본값으로 초기화합니다.
+- 동적 장비 행에 대한 GUI 회귀 테스트를 추가했습니다.
 
 ## 2. 이전 주요 변경
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.8.24 | 2026-06-12 | HTML 비교 리포트에서 변경이 있는 장비/명령으로 바로 이동하는 `변경 항목 바로가기` 버튼을 추가했습니다. |
 | v0.8.23 | 2026-06-12 | HTML 리포트에서 `변경없음` 요약 카드 묶음도 기본 접힘 상태로 변경했습니다. |
 | v0.8.22 | 2026-06-12 | HTML 리포트 상단 메타에서 샘플 스냅샷을 `샘플:` 접두어로 표시했습니다. |
 | v0.8.21 | 2026-06-12 | GUI 상단 런타임 요약에서 샘플 스냅샷을 `샘플:` 접두어로 표시했습니다. |
@@ -33,6 +35,12 @@
 | v0.8.9 | 2026-06-12 | ZIP 파일명, sidecar, manifest의 버전/날짜 일치 검증을 추가했습니다. |
 | v0.8.8 | 2026-06-12 | 릴리스 반입 체크리스트를 필수 문서로 추가했습니다. |
 | v0.8.7 이하 | 2026-06-11 이전 | 스냅샷 비교, redaction, 공유 ZIP, 샘플 검증, GUI 상세 비교 기능을 단계적으로 추가했습니다. |
+
+### v0.8.24 - 2026-06-12
+
+- HTML 비교 리포트 상단에 `변경 항목 바로가기` 버튼 영역을 추가했습니다.
+- `긴급`, `주의`, `정보`처럼 변경이 있는 장비/명령만 버튼으로 표시하고, 누르면 해당 명령별 상세 블록으로 바로 이동합니다.
+- 변경 항목 바로가기와 목적지 강조 동작에 대한 회귀 테스트를 추가했습니다.
 
 ### v0.8.23 - 2026-06-12
 
@@ -79,15 +87,15 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.24 산출물 이름
+## 3. v0.8.25 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.24_20260612_source.zip
-dist\backbone_state_tracker_v0.8.24_20260612_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.24_20260612_windows_exe.zip
-dist\backbone_state_tracker_v0.8.24_20260612_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.24_20260612_release_manifest.txt
-dist\backbone_state_tracker_v0.8.24_20260612_verify_release_package.ps1
+dist\backbone_state_tracker_v0.8.25_20260612_source.zip
+dist\backbone_state_tracker_v0.8.25_20260612_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.25_20260612_windows_exe.zip
+dist\backbone_state_tracker_v0.8.25_20260612_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.25_20260612_release_manifest.txt
+dist\backbone_state_tracker_v0.8.25_20260612_verify_release_package.ps1
 ```
 
 ## 4. 릴리스 검증 기준

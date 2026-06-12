@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.25 - 2026-06-12
+
+- Added a `장비 추가` button to the target device settings section so operators can add more device rows when needed.
+- Expanded device YAML loading so three or more configured devices are shown in the GUI instead of being truncated to the first two rows.
+- Cleared stale extra rows when a shorter device list is loaded and kept blank rows out of collection/save targets.
+- Added GUI regression coverage for dynamic target device rows and shorter-list reload behavior.
+- Updated README, operator, developer, release checklist, and version history documents for v0.8.25.
+
 ## v0.8.24 - 2026-06-12
 
 - Added `변경 항목 바로가기` buttons to HTML comparison reports for changed Critical, Warning, and Info items only.

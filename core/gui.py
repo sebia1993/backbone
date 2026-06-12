@@ -91,6 +91,8 @@ class BackboneStateTrackerApp(tk.Tk):
         self.latest_report: Path | None = None
         self.latest_share_bundle: Path | None = None
         self.device_rows: list[dict[str, tk.Variable]] = []
+        self.device_table_body: tk.Frame | None = None
+        self.device_actions: tk.Frame | None = None
         self.pages: dict[str, tk.Frame] = {}
         self.nav_buttons: dict[str, tk.Button] = {}
         self.current_page = "settings"
@@ -870,6 +872,7 @@ class BackboneStateTrackerApp(tk.Tk):
         body = tk.Frame(devices, bg=PALETTE["surface"], padx=16, pady=16)
         body.grid(row=1, column=0, sticky="nsew")
         body.columnconfigure(2, weight=1)
+        self.device_table_body = body
 
         headers = ["사용", "장비명", "IP/호스트", "포트", "장비 타입"]
         for column, header in enumerate(headers):
@@ -877,35 +880,60 @@ class BackboneStateTrackerApp(tk.Tk):
                 row=0, column=column, sticky="w", padx=4, pady=(0, 6)
             )
 
-        for row_index in range(2):
-            enabled = tk.BooleanVar(value=True)
-            name = tk.StringVar()
-            host = tk.StringVar()
-            port = tk.StringVar(value="22")
-            device_type = tk.StringVar(value="hp_comware")
-            self.device_rows.append(
-                {
-                    "enabled": enabled,
-                    "name": name,
-                    "host": host,
-                    "port": port,
-                    "device_type": device_type,
-                }
-            )
-            row = row_index + 1
-            ttk.Checkbutton(body, variable=enabled).grid(row=row, column=0, sticky="w", padx=4, pady=4)
-            ttk.Entry(body, textvariable=name, width=18).grid(row=row, column=1, sticky="ew", padx=4, pady=4)
-            ttk.Entry(body, textvariable=host).grid(row=row, column=2, sticky="ew", padx=4, pady=4)
-            ttk.Entry(body, textvariable=port, width=8).grid(row=row, column=3, sticky="w", padx=4, pady=4)
-            ttk.Entry(body, textvariable=device_type, width=22).grid(row=row, column=4, sticky="ew", padx=4, pady=4)
+        for _ in range(2):
+            self._add_device_row()
 
         actions = tk.Frame(body, bg=PALETTE["surface"])
-        actions.grid(row=3, column=0, columnspan=5, sticky="ew", pady=(12, 0))
-        ttk.Button(actions, text="장비 목록 불러오기", style="Secondary.TButton", command=self.load_devices_dialog).pack(side="left")
-        ttk.Button(actions, text="장비 목록 저장", style="Primary.TButton", command=self.save_devices_to_default).pack(side="left", padx=(8, 0))
+        self.device_actions = actions
+        add_button = ttk.Button(actions, text="장비 추가", style="Secondary.TButton", command=self.add_device_row)
+        add_button.pack(side="left")
+        load_button = ttk.Button(actions, text="장비 목록 불러오기", style="Secondary.TButton", command=self.load_devices_dialog)
+        load_button.pack(side="left", padx=(8, 0))
+        save_button = ttk.Button(actions, text="장비 목록 저장", style="Primary.TButton", command=self.save_devices_to_default)
+        save_button.pack(side="left", padx=(8, 0))
+        for button in (add_button, load_button, save_button):
+            self._track_busy_sensitive(button)
+        self._place_device_actions()
 
         self._build_collection_section(page, 2)
         self._build_command_set_section(page, 3)
+
+    def _add_device_row(self, device: Device | None = None) -> None:
+        if self.device_table_body is None:
+            raise RuntimeError("대상 장비 입력 영역이 준비되지 않았습니다.")
+
+        enabled = tk.BooleanVar(value=device.enabled if device is not None else True)
+        name = tk.StringVar(value=device.name if device is not None else "")
+        host = tk.StringVar(value=device.host if device is not None else "")
+        port = tk.StringVar(value=str(device.port if device is not None else 22))
+        device_type = tk.StringVar(value=device.device_type if device is not None else "hp_comware")
+        row_vars: dict[str, tk.Variable] = {
+            "enabled": enabled,
+            "name": name,
+            "host": host,
+            "port": port,
+            "device_type": device_type,
+        }
+        self.device_rows.append(row_vars)
+
+        row = len(self.device_rows)
+        body = self.device_table_body
+        ttk.Checkbutton(body, variable=enabled).grid(row=row, column=0, sticky="w", padx=4, pady=4)
+        ttk.Entry(body, textvariable=name, width=18).grid(row=row, column=1, sticky="ew", padx=4, pady=4)
+        ttk.Entry(body, textvariable=host).grid(row=row, column=2, sticky="ew", padx=4, pady=4)
+        ttk.Entry(body, textvariable=port, width=8).grid(row=row, column=3, sticky="w", padx=4, pady=4)
+        ttk.Entry(body, textvariable=device_type, width=22).grid(row=row, column=4, sticky="ew", padx=4, pady=4)
+        self._place_device_actions()
+
+    def _place_device_actions(self) -> None:
+        if self.device_actions is None:
+            return
+        self.device_actions.grid(row=len(self.device_rows) + 1, column=0, columnspan=5, sticky="ew", pady=(12, 0))
+
+    def add_device_row(self) -> None:
+        self._add_device_row()
+        self._refresh_busy_sensitive_widgets()
+        self.log("대상 장비 입력 행을 추가했습니다.")
 
     def _build_logs_page(self) -> None:
         page = self._make_page("logs")
@@ -970,12 +998,17 @@ class BackboneStateTrackerApp(tk.Tk):
         self._refresh_busy_sensitive_widgets()
 
     def _apply_devices(self, devices: list[Device]) -> None:
-        for row, device in zip(self.device_rows, devices):
-            row["enabled"].set(device.enabled)
-            row["name"].set(device.name)
-            row["host"].set(device.host)
-            row["port"].set(str(device.port))
-            row["device_type"].set(device.device_type)
+        while len(self.device_rows) < max(2, len(devices)):
+            self._add_device_row()
+
+        for index, row in enumerate(self.device_rows):
+            device = devices[index] if index < len(devices) else None
+            row["enabled"].set(device.enabled if device is not None else True)
+            row["name"].set(device.name if device is not None else "")
+            row["host"].set(device.host if device is not None else "")
+            row["port"].set(str(device.port if device is not None else 22))
+            row["device_type"].set(device.device_type if device is not None else "hp_comware")
+        self._refresh_busy_sensitive_widgets()
 
     def _read_devices_from_form(self) -> list[Device]:
         devices: list[Device] = []
