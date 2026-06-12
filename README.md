@@ -1,6 +1,6 @@
 # Backbone State Tracker
 
-Version: `v0.8.16`
+Version: `v0.8.17`
 
 Windows GUI utility for collecting read-only status snapshots from backbone 3
 and 4, then comparing snapshots to track operational changes during maintenance.
@@ -25,7 +25,7 @@ and 4, then comparing snapshots to track operational changes during maintenance.
 - Shows labeled summary cards in the HTML comparison report so each value is readable without relying on table headers.
 - Creates a shared report ZIP with redacted reports and guides, excluding snapshot raw output folders.
 - Writes SHA256 checksum sidecars, a release manifest, `PACKAGE_INFO.txt`, a release import checklist, and Python/PowerShell release ZIP content, version, manifest-record, path-safety, and duplicate-entry verification.
-- Provides a Korean bright-console UI with left navigation for collection, comparison, settings, and logs.
+- Provides a Korean bright-console UI with left navigation ordered by workflow: settings, collection, comparison, and logs.
 - Shows line-level snapshot differences so operators can see the exact before/after output that changed.
 - Filters and searches GUI comparison detail rows by severity, device, command, judgment, line, and changed values.
 - Highlights GUI comparison rows with impact, line location, before/after values, and severity-specific follow-up guidance.
@@ -47,9 +47,10 @@ python app.py
 Replace `<folder-that-contains-backbone_state_tracker>` with the folder where the
 project or transferred ZIP was extracted.
 
-Use the GUI to enter backbone 3/4 device IPs, SSH username, password, and an
-optional custom collection stage name. Passwords are never saved to
-configuration or report files.
+Use the GUI to enter backbone 3/4 device IPs, SSH username, and password on
+the first `장비 설정` screen, then move to `상태 수집` for the optional custom
+collection stage name. Passwords are never saved to configuration or report
+files.
 
 ## Important Files
 
@@ -100,7 +101,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 The generated ZIP is written to `dist\` as:
 
 ```text
-backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip
 ```
 
 The ZIP also includes `PACKAGE_INFO.txt`, `RUN_FIRST.txt`, and the release
@@ -109,15 +110,15 @@ version-level `release_manifest.txt` are written to `dist\`. After moving a ZIP
 into the internal environment, verify it with:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip --require-manifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip --require-manifest
 ```
 
 If only the release files were transferred, use the standalone PowerShell helper
 that is written next to the ZIP files:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.16_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip -RequireManifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.17_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 Corporate mail systems may block ZIP files containing `.exe`, `.py`, or `.ps1`

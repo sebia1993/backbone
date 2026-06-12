@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.17 - 2026-06-12
+
+- Reordered the GUI workflow so the app opens on `장비 설정` and the left navigation follows `장비 설정 → 상태 수집 → 비교 결과 → 작업 로그`.
+- Added a `상태 수집으로 이동` button on the settings page so operators can move directly to collection after confirming credentials and device targets.
+- Updated GUI regression tests for the settings-first startup flow and workflow navigation order.
+- Updated README, operator, developer, release checklist, command, and version history documents for v0.8.17.
+
 ## v0.8.16 - 2026-06-12
 
 - Changed the HTML comparison report summary from a wide table to labeled summary cards so each value remains understandable when viewed by itself.
