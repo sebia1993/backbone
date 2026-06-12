@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.26 - 2026-06-12
+
+- Made the `장비 설정` screen vertically scrollable so added target device rows do not push collection controls out of reach.
+- Added a live target device summary showing enabled, configured, and total input row counts.
+- Added GUI regression coverage for the scrollable settings page and dynamic device summary updates.
+- Updated README, operator, command, developer, release checklist, and version history documents for v0.8.26.
+
 ## v0.8.25 - 2026-06-12
 
 - Added a `장비 추가` button to the target device settings section so operators can add more device rows when needed.
