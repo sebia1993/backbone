@@ -60,6 +60,8 @@ def find_latest_pre_work_snapshot(snapshot_dirs: list[Path]) -> Path | None:
             snapshot = SnapshotStore.load_snapshot(snapshot_dir)
         except Exception:
             continue
+        if is_sample_snapshot(snapshot_dir, snapshot.stage_slug):
+            continue
         is_pre_work = (
             snapshot.stage_slug == WORK_STAGE_BY_NAME[PRE_WORK_STAGE].slug
             or snapshot.label == PRE_WORK_STAGE
@@ -70,6 +72,10 @@ def find_latest_pre_work_snapshot(snapshot_dirs: list[Path]) -> Path | None:
         if latest is None or snapshot_dir.name > latest.name:
             latest = snapshot_dir
     return latest
+
+
+def is_sample_snapshot(snapshot_dir: Path, stage_slug: str = "") -> bool:
+    return stage_slug.startswith("sample_") or "_sample_" in snapshot_dir.name
 
 
 SEVERITY_LABELS_KO = {

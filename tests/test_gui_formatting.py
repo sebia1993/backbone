@@ -113,6 +113,38 @@ class GuiDiffFormattingTests(unittest.TestCase):
             finally:
                 app.destroy()
 
+    def test_sample_baseline_does_not_change_first_real_collection_stage(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            app = BackboneStateTrackerApp()
+            app.withdraw()
+            try:
+                app.snapshot_store = SnapshotStore(Path(tmp))
+                device = Device(name="backbone4", host="192.0.2.4")
+                result = CommandResult(
+                    device_name=device.name,
+                    host=device.host,
+                    command_id="interface_brief",
+                    command="display interface brief",
+                    category="interface",
+                    phase="check",
+                    success=True,
+                    output="GE1/0/1 UP",
+                    started_at="2026-06-11T10:00:00",
+                    ended_at="2026-06-11T10:00:01",
+                )
+                app.snapshot_store.write_snapshot(
+                    "[샘플] 작업 전",
+                    [device],
+                    {device.name: [result]},
+                    folder_label="sample_pre_work",
+                    stage_name="[샘플] 작업 전",
+                    stage_slug="sample_pre_work",
+                )
+
+                self.assertEqual(app._default_collect_stage_name(), "작업 전")
+            finally:
+                app.destroy()
+
     def test_compare_page_uses_compact_metrics_above_details(self) -> None:
         app = BackboneStateTrackerApp()
         app.withdraw()
