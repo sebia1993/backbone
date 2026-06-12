@@ -194,11 +194,11 @@ class ReportWriter:
             item_summary = redact_sensitive_text(summary_label(item))
             change_preview = redact_sensitive_text(item.change_preview or "-")
             summary_cards_html.append(
-                f"<article class='summary-card filter-entry' data-severity='{escape(item.severity)}' aria-labelledby='summary-{index}'>"
+                f"<article class='summary-card' aria-labelledby='summary-{index}'>"
                 "<div class='summary-card-head'>"
                 f"<span class='badge' style='background:{colors.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
                 f"<strong id='summary-{index}'>{escape(item.device_name)} / {escape(item.command_id)}</strong>"
-                f"<a class='summary-link' href='#{detail_id}'>상세 보기</a>"
+                f"<a class='summary-link' data-target-severity='{escape(item.severity)}' href='#{detail_id}'>상세 보기</a>"
                 "</div>"
                 "<div class='summary-meta'>"
                 f"<div class='summary-item'><span class='summary-label'>등급</span><span class='summary-value'>{escape(severity_label)}</span></div>"
@@ -235,7 +235,7 @@ class ReportWriter:
     * {{ box-sizing: border-box; }}
     body {{
       margin: 0;
-      font-family: "Segoe UI", Arial, sans-serif;
+      font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
     }}
@@ -437,10 +437,11 @@ class ReportWriter:
   </div>
   <script>
     const filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
-    const filterEntries = Array.from(document.querySelectorAll("[data-severity]"));
+    const filterEntries = Array.from(document.querySelectorAll(".diff-block[data-severity]"));
+    const summaryLinks = Array.from(document.querySelectorAll("[data-target-severity]"));
     let activeFilter = "";
-    function applyFilter(nextFilter) {{
-      activeFilter = activeFilter === nextFilter ? "" : nextFilter;
+    function setFilter(nextFilter) {{
+      activeFilter = nextFilter;
       filterButtons.forEach((button) => {{
         button.classList.toggle("is-active", button.dataset.filter === activeFilter);
       }});
@@ -449,8 +450,18 @@ class ReportWriter:
         entry.hidden = !visible;
       }});
     }}
+    function applyFilter(nextFilter) {{
+      setFilter(activeFilter === nextFilter ? "" : nextFilter);
+    }}
     filterButtons.forEach((button) => {{
       button.addEventListener("click", () => applyFilter(button.dataset.filter));
+    }});
+    summaryLinks.forEach((link) => {{
+      link.addEventListener("click", () => {{
+        if (activeFilter && activeFilter !== link.dataset.targetSeverity) {{
+          setFilter(link.dataset.targetSeverity);
+        }}
+      }});
     }});
   </script>
 </body>

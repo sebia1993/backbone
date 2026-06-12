@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 사용자 가이드 v0.8.18</title>
+  <title>Backbone State Tracker 사용자 가이드 v0.8.19</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -16,7 +16,7 @@
 </head>
 <body>
   <h1>Backbone State Tracker 사용자 가이드</h1>
-  <p>문서 버전: v0.8.18<br>작성일: 2026-06-12<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
+  <p>문서 버전: v0.8.19<br>작성일: 2026-06-12<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
   <h2>1. 핵심 흐름</h2>
   <ol>
@@ -64,14 +64,15 @@
 
   <h2>6. HTML 리포트</h2>
   <ul>
-    <li>HTML 리포트 상단의 등급 카드도 필터로 동작합니다.</li>
+    <li>HTML 리포트 상단의 등급 카드도 필터로 동작하며, 필터 중에도 다른 등급 카드는 계속 표시됩니다.</li>
+    <li>요약 카드의 <code>상세 보기</code>를 누르면 현재 다른 등급 필터가 켜져 있어도 해당 상세가 보이도록 필터가 자동으로 맞춰집니다.</li>
     <li><code>변경없음</code> 블록은 기본으로 접혀 있습니다.</li>
     <li>변경 표는 각 행 안에 등급, 장비, 명령, 분류, 변경 수, 첫 변경, 요약을 함께 보여줍니다.</li>
   </ul>
 
   <h2>7. 배포 ZIP 확인</h2>
-  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.18_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.18_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.18_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.18_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
+  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.19_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.19_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.19_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.19_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
 </body>
 </html>
