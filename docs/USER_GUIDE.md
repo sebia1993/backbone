@@ -1,6 +1,6 @@
 # Backbone State Tracker 사용자 가이드
 
-문서 버전: v0.8.18  
+문서 버전: v0.8.19  
 작성일: 2026-06-12  
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
@@ -49,7 +49,8 @@
 
 ## 6. HTML 리포트
 
-- HTML 리포트 상단의 등급 카드도 필터로 동작합니다.
+- HTML 리포트 상단의 등급 카드도 필터로 동작하며, 필터 중에도 다른 등급 카드는 계속 표시됩니다.
+- 요약 카드의 `상세 보기`를 누르면 현재 다른 등급 필터가 켜져 있어도 해당 상세가 보이도록 필터가 자동으로 맞춰집니다.
 - `변경없음` 블록은 제목만 보이고 접혀 있으므로 필요한 경우에만 펼칩니다.
 - 변경 표는 각 행 안에 등급, 장비, 명령, 분류, 변경 수, 첫 변경, 요약을 함께 보여주도록 구성되어 있습니다.
 - 명령별 상세에는 기준 값과 비교 값이 같은 줄에 표시되어 어느 라인이 바뀌었는지 바로 확인할 수 있습니다.
@@ -64,9 +65,9 @@
 Windows EXE ZIP 예시:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.18_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.18_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.18_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.18_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.19_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.19_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.19_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.19_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 사내 메일이 `.exe`, `.py`, `.ps1` 포함 ZIP을 차단할 수 있습니다. 이 경우 승인된 내부 파일 반입 절차를 사용하세요.

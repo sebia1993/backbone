@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.19 - 2026-06-12
+
+- Improved HTML comparison report filtering so the severity summary cards remain visible while details are filtered.
+- Updated summary-card `상세 보기` links to reveal the matching detail block even when another severity filter is active.
+- Switched the generated HTML report font stack to prefer `Malgun Gothic` for Korean readability.
+- Added regression coverage for the HTML severity-filter behavior.
+- Updated README, operator, developer, release checklist, and version history documents for v0.8.19.
+
 ## v0.8.18 - 2026-06-12
 
 - Integrated status collection into the `장비 설정` screen and removed the separate collection menu and workflow wizard.

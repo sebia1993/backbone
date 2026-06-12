@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 버전별 변경내역 v0.8.18</title>
+  <title>Backbone State Tracker 버전별 변경내역 v0.8.19</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2, h3 { color: #102a43; }
@@ -15,25 +15,21 @@
 </head>
 <body>
   <h1>Backbone State Tracker 버전별 변경내역</h1>
-  <p>문서 버전: v0.8.18<br>작성일: 2026-06-12<br>대상: 운영자, 인수자, 초급 유지보수 담당자</p>
+  <p>문서 버전: v0.8.19<br>작성일: 2026-06-12<br>대상: 운영자, 인수자, 초급 유지보수 담당자</p>
 
   <h2>1. 최신 버전</h2>
-  <h3>v0.8.18 - 2026-06-12</h3>
+  <h3>v0.8.19 - 2026-06-12</h3>
   <ul>
-    <li><code>상태 수집</code> 별도 메뉴와 작업 진행 마법사를 제거하고, 상태 수집 기능을 <code>장비 설정</code> 화면에 통합했습니다.</li>
-    <li>수집 단계 선택 UI를 제거하고 <code>수집 단계명(선택)</code> 단일 입력만 남겼습니다.</li>
-    <li>단계명을 입력하지 않으면 <code>점검시간_YYYYMMDD_HHMM</code> 형식으로 저장합니다.</li>
-    <li>첫 수집은 기준 스냅샷, 이후 수집은 최신 기준과 자동 비교하도록 정리했습니다.</li>
-    <li>GUI와 HTML 리포트의 등급 카드를 클릭하면 해당 등급만 필터링합니다.</li>
-    <li>HTML 리포트에서 <code>변경없음</code> 상세 블록은 기본 접힘 상태로 표시합니다.</li>
-    <li>긴급/주의 판단 기준을 재정의했습니다.</li>
-    <li>사용자 가이드에 실제 앱 화면 캡처 3장을 추가했습니다.</li>
-    <li>공유 ZIP과 릴리스 ZIP 검증 대상에 <code>docs/images/</code> 화면 캡처를 포함했습니다.</li>
+    <li>HTML 비교 리포트에서 등급 필터를 적용해도 요약 카드는 계속 보이도록 개선했습니다.</li>
+    <li>요약 카드의 <code>상세 보기</code> 링크를 누르면 해당 상세 블록이 보이도록 필터를 자동 조정합니다.</li>
+    <li>HTML 리포트 기본 폰트 스택에 <code>Malgun Gothic</code>을 우선 적용했습니다.</li>
+    <li>HTML 등급 필터 동작을 검증하는 회귀 테스트를 추가했습니다.</li>
   </ul>
 
   <h2>2. 이전 주요 변경</h2>
   <table>
     <tr><th>버전</th><th>날짜</th><th>주요 내용</th></tr>
+    <tr><td>v0.8.18</td><td>2026-06-12</td><td>수집 기능을 <code>장비 설정</code>에 통합하고 마법사/별도 수집 메뉴를 제거했습니다.</td></tr>
     <tr><td>v0.8.17</td><td>2026-06-12</td><td>앱 시작 화면을 <code>장비 설정</code>으로 재배치했습니다.</td></tr>
     <tr><td>v0.8.16</td><td>2026-06-12</td><td>HTML 요약 카드와 GUI 비교 지표 영역을 개선했습니다.</td></tr>
     <tr><td>v0.8.15</td><td>2026-06-12</td><td>대시보드 제거와 작업 로그 자동 이동을 추가했습니다.</td></tr>
@@ -42,12 +38,12 @@
     <tr><td>v0.8.7 이하</td><td>2026-06-11 이전</td><td>스냅샷 비교, redaction, 공유 ZIP, 샘플 검증, GUI 상세 비교 기능을 단계적으로 추가했습니다.</td></tr>
   </table>
 
-  <h2>3. v0.8.18 산출물 이름</h2>
-  <pre><code>dist\backbone_state_tracker_v0.8.18_20260612_source.zip
-dist\backbone_state_tracker_v0.8.18_20260612_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.18_20260612_windows_exe.zip
-dist\backbone_state_tracker_v0.8.18_20260612_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.18_20260612_release_manifest.txt
-dist\backbone_state_tracker_v0.8.18_20260612_verify_release_package.ps1</code></pre>
+  <h2>3. v0.8.19 산출물 이름</h2>
+  <pre><code>dist\backbone_state_tracker_v0.8.19_20260612_source.zip
+dist\backbone_state_tracker_v0.8.19_20260612_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.19_20260612_windows_exe.zip
+dist\backbone_state_tracker_v0.8.19_20260612_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.19_20260612_release_manifest.txt
+dist\backbone_state_tracker_v0.8.19_20260612_verify_release_package.ps1</code></pre>
 </body>
 </html>
