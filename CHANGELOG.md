@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.15 - 2026-06-12
+
+- Removed the dashboard from the main navigation and made status collection the first screen.
+- Moved the workflow wizard into the status collection screen.
+- Automatically switches to the work log when collection starts, is blocked by a busy workflow, or fails input/preflight validation.
+- Added GUI regression tests for the no-dashboard navigation and log-first collection flow.
+- Updated README, operator, developer, release checklist, command, and version history documents for v0.8.15.
+
 ## v0.8.14 - 2026-06-12
 
 - Added `Date stamp` to checksum sidecar files so sidecars carry the same release date identity as ZIP filenames and manifests.
