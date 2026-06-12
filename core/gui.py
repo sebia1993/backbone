@@ -93,6 +93,8 @@ class BackboneStateTrackerApp(tk.Tk):
         self.device_rows: list[dict[str, tk.Variable]] = []
         self.device_table_body: tk.Frame | None = None
         self.device_actions: tk.Frame | None = None
+        self.settings_canvas: tk.Canvas | None = None
+        self.settings_scrollbar: ttk.Scrollbar | None = None
         self.pages: dict[str, tk.Frame] = {}
         self.nav_buttons: dict[str, tk.Button] = {}
         self.current_page = "settings"
@@ -109,6 +111,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.username_var = tk.StringVar()
         self.password_var = tk.StringVar()
         self.timeout_var = tk.StringVar(value="30")
+        self.device_summary_var = tk.StringVar(value="사용 0대 / 입력 0대 / 행 0개")
         self.stage_var = tk.StringVar(value=PRE_WORK_STAGE)
         self.custom_label_var = tk.StringVar()
         self.baseline_var = tk.StringVar()
@@ -310,6 +313,49 @@ class BackboneStateTrackerApp(tk.Tk):
         page.columnconfigure(0, weight=1)
         self.pages[key] = page
         return page
+
+    def _make_scrollable_page(self, key: str) -> tuple[tk.Frame, tk.Canvas, ttk.Scrollbar]:
+        page = self._make_page(key)
+        page.rowconfigure(0, weight=1)
+        page.columnconfigure(0, weight=1)
+
+        canvas = tk.Canvas(page, bg=PALETTE["bg"], highlightthickness=0, bd=0)
+        scrollbar = ttk.Scrollbar(page, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.grid(row=0, column=0, sticky="nsew")
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        body = tk.Frame(canvas, bg=PALETTE["bg"])
+        body.columnconfigure(0, weight=1)
+        body_window = canvas.create_window((0, 0), window=body, anchor="nw")
+
+        def update_scroll_region(_event: tk.Event) -> None:
+            canvas.configure(scrollregion=canvas.bbox("all"))
+
+        def sync_body_width(event: tk.Event) -> None:
+            canvas.itemconfigure(body_window, width=event.width)
+
+        body.bind("<Configure>", update_scroll_region)
+        canvas.bind("<Configure>", sync_body_width)
+        canvas.bind("<Enter>", lambda _event: self._bind_settings_mousewheel(canvas))
+        canvas.bind("<Leave>", lambda _event: self._unbind_settings_mousewheel())
+        body.bind("<Enter>", lambda _event: self._bind_settings_mousewheel(canvas))
+        body.bind("<Leave>", lambda _event: self._unbind_settings_mousewheel())
+        return body, canvas, scrollbar
+
+    def _bind_settings_mousewheel(self, canvas: tk.Canvas) -> None:
+        canvas.bind_all("<MouseWheel>", self._on_settings_mousewheel)
+
+    def _unbind_settings_mousewheel(self) -> None:
+        if self.settings_canvas is not None:
+            self.settings_canvas.unbind_all("<MouseWheel>")
+
+    def _on_settings_mousewheel(self, event: tk.Event) -> None:
+        if self.current_page != "settings" or self.settings_canvas is None:
+            return
+        delta = getattr(event, "delta", 0)
+        if delta:
+            self.settings_canvas.yview_scroll(int(-1 * (delta / 120)), "units")
 
     def _make_section(self, parent: tk.Frame, title: str, row: int, column: int = 0, columnspan: int = 1) -> tk.Frame:
         section = tk.Frame(
@@ -852,7 +898,7 @@ class BackboneStateTrackerApp(tk.Tk):
         return value[: max(limit - 1, 0)] + "…"
 
     def _build_settings_page(self) -> None:
-        page = self._make_page("settings")
+        page, self.settings_canvas, self.settings_scrollbar = self._make_scrollable_page("settings")
         page.rowconfigure(3, weight=1)
 
         access = self._make_section(page, "접속 계정", 0)
@@ -891,6 +937,13 @@ class BackboneStateTrackerApp(tk.Tk):
         load_button.pack(side="left", padx=(8, 0))
         save_button = ttk.Button(actions, text="장비 목록 저장", style="Primary.TButton", command=self.save_devices_to_default)
         save_button.pack(side="left", padx=(8, 0))
+        tk.Label(
+            actions,
+            textvariable=self.device_summary_var,
+            bg=PALETTE["surface"],
+            fg=PALETTE["muted"],
+            font=("Malgun Gothic", 9),
+        ).pack(side="right")
         for button in (add_button, load_button, save_button):
             self._track_busy_sensitive(button)
         self._place_device_actions()
@@ -915,6 +968,8 @@ class BackboneStateTrackerApp(tk.Tk):
             "device_type": device_type,
         }
         self.device_rows.append(row_vars)
+        for variable in row_vars.values():
+            variable.trace_add("write", lambda *_args: self._update_device_summary())
 
         row = len(self.device_rows)
         body = self.device_table_body
@@ -924,6 +979,7 @@ class BackboneStateTrackerApp(tk.Tk):
         ttk.Entry(body, textvariable=port, width=8).grid(row=row, column=3, sticky="w", padx=4, pady=4)
         ttk.Entry(body, textvariable=device_type, width=22).grid(row=row, column=4, sticky="ew", padx=4, pady=4)
         self._place_device_actions()
+        self._update_device_summary()
 
     def _place_device_actions(self) -> None:
         if self.device_actions is None:
@@ -934,6 +990,17 @@ class BackboneStateTrackerApp(tk.Tk):
         self._add_device_row()
         self._refresh_busy_sensitive_widgets()
         self.log("대상 장비 입력 행을 추가했습니다.")
+
+    def _update_device_summary(self) -> None:
+        configured = 0
+        enabled = 0
+        for row in self.device_rows:
+            has_value = bool(str(row["name"].get()).strip() or str(row["host"].get()).strip())
+            if has_value:
+                configured += 1
+                if bool(row["enabled"].get()):
+                    enabled += 1
+        self.device_summary_var.set(f"사용 {enabled}대 / 입력 {configured}대 / 행 {len(self.device_rows)}개")
 
     def _build_logs_page(self) -> None:
         page = self._make_page("logs")
@@ -1008,6 +1075,7 @@ class BackboneStateTrackerApp(tk.Tk):
             row["host"].set(device.host if device is not None else "")
             row["port"].set(str(device.port if device is not None else 22))
             row["device_type"].set(device.device_type if device is not None else "hp_comware")
+        self._update_device_summary()
         self._refresh_busy_sensitive_widgets()
 
     def _read_devices_from_form(self) -> list[Device]:

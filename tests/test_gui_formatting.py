@@ -76,6 +76,9 @@ class GuiDiffFormattingTests(unittest.TestCase):
             self.assertTrue(any("점검시간_YYYYMMDD_HHMM" in text for text in texts))
             self.assertIn("점검 명령 세트", texts)
             self.assertEqual(app.stage_var.get(), "작업 전")
+            self.assertEqual(app.device_summary_var.get(), "사용 2대 / 입력 2대 / 행 2개")
+            self.assertIsNotNone(app.settings_canvas)
+            self.assertIsNotNone(app.settings_scrollbar)
             self.assertNotIn("TRadiobutton", classes)
             self.assertNotIn("작업 진행 마법사", texts)
         finally:
@@ -96,7 +99,40 @@ class GuiDiffFormattingTests(unittest.TestCase):
             self.assertEqual(added["host"].get(), "")
             self.assertEqual(added["port"].get(), "22")
             self.assertEqual(added["device_type"].get(), "hp_comware")
+            self.assertEqual(app.device_summary_var.get(), "사용 2대 / 입력 2대 / 행 3개")
             self.assertEqual(len(app._read_devices_from_form()), 2)
+        finally:
+            app.destroy()
+
+    def test_device_summary_updates_as_target_rows_change(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            app._apply_devices([Device(name="backbone3", host="192.0.2.3"), Device(name="backbone4", host="192.0.2.4")])
+            self.assertEqual(app.device_summary_var.get(), "사용 2대 / 입력 2대 / 행 2개")
+
+            app.add_device_row()
+            app.device_rows[2]["name"].set("backbone5")
+            app.device_rows[2]["host"].set("192.0.2.5")
+            self.assertEqual(app.device_summary_var.get(), "사용 3대 / 입력 3대 / 행 3개")
+
+            app.device_rows[2]["enabled"].set(False)
+            self.assertEqual(app.device_summary_var.get(), "사용 2대 / 입력 3대 / 행 3개")
+        finally:
+            app.destroy()
+
+    def test_settings_page_scroll_region_expands_with_many_device_rows(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            self.assertIsNotNone(app.settings_canvas)
+            for index in range(10):
+                app._add_device_row(Device(name=f"extra{index}", host=f"192.0.2.{20 + index}"))
+            app.update_idletasks()
+            scroll_region = str(app.settings_canvas.cget("scrollregion"))
+
+            self.assertTrue(scroll_region)
+            self.assertEqual(app.device_summary_var.get(), "사용 12대 / 입력 12대 / 행 12개")
         finally:
             app.destroy()
 
