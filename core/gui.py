@@ -472,12 +472,14 @@ class BackboneStateTrackerApp(tk.Tk):
             row=0, column=0, sticky="w"
         )
         ttk.Entry(form, textvariable=self.custom_label_var).grid(row=0, column=1, sticky="ew", padx=(8, 12))
-        ttk.Button(form, text="설정 점검", style="Secondary.TButton", command=self.run_preflight_check).grid(
+        self.preflight_button = ttk.Button(form, text="설정 점검", style="Secondary.TButton", command=self.run_preflight_check)
+        self.preflight_button.grid(
             row=0,
             column=2,
             sticky="e",
             padx=(0, 8),
         )
+        self._track_busy_sensitive(self.preflight_button)
         collect_button = ttk.Button(form, text="상태 수집 시작", style="Primary.TButton", command=self.collect_snapshot)
         collect_button.grid(row=0, column=3, sticky="e")
         self._track_busy_sensitive(collect_button)
@@ -530,7 +532,9 @@ class BackboneStateTrackerApp(tk.Tk):
         tk.Label(form, text="비교 스냅샷", bg=PALETTE["surface"], fg=PALETTE["muted"]).grid(row=0, column=2, sticky="w")
         self.target_combo = ttk.Combobox(form, textvariable=self.target_var, state="readonly")
         self.target_combo.grid(row=0, column=3, sticky="ew", padx=(8, 16))
-        ttk.Button(form, text="목록 새로고침", style="Secondary.TButton", command=self.refresh_snapshots).grid(row=0, column=4, sticky="e")
+        self.snapshot_refresh_button = ttk.Button(form, text="목록 새로고침", style="Secondary.TButton", command=self.refresh_snapshots)
+        self.snapshot_refresh_button.grid(row=0, column=4, sticky="e")
+        self._track_busy_sensitive(self.snapshot_refresh_button)
 
         actions = tk.Frame(form, bg=PALETTE["surface"])
         actions.grid(row=1, column=0, columnspan=5, sticky="ew", pady=(14, 0))
@@ -1129,6 +1133,8 @@ class BackboneStateTrackerApp(tk.Tk):
             messagebox.showerror("저장 실패", str(exc))
 
     def run_preflight_check(self, show_dialog: bool = True) -> bool:
+        if self._reject_if_busy("설정 점검"):
+            return False
         try:
             devices = self._read_devices_from_form()
             commands = load_commands(COMMANDS_PATH)

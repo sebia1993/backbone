@@ -1,6 +1,6 @@
 # Backbone State Tracker 사용자 가이드
 
-문서 버전: v0.8.26  
+문서 버전: v0.8.27  
 작성일: 2026-06-12  
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
@@ -28,6 +28,7 @@
 - `장비 목록 불러오기`로 3대 이상이 들어 있는 YAML을 읽으면 필요한 만큼 행이 자동으로 늘어납니다.
 - `설정 점검`은 장비 목록과 명령 세트 설정을 로컬에서 먼저 검증합니다.
 - `상태 수집 시작`은 읽기 전용 점검 명령만 실행합니다.
+- 수집, 비교, 샘플 검증이 진행 중이면 `설정 점검`과 스냅샷 `목록 새로고침`은 잠기며, 완료 후 다시 사용할 수 있습니다.
 - `config/commands.yaml`에 정의된 명령만 실행되며, shutdown, save, reboot 같은 변경 명령은 포함하지 않습니다.
 
 ## 3. 비교 결과 확인
@@ -76,9 +77,9 @@
 Windows EXE ZIP 예시:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.26_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.26_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.26_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.26_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.27_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.27_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.27_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.27_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 사내 메일이 `.exe`, `.py`, `.ps1` 포함 ZIP을 차단할 수 있습니다. 이 경우 승인된 내부 파일 반입 절차를 사용하세요.

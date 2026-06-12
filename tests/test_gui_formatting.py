@@ -490,6 +490,42 @@ class GuiDiffFormattingTests(unittest.TestCase):
         finally:
             app.destroy()
 
+    def test_busy_guard_blocks_preflight_check(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            app.show_page("settings")
+            app.workflow_busy = True
+            with patch("backbone_state_tracker.core.gui.messagebox.showwarning") as warning:
+                with patch.object(app, "_read_devices_from_form") as read_devices:
+                    result = app.run_preflight_check()
+
+            self.assertFalse(result)
+            read_devices.assert_not_called()
+            warning.assert_called_once()
+            self.assertEqual(app.compare_status_var.get(), "진행 중")
+            self.assertIn("현재 수집 또는 비교가 진행 중입니다.", app.log_text.get("1.0", "end"))
+        finally:
+            app.destroy()
+
+    def test_busy_state_disables_preflight_and_snapshot_refresh_buttons(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            app.workflow_busy = True
+            app._refresh_busy_sensitive_widgets()
+
+            self.assertEqual(str(app.preflight_button.cget("state")), "disabled")
+            self.assertEqual(str(app.snapshot_refresh_button.cget("state")), "disabled")
+
+            app.workflow_busy = False
+            app._refresh_busy_sensitive_widgets()
+
+            self.assertEqual(str(app.preflight_button.cget("state")), "normal")
+            self.assertEqual(str(app.snapshot_refresh_button.cget("state")), "normal")
+        finally:
+            app.destroy()
+
     def test_collect_validation_error_moves_to_logs(self) -> None:
         app = BackboneStateTrackerApp()
         app.withdraw()
