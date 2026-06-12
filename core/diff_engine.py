@@ -110,7 +110,7 @@ class DiffEngine:
             health = assess_target_health(target_result, target_lines)
 
             if base_normalized == target_normalized and base_result.success == target_result.success:
-                if health is not None:
+                if health is not None and should_emit_health_for_unchanged_output(health):
                     severity, summary, health_line = health
                     change_count, changed_lines, change_preview = summarize_changed_lines([health_line])
                     items.append(
@@ -553,6 +553,11 @@ def assess_target_health(result: CommandResult, target_lines: list[tuple[int, st
     if result.command_id == "power_status":
         return assess_power_state(target_lines)
     return None
+
+
+def should_emit_health_for_unchanged_output(health: tuple[str, str, DiffLine]) -> bool:
+    severity, _summary, _line = health
+    return severity in {"Critical", "Warning"}
 
 
 def assess_cpu_usage(target_lines: list[tuple[int, str]]) -> tuple[str, str, DiffLine] | None:

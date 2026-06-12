@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.33
+문서 버전: v0.8.34
 작성일: 2026-06-12  
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -71,10 +71,10 @@ GUI 변경이 있으면 실제 앱을 실행해 화면이 비어 있지 않은�
 
 - `Critical`: 장비 접속 실패, 명령 실패, 인터페이스 Down, LACP selected 수 감소, OSPF Full 이탈, `cpu_usage` 5초/1분/5분 70% 이상, `memory_usage` FreeRatio 30% 이하, `power_status` State 비정상, major alarm, fault, abnormal, offline, missing.
 - `Warning`: `cpu_usage` 5초/1분/5분 50~69%, `memory_usage` FreeRatio 31~40%, minor alarm, warning, error, 라우팅/STP/로그/리소스 변화.
-- `Info`: `cpu_usage` 5초/1분/5분 모두 50% 미만, `memory_usage` FreeRatio 40% 초과, 접속 복구 또는 일반 출력 변화.
-- `Unchanged`: 정규화 후 의미 있는 변화가 없는 항목.
+- `Info`: 정상 범위의 `cpu_usage`/`memory_usage` 출력 변화, 접속 복구 또는 일반 출력 변화.
+- `Unchanged`: 정상 범위의 `cpu_usage`/`memory_usage`를 포함해 정규화 후 의미 있는 변화가 없는 항목.
 
-건강 상태를 의미하는 `No alarm`, `No fault`, `Normal`, `None`은 알람 키워드 오탐을 줄이기 위해 분류용 haystack에서 제외합니다. 단, `cpu_usage`와 `memory_usage`는 출력 변경량이 아니라 비교 대상 스냅샷의 현재 임계치 기준만으로 `Critical`/`Warning`/`Info`를 정합니다. `power_status`의 비정상 State 판정은 별도 구조화 파서로 처리합니다.
+건강 상태를 의미하는 `No alarm`, `No fault`, `Normal`, `None`은 알람 키워드 오탐을 줄이기 위해 분류용 haystack에서 제외합니다. 단, `cpu_usage`와 `memory_usage`는 비교 대상 스냅샷의 현재 임계치 기준으로 `Critical`/`Warning`을 먼저 정합니다. 정상 범위에서는 출력이 달라진 경우만 `Info`이며, 출력이 동일하면 `Unchanged`입니다. `power_status`의 비정상 State 판정은 별도 구조화 파서로 처리합니다.
 
 ## 7. 문서와 스크린샷
 

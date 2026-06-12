@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 점검 명령어 가이드 v0.8.33</title>
+  <title>Backbone State Tracker 점검 명령어 가이드 v0.8.34</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -14,7 +14,7 @@
 </head>
 <body>
   <h1>Backbone State Tracker 점검 명령어 가이드</h1>
-  <p>문서 버전: v0.8.33<br>작성일: 2026-06-12<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
+  <p>문서 버전: v0.8.34<br>작성일: 2026-06-12<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
   <h2>1. 기본 원칙</h2>
   <ul>
@@ -37,8 +37,8 @@
     <tr><td><code>link_aggregation_summary</code></td><td><code>display link-aggregation summary</code></td><td>LACP selected 수</td><td>selected 수 감소, unselected, not selected는 긴급입니다.</td></tr>
     <tr><td><code>stp_brief</code></td><td><code>display stp brief</code></td><td>STP 역할/상태</td><td>root, blocked, forwarding 변화를 확인합니다.</td></tr>
     <tr><td><code>ospf_peer</code></td><td><code>display ospf peer</code></td><td>OSPF neighbor</td><td>Full 이탈, Init, ExStart, Loading은 긴급입니다.</td></tr>
-    <tr><td><code>cpu_usage</code></td><td><code>display cpu-usage</code></td><td>CPU 상태</td><td>5초/1분/5분 값 중 70% 이상은 긴급, 50~69%는 주의, 모두 50% 미만은 정보입니다.</td></tr>
-    <tr><td><code>memory_usage</code></td><td><code>display memory</code></td><td>메모리 상태</td><td>FreeRatio 30% 이하는 긴급, 31~40%는 주의, 40% 초과는 정보입니다.</td></tr>
+    <tr><td><code>cpu_usage</code></td><td><code>display cpu-usage</code></td><td>CPU 상태</td><td>5초/1분/5분 값 중 70% 이상은 긴급, 50~69%는 주의, 모두 50% 미만은 정상입니다. 정상 범위에서 출력이 달라진 경우 정보입니다.</td></tr>
+    <tr><td><code>memory_usage</code></td><td><code>display memory</code></td><td>메모리 상태</td><td>FreeRatio 30% 이하는 긴급, 31~40%는 주의, 40% 초과는 정상입니다. 정상 범위에서 출력이 달라진 경우 정보입니다.</td></tr>
     <tr><td><code>recent_log</code></td><td><code>display logbuffer</code></td><td>최근 시스템 로그</td><td>link down, neighbor down, alarm, error, failure 로그를 우선 확인합니다.</td></tr>
   </table>
 
@@ -47,8 +47,8 @@
     <tr><th>등급</th><th>기준</th></tr>
     <tr><td>긴급</td><td>장비 접속 실패, 명령 실패, 인터페이스 Down, LACP selected 수 감소, OSPF Full 이탈, CPU 5초/1분/5분 70% 이상, memory FreeRatio 30% 이하, power State 비정상, major alarm, fault, abnormal, offline, missing</td></tr>
     <tr><td>주의</td><td>CPU 5초/1분/5분 50~69%, memory FreeRatio 31~40%, minor alarm, warning, error, 라우팅/STP/로그/리소스 변화 중 긴급 키워드가 없는 변화</td></tr>
-    <tr><td>정보</td><td>CPU 5초/1분/5분 모두 50% 미만, memory FreeRatio 40% 초과, 접속 복구 또는 긴급/주의로 단정하지 않는 일반 변경</td></tr>
-    <tr><td>변경없음</td><td>의미 있는 변경이 없는 항목</td></tr>
+    <tr><td>정보</td><td>정상 범위 CPU/memory 출력 변화, 접속 복구 또는 긴급/주의로 단정하지 않는 일반 변경</td></tr>
+    <tr><td>변경없음</td><td>정상 범위 CPU/memory를 포함해 의미 있는 변경이 없는 항목</td></tr>
   </table>
 </body>
 </html>
