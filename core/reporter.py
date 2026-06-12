@@ -202,7 +202,7 @@ class ReportWriter:
             status_label = status_to_korean(item.status)
             item_summary = redact_sensitive_text(summary_label(item))
             change_preview = redact_sensitive_text(item.change_preview or "-")
-            default_hidden_attr = " hidden"
+            default_hidden_attr = " hidden aria-hidden='true'"
             card_html = (
                 f"<article class='summary-card' data-severity='{escape(item.severity)}' aria-labelledby='summary-{index}'{default_hidden_attr}>"
                 "<div class='summary-card-head'>"
@@ -237,24 +237,24 @@ class ReportWriter:
             details_html.append(render_diff_block(item, detail_id, severity_label, status_label, item_summary))
 
         status_jump_html = (
-            "<section class='jump-list' aria-label='상태별 바로가기' data-jump-list hidden>"
+            "<section class='jump-list' aria-label='상태별 바로가기' data-jump-list hidden aria-hidden='true'>"
             "<div class='jump-head'>"
             "<strong>상태별 바로가기</strong>"
             "<span class='meta'>상단 상태 카드를 클릭하면 선택한 상태의 장비/명령 버튼만 표시합니다.</span>"
             "</div>"
             f"<div class='jump-actions'>{''.join(status_jump_buttons_html)}</div>"
-            "<p class='meta jump-empty' data-jump-empty hidden>선택한 상태의 바로가기 항목 없음</p>"
+            "<p class='meta jump-empty' data-jump-empty hidden aria-hidden='true'>선택한 상태의 바로가기 항목 없음</p>"
             "</section>"
         )
         visible_summary_html = (
             "".join(summary_cards_html)
-            + "<p class='meta summary-empty' data-summary-empty hidden>선택한 상태의 요약 항목 없음</p>"
+            + "<p class='meta summary-empty' data-summary-empty hidden aria-hidden='true'>선택한 상태의 요약 항목 없음</p>"
         )
         unchanged_summary_html = ""
         if unchanged_summary_cards_html:
             unchanged_count = counts.get("Unchanged", 0)
             unchanged_summary_html = (
-                "<details class='summary-list unchanged-summary' data-summary-severity='Unchanged' hidden>"
+                "<details class='summary-list unchanged-summary' data-summary-severity='Unchanged' hidden aria-hidden='true'>"
                 "<summary>"
                 "<span class='collapsed-head'>"
                 "<span class='badge' style='background:#667085'>변경없음</span>"
@@ -284,6 +284,7 @@ class ReportWriter:
       --context: #f7f9fb;
     }}
     * {{ box-sizing: border-box; }}
+    [hidden] {{ display: none !important; }}
     body {{
       margin: 0;
       font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif;
@@ -539,7 +540,7 @@ class ReportWriter:
       <button class="count" type="button" data-filter="Unchanged">변경없음<strong>{counts.get('Unchanged', 0)}</strong></button>
     </section>
     {status_jump_html}
-    <section class="summary-list" aria-label="비교 요약" data-summary-list hidden>
+    <section class="summary-list" aria-label="비교 요약" data-summary-list hidden aria-hidden="true">
       {visible_summary_html}
     </section>
     {unchanged_summary_html}
@@ -561,6 +562,11 @@ class ReportWriter:
     function severityVisible(severity) {{
       return activeFilter ? severity === activeFilter : false;
     }}
+    function setElementHidden(element, hidden) {{
+      if (!element) return;
+      element.hidden = hidden;
+      element.setAttribute("aria-hidden", hidden ? "true" : "false");
+    }}
     function focusTarget(target) {{
       if (!target) return;
       if (target.tagName.toLowerCase() === "details") {{
@@ -578,32 +584,28 @@ class ReportWriter:
       }});
       filterEntries.forEach((entry) => {{
         const visible = severityVisible(entry.dataset.severity);
-        entry.hidden = !visible;
+        setElementHidden(entry, !visible);
       }});
       summaryCards.forEach((card) => {{
         const visible = severityVisible(card.dataset.severity);
-        card.hidden = !visible;
+        setElementHidden(card, !visible);
       }});
       jumpButtons.forEach((button) => {{
         const visible = severityVisible(button.dataset.jumpSeverity);
-        button.hidden = !visible;
+        setElementHidden(button, !visible);
       }});
-      if (jumpList) {{
-        jumpList.hidden = !activeFilter;
-      }}
-      if (summaryList) {{
-        summaryList.hidden = !activeFilter || activeFilter === "Unchanged";
-      }}
+      setElementHidden(jumpList, !activeFilter);
+      setElementHidden(summaryList, !activeFilter || activeFilter === "Unchanged");
       if (summaryEmpty) {{
         const hasVisibleMainSummary = mainSummaryCards.some((card) => !card.hidden);
-        summaryEmpty.hidden = !activeFilter || activeFilter === "Unchanged" || hasVisibleMainSummary;
+        setElementHidden(summaryEmpty, !activeFilter || activeFilter === "Unchanged" || hasVisibleMainSummary);
       }}
       if (jumpEmpty) {{
         const hasVisibleJump = jumpButtons.some((button) => !button.hidden);
-        jumpEmpty.hidden = !activeFilter || hasVisibleJump;
+        setElementHidden(jumpEmpty, !activeFilter || hasVisibleJump);
       }}
       if (unchangedSummary) {{
-        unchangedSummary.hidden = !severityVisible("Unchanged");
+        setElementHidden(unchangedSummary, !severityVisible("Unchanged"));
         unchangedSummary.open = activeFilter === "Unchanged";
       }}
     }}
@@ -683,7 +685,7 @@ def snapshot_display_name(snapshot_dir: Path) -> str:
 
 
 def render_diff_block(item: DiffItem, detail_id: str, severity_label: str, status_label: str, item_summary: str) -> str:
-    default_hidden_attr = " hidden"
+    default_hidden_attr = " hidden aria-hidden='true'"
     body = (
         f"<p>{escape(item_summary)}</p>"
         f"{render_change_table(item)}"
