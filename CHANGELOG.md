@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.31 - 2026-06-12
+
+- Changed the HTML report default view so status shortcuts, summary cards, and detail blocks stay hidden until an operator selects a severity card.
+- Updated severity card filtering so only the selected `긴급`, `주의`, `정보`, or `변경없음` items appear.
+- Kept jump buttons scoped to the selected status and preserved direct navigation to the matching device/command detail block.
+- Updated reporter regression coverage and release documents for v0.8.31.
+
 ## v0.8.30 - 2026-06-12
 
 - Added `cpu_usage` threshold checks for parsed 5 seconds, 1 minute, and 5 minutes values.
