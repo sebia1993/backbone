@@ -7,7 +7,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 from backbone_state_tracker.core.diff_engine import DiffEngine
-from backbone_state_tracker.core.models import CommandResult, Device
+from backbone_state_tracker.core.models import CommandResult, Device, DiffItem, DiffLine, DiffSummary
 from backbone_state_tracker.core.reporter import ReportWriter
 from backbone_state_tracker.core.snapshot import SnapshotStore
 
@@ -63,15 +63,21 @@ class ReportWriterTests(unittest.TestCase):
             self.assertIn('data-filter="Unchanged"', html)
             self.assertIn('data-severity=', html)
             self.assertIn('data-target-severity=', html)
-            self.assertIn("변경 항목 바로가기", html)
+            self.assertIn("상태별 바로가기", html)
+            self.assertNotIn("변경 항목 바로가기", html)
             self.assertIn("data-jump-target='diff-", html)
             self.assertIn("data-jump-severity='Critical'", html)
             self.assertIn("<span class='jump-main'>backbone4 / interface_brief</span>", html)
             self.assertIn("<span class='jump-count'>1건</span>", html)
-            self.assertNotIn("<span class='jump-main'>backbone4 / device_connectivity</span>", html)
+            self.assertIn("<span class='jump-main'>backbone4 / device_connectivity</span>", html)
+            self.assertIn("data-jump-severity='Unchanged' hidden", html)
             self.assertIn('document.querySelectorAll(".diff-block[data-severity]")', html)
+            self.assertIn('document.querySelectorAll(".summary-card[data-severity]")', html)
             self.assertIn("function applyFilter", html)
             self.assertIn("function setFilter", html)
+            self.assertIn('const defaultVisibleSeverities = new Set(["Critical", "Warning"]);', html)
+            self.assertIn("button.hidden = !visible;", html)
+            self.assertIn("card.hidden = !visible;", html)
             self.assertIn("function focusTarget", html)
             self.assertIn("target.scrollIntoView", html)
             self.assertIn("target.focus", html)
@@ -116,15 +122,91 @@ class ReportWriterTests(unittest.TestCase):
             self.assertIn("<details class='diff-block filter-entry'", html)
             self.assertIn("data-severity='Unchanged'", html)
             self.assertIn("collapsed-head", html)
-            self.assertIn("변경 항목 없음", html)
-            self.assertNotIn("data-jump-target=", html)
-            self.assertIn("<details class='summary-list unchanged-summary' data-summary-severity='Unchanged'>", html)
+            self.assertNotIn("변경 항목 없음", html)
+            self.assertIn("상태별 바로가기", html)
+            self.assertIn("data-jump-target=", html)
+            self.assertIn("data-jump-severity='Unchanged' hidden", html)
+            self.assertIn("<details class='summary-list unchanged-summary' data-summary-severity='Unchanged' hidden>", html)
             self.assertIn("변경없음 2건 - 필요 시 펼쳐서 확인", html)
             self.assertIn("<div class='unchanged-summary-body'>", html)
             self.assertIn("const unchangedSummary", html)
             self.assertIn('unchangedSummary.open = activeFilter === "Unchanged";', html)
+            self.assertIn('unchangedSummary.hidden = !severityVisible("Unchanged");', html)
             self.assertIn("target.open = true;", html)
             self.assertNotIn("<details class='summary-list unchanged-summary' data-summary-severity='Unchanged' open", html)
+
+    def test_html_status_shortcuts_filter_all_severities_and_hide_info_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            report_path = Path(tmp) / "report.html"
+            summary = DiffSummary(
+                base_snapshot="base",
+                target_snapshot="target",
+                generated_at="2026-06-12T10:00:00",
+                items=[
+                    DiffItem(
+                        device_name="backbone3",
+                        command_id="critical_check",
+                        command="display interface brief",
+                        category="interface",
+                        severity="Critical",
+                        status="changed",
+                        summary="Critical state keyword detected in changed output.",
+                        changed_lines=[DiffLine(kind="changed", base_line_no=1, target_line_no=1, base_text="UP", target_text="DOWN")],
+                        change_count=1,
+                        change_preview="UP -> DOWN",
+                    ),
+                    DiffItem(
+                        device_name="backbone4",
+                        command_id="warning_check",
+                        command="display logbuffer",
+                        category="log",
+                        severity="Warning",
+                        status="changed",
+                        summary="Warning keyword detected in changed output.",
+                        changed_lines=[DiffLine(kind="added", target_line_no=1, target_text="warning")],
+                        change_count=1,
+                        change_preview="warning",
+                    ),
+                    DiffItem(
+                        device_name="backbone4",
+                        command_id="info_check",
+                        command="display device",
+                        category="hardware",
+                        severity="Info",
+                        status="changed",
+                        summary="Output changed.",
+                        changed_lines=[DiffLine(kind="added", target_line_no=1, target_text="reachable")],
+                        change_count=1,
+                        change_preview="reachable",
+                    ),
+                    DiffItem(
+                        device_name="backbone4",
+                        command_id="unchanged_check",
+                        command="display ospf peer",
+                        category="routing",
+                        severity="Unchanged",
+                        status="unchanged",
+                        summary="No meaningful change detected.",
+                    ),
+                ],
+            )
+
+            ReportWriter._write_html(report_path, summary)
+
+            html = report_path.read_text(encoding="utf-8")
+            self.assertIn("상태별 바로가기", html)
+            for severity in ("Critical", "Warning", "Info", "Unchanged"):
+                self.assertIn(f"data-jump-severity='{severity}'", html)
+                self.assertIn(f"data-filter=\"{severity}\"", html)
+            self.assertIn("data-jump-severity='Info' hidden", html)
+            self.assertIn("data-jump-severity='Unchanged' hidden", html)
+            self.assertIn("<article class='summary-card' data-severity='Info' aria-labelledby='summary-3' hidden>", html)
+            self.assertIn("<section class='diff-block filter-entry' id='diff-3' data-severity='Info' tabindex='-1' hidden>", html)
+            self.assertIn("<details class='diff-block filter-entry' id='diff-4' data-severity='Unchanged' tabindex='-1' hidden>", html)
+            self.assertIn("function severityVisible", html)
+            self.assertIn("summaryCards.forEach((card) =>", html)
+            self.assertIn("jumpButtons.forEach((button) =>", html)
+            self.assertIn("setFilter(\"\");", html)
 
     def test_html_meta_labels_sample_snapshots(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

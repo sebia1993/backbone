@@ -181,7 +181,7 @@ class ReportWriter:
         counts = summary.counts
         base_display_name = snapshot_display_name(Path(summary.base_snapshot))
         target_display_name = snapshot_display_name(Path(summary.target_snapshot))
-        changed_jump_buttons_html = []
+        status_jump_buttons_html = []
         summary_cards_html = []
         unchanged_summary_cards_html = []
         details_html = []
@@ -197,8 +197,9 @@ class ReportWriter:
             status_label = status_to_korean(item.status)
             item_summary = redact_sensitive_text(summary_label(item))
             change_preview = redact_sensitive_text(item.change_preview or "-")
+            default_hidden_attr = "" if item.severity in {"Critical", "Warning"} else " hidden"
             card_html = (
-                f"<article class='summary-card' aria-labelledby='summary-{index}'>"
+                f"<article class='summary-card' data-severity='{escape(item.severity)}' aria-labelledby='summary-{index}'{default_hidden_attr}>"
                 "<div class='summary-card-head'>"
                 f"<span class='badge' style='background:{colors.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
                 f"<strong id='summary-{index}'>{escape(item.device_name)} / {escape(item.command_id)}</strong>"
@@ -216,44 +217,39 @@ class ReportWriter:
                 f"<div class='summary-field'><span class='summary-label'>요약</span><span class='summary-value'>{escape(item_summary)}</span></div>"
                 "</article>"
             )
+            status_jump_buttons_html.append(
+                "<button class='jump-button' type='button' "
+                f"data-jump-target='{detail_id}' data-jump-severity='{escape(item.severity)}'{default_hidden_attr}>"
+                f"<span class='jump-severity' style='background:{colors.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
+                f"<span class='jump-main'>{escape(item.device_name)} / {escape(item.command_id)}</span>"
+                f"<span class='jump-count'>{item.change_count}건</span>"
+                "</button>"
+            )
             if item.severity == "Unchanged":
                 unchanged_summary_cards_html.append(card_html)
             else:
                 summary_cards_html.append(card_html)
-                changed_jump_buttons_html.append(
-                    "<button class='jump-button' type='button' "
-                    f"data-jump-target='{detail_id}' data-jump-severity='{escape(item.severity)}'>"
-                    f"<span class='jump-severity' style='background:{colors.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
-                    f"<span class='jump-main'>{escape(item.device_name)} / {escape(item.command_id)}</span>"
-                    f"<span class='jump-count'>{item.change_count}건</span>"
-                    "</button>"
-                )
             details_html.append(render_diff_block(item, detail_id, severity_label, status_label, item_summary))
 
-        changed_jump_html = (
-            "<section class='jump-list' aria-label='변경 항목 바로가기'>"
+        status_jump_html = (
+            "<section class='jump-list' aria-label='상태별 바로가기'>"
             "<div class='jump-head'>"
-            "<strong>변경 항목 바로가기</strong>"
-            "<span class='meta'>장비명 / 명령어 기준으로 변경이 있는 항목만 표시합니다.</span>"
+            "<strong>상태별 바로가기</strong>"
+            "<span class='meta'>상단 상태 카드를 클릭하면 해당 상태의 장비/명령 버튼만 표시합니다. 기본 보기: 긴급/주의.</span>"
             "</div>"
-            f"<div class='jump-actions'>{''.join(changed_jump_buttons_html)}</div>"
+            f"<div class='jump-actions'>{''.join(status_jump_buttons_html)}</div>"
+            "<p class='meta jump-empty' data-jump-empty hidden>선택한 상태의 바로가기 항목 없음</p>"
             "</section>"
-            if changed_jump_buttons_html
-            else (
-                "<section class='jump-list' aria-label='변경 항목 바로가기'>"
-                "<div class='jump-head'>"
-                "<strong>변경 항목 바로가기</strong>"
-                "<span class='meta'>변경 항목 없음</span>"
-                "</div>"
-                "</section>"
-            )
         )
-        visible_summary_html = "".join(summary_cards_html) or "<p class='meta'>긴급/주의/정보 변경 요약 없음</p>"
+        visible_summary_html = (
+            "".join(summary_cards_html)
+            + "<p class='meta summary-empty' data-summary-empty hidden>표시할 요약 없음. 정보/변경없음은 상단 상태 카드를 선택하세요.</p>"
+        )
         unchanged_summary_html = ""
         if unchanged_summary_cards_html:
             unchanged_count = counts.get("Unchanged", 0)
             unchanged_summary_html = (
-                "<details class='summary-list unchanged-summary' data-summary-severity='Unchanged'>"
+                "<details class='summary-list unchanged-summary' data-summary-severity='Unchanged' hidden>"
                 "<summary>"
                 "<span class='collapsed-head'>"
                 "<span class='badge' style='background:#667085'>변경없음</span>"
@@ -537,7 +533,7 @@ class ReportWriter:
       <button class="count" type="button" data-filter="Info">정보<strong>{counts.get('Info', 0)}</strong></button>
       <button class="count" type="button" data-filter="Unchanged">변경없음<strong>{counts.get('Unchanged', 0)}</strong></button>
     </section>
-    {changed_jump_html}
+    {status_jump_html}
     <section class="summary-list" aria-label="비교 요약">
       {visible_summary_html}
     </section>
@@ -547,10 +543,17 @@ class ReportWriter:
   <script>
     const filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
     const filterEntries = Array.from(document.querySelectorAll(".diff-block[data-severity]"));
+    const summaryCards = Array.from(document.querySelectorAll(".summary-card[data-severity]"));
     const summaryLinks = Array.from(document.querySelectorAll("[data-target-severity]"));
     const jumpButtons = Array.from(document.querySelectorAll("[data-jump-target]"));
     const unchangedSummary = document.querySelector("[data-summary-severity='Unchanged']");
+    const summaryEmpty = document.querySelector("[data-summary-empty]");
+    const jumpEmpty = document.querySelector("[data-jump-empty]");
+    const defaultVisibleSeverities = new Set(["Critical", "Warning"]);
     let activeFilter = "";
+    function severityVisible(severity) {{
+      return activeFilter ? severity === activeFilter : defaultVisibleSeverities.has(severity);
+    }}
     function focusTarget(target) {{
       if (!target) return;
       if (target.tagName.toLowerCase() === "details") {{
@@ -567,11 +570,25 @@ class ReportWriter:
         button.classList.toggle("is-active", button.dataset.filter === activeFilter);
       }});
       filterEntries.forEach((entry) => {{
-        const visible = !activeFilter || entry.dataset.severity === activeFilter;
+        const visible = severityVisible(entry.dataset.severity);
         entry.hidden = !visible;
       }});
+      summaryCards.forEach((card) => {{
+        const visible = severityVisible(card.dataset.severity);
+        card.hidden = !visible;
+      }});
+      jumpButtons.forEach((button) => {{
+        const visible = severityVisible(button.dataset.jumpSeverity);
+        button.hidden = !visible;
+      }});
+      if (summaryEmpty) {{
+        summaryEmpty.hidden = summaryCards.some((card) => !card.hidden);
+      }}
+      if (jumpEmpty) {{
+        jumpEmpty.hidden = jumpButtons.some((button) => !button.hidden);
+      }}
       if (unchangedSummary) {{
-        unchangedSummary.hidden = Boolean(activeFilter && activeFilter !== "Unchanged");
+        unchangedSummary.hidden = !severityVisible("Unchanged");
         unchangedSummary.open = activeFilter === "Unchanged";
       }}
     }}
@@ -603,6 +620,7 @@ class ReportWriter:
         }}
       }});
     }});
+    setFilter("");
   </script>
 </body>
 </html>
@@ -650,6 +668,7 @@ def snapshot_display_name(snapshot_dir: Path) -> str:
 
 
 def render_diff_block(item: DiffItem, detail_id: str, severity_label: str, status_label: str, item_summary: str) -> str:
+    default_hidden_attr = "" if item.severity in {"Critical", "Warning"} else " hidden"
     body = (
         f"<p>{escape(item_summary)}</p>"
         f"{render_change_table(item)}"
@@ -660,7 +679,7 @@ def render_diff_block(item: DiffItem, detail_id: str, severity_label: str, statu
     )
     if item.severity == "Unchanged":
         return (
-            f"<details class='diff-block filter-entry' id='{detail_id}' data-severity='{escape(item.severity)}' tabindex='-1'>"
+            f"<details class='diff-block filter-entry' id='{detail_id}' data-severity='{escape(item.severity)}' tabindex='-1'{default_hidden_attr}>"
             "<summary>"
             "<span class='collapsed-head'>"
             "<span class='badge' style='background:#667085'>변경없음</span>"
@@ -672,7 +691,7 @@ def render_diff_block(item: DiffItem, detail_id: str, severity_label: str, statu
             "</details>"
         )
     return (
-        f"<section class='diff-block filter-entry' id='{detail_id}' data-severity='{escape(item.severity)}' tabindex='-1'>"
+        f"<section class='diff-block filter-entry' id='{detail_id}' data-severity='{escape(item.severity)}' tabindex='-1'{default_hidden_attr}>"
         f"<h2>{escape(item.device_name)} / {escape(item.command_id)}</h2>"
         f"{body}"
         "</section>"
