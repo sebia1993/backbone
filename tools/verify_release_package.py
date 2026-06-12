@@ -42,6 +42,9 @@ COMMON_REQUIRED = {
     "backbone_state_tracker/docs/VERSION_HISTORY.html",
     "backbone_state_tracker/docs/RELEASE_CHECKLIST.md",
     "backbone_state_tracker/docs/RELEASE_CHECKLIST.html",
+    "backbone_state_tracker/docs/images/settings-collection.png",
+    "backbone_state_tracker/docs/images/compare-results.png",
+    "backbone_state_tracker/docs/images/work-log.png",
 }
 
 SOURCE_REQUIRED = COMMON_REQUIRED | {

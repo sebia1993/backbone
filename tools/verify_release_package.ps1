@@ -218,7 +218,10 @@ $commonRequired = @(
     "backbone_state_tracker/docs/VERSION_HISTORY.md",
     "backbone_state_tracker/docs/VERSION_HISTORY.html",
     "backbone_state_tracker/docs/RELEASE_CHECKLIST.md",
-    "backbone_state_tracker/docs/RELEASE_CHECKLIST.html"
+    "backbone_state_tracker/docs/RELEASE_CHECKLIST.html",
+    "backbone_state_tracker/docs/images/settings-collection.png",
+    "backbone_state_tracker/docs/images/compare-results.png",
+    "backbone_state_tracker/docs/images/work-log.png"
 )
 $sourceRequired = $commonRequired + @(
     "backbone_state_tracker/app.py",

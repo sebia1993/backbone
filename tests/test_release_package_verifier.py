@@ -45,6 +45,9 @@ def _common_entries() -> dict[str, str]:
         "backbone_state_tracker/docs/VERSION_HISTORY.html": "history html",
         "backbone_state_tracker/docs/RELEASE_CHECKLIST.md": "release checklist md",
         "backbone_state_tracker/docs/RELEASE_CHECKLIST.html": "release checklist html",
+        "backbone_state_tracker/docs/images/settings-collection.png": "settings image",
+        "backbone_state_tracker/docs/images/compare-results.png": "compare image",
+        "backbone_state_tracker/docs/images/work-log.png": "log image",
     }
 
 

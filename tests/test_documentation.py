@@ -26,3 +26,19 @@ class DocumentationPortabilityTests(unittest.TestCase):
                     offenders.append(f"{path.relative_to(PROJECT_DIR)} contains {fragment}")
 
         self.assertEqual([], offenders)
+
+    def test_user_guide_images_exist_and_are_referenced(self) -> None:
+        image_names = [
+            "settings-collection.png",
+            "compare-results.png",
+            "work-log.png",
+        ]
+        user_md = (PROJECT_DIR / "docs" / "USER_GUIDE.md").read_text(encoding="utf-8")
+        user_html = (PROJECT_DIR / "docs" / "USER_GUIDE.html").read_text(encoding="utf-8")
+
+        for image_name in image_names:
+            image_path = PROJECT_DIR / "docs" / "images" / image_name
+            self.assertTrue(image_path.exists(), f"missing {image_path}")
+            self.assertGreater(image_path.stat().st_size, 1000)
+            self.assertIn(f"images/{image_name}", user_md)
+            self.assertIn(f"images/{image_name}", user_html)

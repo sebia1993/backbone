@@ -52,6 +52,11 @@ def create_share_report_bundle(
                 path = resolved_docs_dir / name
                 if path.exists():
                     archive.write(path, f"docs/{name}")
+            images_dir = resolved_docs_dir / "images"
+            if images_dir.exists():
+                for path in sorted(images_dir.rglob("*")):
+                    if path.is_file():
+                        archive.write(path, f"docs/images/{path.relative_to(images_dir).as_posix()}")
     return bundle_path
 
 

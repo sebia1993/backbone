@@ -34,16 +34,25 @@ CRITICAL_PATTERNS = [
     re.compile(r"\bfail(?:ed|ure)?\b", re.IGNORECASE),
     re.compile(r"\bfault\b", re.IGNORECASE),
     re.compile(r"\babnormal\b", re.IGNORECASE),
+    re.compile(r"\boffline\b", re.IGNORECASE),
+    re.compile(r"\bmissing\b", re.IGNORECASE),
+    re.compile(r"\babsent\b", re.IGNORECASE),
     re.compile(r"\bunselected\b", re.IGNORECASE),
     re.compile(r"\bnot\s+selected\b", re.IGNORECASE),
     re.compile(r"\binit\b|\bexstart\b|\bexchange\b|\bloading\b", re.IGNORECASE),
+    re.compile(r"\bcritical\b", re.IGNORECASE),
+    re.compile(r"\bmajor\b.*\balarm\b|\balarm\b.*\bmajor\b", re.IGNORECASE),
+    re.compile(r"\bover\s+threshold\b", re.IGNORECASE),
 ]
 
 WARNING_PATTERNS = [
     re.compile(r"\bwarn(?:ing)?\b", re.IGNORECASE),
     re.compile(r"\berror\b", re.IGNORECASE),
-    re.compile(r"\bmajor\b|\bminor\b|\balarm\b", re.IGNORECASE),
+    re.compile(r"\bminor\b.*\balarm\b|\balarm\b.*\bminor\b|\balarm\b", re.IGNORECASE),
     re.compile(r"\bchange(?:d)?\b", re.IGNORECASE),
+]
+HEALTHY_ALERT_PATTERNS = [
+    re.compile(r"\bno\s+alarm\b|\bno\s+fault\b|\bnone\b|\bnormal\b", re.IGNORECASE),
 ]
 
 MAX_CHANGED_LINES = 500
@@ -496,13 +505,21 @@ def classify_change(result: CommandResult, added_lines: list[str], diff_text: st
     if not result.success:
         return "Critical", "Target snapshot command failed."
 
-    haystack = "\n".join(added_lines) or diff_text
+    target_lines = added_lines or target_lines_from_diff(diff_text)
+    base_lines = base_lines_from_diff(diff_text)
+    haystack = alert_haystack(target_lines) or alert_haystack(diff_text.splitlines())
     critical_categories = {"interface", "routing", "hardware", "connection"}
     if result.category in critical_categories and any(pattern.search(haystack) for pattern in CRITICAL_PATTERNS):
         return "Critical", "Critical state keyword detected in changed output."
 
+    if result.category == "hardware" and any(pattern.search(haystack) for pattern in WARNING_PATTERNS):
+        return "Warning", "Hardware warning or alarm keyword detected in changed output."
+
     if result.category == "log" and any(pattern.search(haystack) for pattern in CRITICAL_PATTERNS):
         return "Critical", "New critical-looking log line detected."
+
+    if result.category == "interface" and selected_count_decreased(base_lines, target_lines):
+        return "Critical", "Critical state keyword detected in changed output."
 
     if result.category in {"log", "routing", "resource", "switching"}:
         if any(pattern.search(haystack) for pattern in WARNING_PATTERNS):
@@ -510,3 +527,43 @@ def classify_change(result: CommandResult, added_lines: list[str], diff_text: st
         return "Warning", "Operational state changed."
 
     return "Info", "Output changed."
+
+
+def alert_haystack(lines: list[str]) -> str:
+    relevant = [line for line in lines if not any(pattern.search(line) for pattern in HEALTHY_ALERT_PATTERNS)]
+    return "\n".join(relevant)
+
+
+def target_lines_from_diff(diff_text: str) -> list[str]:
+    return [
+        line[1:]
+        for line in diff_text.splitlines()
+        if line.startswith("+") and not line.startswith("+++")
+    ]
+
+
+def base_lines_from_diff(diff_text: str) -> list[str]:
+    return [
+        line[1:]
+        for line in diff_text.splitlines()
+        if line.startswith("-") and not line.startswith("---")
+    ]
+
+
+def selected_count_decreased(base_lines: list[str], target_lines: list[str]) -> bool:
+    base_count = max(selected_counts(base_lines), default=None)
+    target_count = max(selected_counts(target_lines), default=None)
+    return base_count is not None and target_count is not None and target_count < base_count
+
+
+def selected_counts(lines: list[str]) -> list[int]:
+    counts: list[int] = []
+    for line in lines:
+        if not re.search(r"\bselected\b", line, re.IGNORECASE):
+            continue
+        for pattern in (
+            re.compile(r"\bselected\b\D{0,20}(\d+)", re.IGNORECASE),
+            re.compile(r"(\d+)\D{0,20}\bselected\b", re.IGNORECASE),
+        ):
+            counts.extend(int(match.group(1)) for match in pattern.finditer(line))
+    return counts

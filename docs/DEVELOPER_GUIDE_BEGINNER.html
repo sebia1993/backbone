@@ -2,140 +2,67 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.17</title>
+  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.18</title>
   <style>
-    body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
-    main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
+    body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
-    h1 { border-bottom: 4px solid #01a982; padding-bottom: 12px; }
-    code, pre { background: #eef2f6; }
-    code { padding: 2px 5px; }
-    pre { padding: 14px; overflow-x: auto; }
-    li { margin: 5px 0; }
+    code { background: #eef2f6; padding: 2px 5px; border-radius: 4px; }
+    pre { background: #0b1620; color: #f8fafc; padding: 14px; border-radius: 6px; overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+    th, td { border: 1px solid #d9e3ea; padding: 8px; vertical-align: top; }
+    th { background: #f4f7fa; }
   </style>
 </head>
 <body>
-<main>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p>문서 버전: v0.8.17<br>작성일: 2026-06-12<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
+  <p>문서 버전: v0.8.18<br>작성일: 2026-06-12<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
 
   <h2>1. 프로젝트 목적</h2>
-  <p>백본 3/4호기의 작업 전후 상태를 수집하고 특정 시점끼리 비교해 변경점을 추적하는 Windows GUI 프로그램입니다. 장비 설정 변경이 아니라 읽기 전용 점검과 리포트 생성을 목표로 합니다.</p>
+  <p>백본 3/4호기의 작업 전후 상태를 읽기 전용 명령으로 수집하고, 스냅샷 간 변경점을 GUI와 HTML/XLSX/JSON 리포트로 확인하는 Windows 운영 도구입니다.</p>
 
-  <h2>2. 주요 폴더와 파일</h2>
+  <h2>2. 주요 파일</h2>
   <ul>
-    <li><code>app.py</code>: 프로그램 시작점</li>
-    <li><code>core/gui.py</code>: Tkinter GUI 화면과 사용자 이벤트 처리</li>
-    <li><code>core/collector.py</code>: Netmiko 기반 SSH 명령 수집</li>
-    <li><code>core/connectivity.py</code>: 장비별 접속 상태 내부 결과 생성</li>
-    <li><code>core/preflight.py</code>: 수집 전 장비/명령 설정 검증 규칙</li>
-    <li><code>core/mock_validation.py</code>: 실제 장비 없이 샘플 스냅샷과 비교 리포트 생성</li>
-    <li><code>core/redaction.py</code>: 로그, 메타데이터, 리포트에 표시되는 명백한 비밀값 마스킹</li>
-    <li><code>core/report_bundle.py</code>: 공유용 리포트 ZIP 생성과 raw 출력 제외 규칙 관리</li>
-    <li><code>core/snapshot.py</code>: 스냅샷 저장과 로드</li>
-    <li><code>core/diff_engine.py</code>: 스냅샷 비교 엔진</li>
+    <li><code>core/gui.py</code>: Tkinter GUI, 화면 전환, 수집/비교 버튼 동작</li>
+    <li><code>core/diff_engine.py</code>: 스냅샷 비교와 등급 분류</li>
     <li><code>core/reporter.py</code>: HTML, XLSX, JSON 리포트 생성</li>
-    <li><code>core/workflow.py</code>: 작업 단계와 자동 비교 기준</li>
-    <li><code>core/workflow_wizard.py</code>: 상태 수집 화면의 작업 진행 마법사 단계 상태 계산</li>
-    <li><code>core/version.py</code>: 프로그램 버전 정보</li>
-    <li><code>config/commands.yaml</code>: 읽기 전용 점검 명령</li>
-    <li><code>docs/COMMAND_GUIDE.md</code>, <code>docs/COMMAND_GUIDE.html</code>: 운영자용 명령어 의미와 확인 포인트</li>
-    <li><code>docs/RELEASE_CHECKLIST.md</code>, <code>docs/RELEASE_CHECKLIST.html</code>: 사내 반입 시 파일 세트, 해시, ZIP 내용, 실행 확인 순서</li>
-    <li><code>tests/</code>: 단위 테스트</li>
-    <li><code>tools/</code>: ZIP과 EXE 배포 스크립트</li>
-    <li><code>tools/write_release_manifest.py</code>: 배포 ZIP의 SHA256 체크섬과 릴리스 매니페스트 생성</li>
-    <li><code>tools/verify_release_package.py</code>: 배포 ZIP의 해시, 필수 파일, 금지 경로, ZIP 루트/경로 안전성, ZIP/manifest 중복 엔트리 검증</li>
-    <li><code>tools/verify_release_package.ps1</code>: 소스 폴더 없이 PowerShell만으로 배포 ZIP을 같은 기준으로 검증</li>
+    <li><code>core/report_bundle.py</code>: 공유 ZIP과 문서 이미지 포함</li>
+    <li><code>core/workflow.py</code>: 기준 스냅샷과 사용자 지정 단계명 규칙</li>
+    <li><code>docs/images/</code>: 사용자 가이드용 실제 화면 캡처</li>
   </ul>
 
-  <h2>3. 개발 환경 준비</h2>
+  <h2>3. 개발 환경과 테스트</h2>
   <pre><code>cd "&lt;folder-that-contains-backbone_state_tracker&gt;\backbone_state_tracker"
 python -m pip install -r requirements.txt
 $env:PYTHONPATH=(Split-Path (Get-Location) -Parent)
-python app.py</code></pre>
-  <p><code>&lt;folder-that-contains-backbone_state_tracker&gt;</code>는 실제 압축 해제 위치 또는 내부 작업 폴더로 바꿔 실행합니다.</p>
-
-  <h2>4. 테스트와 Smoke Check</h2>
-  <pre><code>$env:PYTHONDONTWRITEBYTECODE='1'
-$env:PYTHONPATH=(Split-Path (Get-Location) -Parent)
 python -m unittest discover -s tests
 python app.py --smoke-check</code></pre>
-  <p><code>--smoke-check</code>는 GUI를 실제로 생성했다가 닫으며 주요 페이지가 만들어지는지 확인합니다.</p>
-  <p>v0.6.0부터 비교 결과는 <code>DiffItem.diff</code> 원본 unified diff와 함께 <code>changed_lines</code>, <code>change_count</code>, <code>change_preview</code>를 저장합니다. 리포트나 GUI를 수정할 때는 두 표현이 모두 유지되는지 확인합니다.</p>
-  <p>v0.7.1부터 HTML 리포트의 변경 상세는 <code>유형</code>, <code>라인</code>, <code>변경 내용</code> 3열 구조입니다. GUI와 XLSX는 기존 분리 필드를 유지하므로 HTML 가독성 수정이 다른 출력 형식을 깨지 않는지 테스트로 확인합니다.</p>
-  <p>v0.7.2부터 모든 수집은 장비별 <code>device_connectivity</code> 결과를 포함합니다. 이 항목은 <code>config/commands.yaml</code>에 넣는 사용자 점검 명령이 아니라 접속 성공/실패를 비교군에 넣기 위한 내부 결과입니다. 장비가 접속 불가이면 비교 엔진은 일반 명령 누락 노이즈를 숨기고 <code>device_connectivity</code> 한 건을 Critical로 표시합니다.</p>
-  <p>v0.7.3부터 <code>SnapshotStore._unique_snapshot_dir()</code>가 같은 초에 동일 단계 스냅샷을 여러 번 저장해도 폴더를 덮어쓰지 않도록 <code>_001</code>, <code>_002</code> 순번 폴더를 할당합니다. 관련 회귀 테스트는 <code>tests/test_snapshot.py</code>의 <code>test_write_snapshot_allocates_unique_folder_when_name_exists</code>입니다.</p>
-  <p>v0.7.4부터 GUI 비교 상세는 <code>판단</code>, <code>라인</code>, <code>변경 내용</code>을 한 행에 표시하고 선택 상세에 핵심 판단, 변경값, 원본 파일, 등급별 운영 메모를 표시합니다. 관련 포맷 테스트는 <code>tests/test_gui_formatting.py</code>입니다.</p>
-  <p>v0.7.5부터 <code>core/mock_validation.py</code>가 실제 장비 접속 없이 <code>[샘플]</code> 스냅샷 3개와 비교 리포트를 생성합니다. 관련 테스트는 <code>tests/test_mock_validation.py</code>입니다.</p>
-  <p>v0.7.6부터 <code>core/redaction.py</code>가 GUI 로그, 스냅샷 메타데이터, HTML/XLSX/JSON 비교 리포트의 명백한 비밀값을 <code>***</code>로 마스킹합니다. per-command <code>raw/*.txt</code> 출력은 운영 증거 보존을 위해 그대로 유지합니다. 관련 테스트는 <code>tests/test_redaction.py</code>와 <code>tests/test_reporter.py</code>입니다.</p>
-  <p>v0.7.7부터 <code>core/report_bundle.py</code>가 비교 리포트마다 공유용 ZIP을 생성합니다. ZIP에는 마스킹된 리포트와 사용자 문서만 넣고, <code>raw/</code>, <code>config/devices.yaml</code>, 실행파일은 제외합니다. 관련 테스트는 <code>tests/test_reporter.py</code>의 공유 ZIP 검증입니다.</p>
-  <p>v0.7.8부터 GUI 비교 상세 목록에 등급 필터와 검색 입력이 있습니다. 필터 검색은 표시용 마스킹 값을 기준으로 동작해야 하며, 관련 테스트는 <code>tests/test_gui_formatting.py</code>입니다.</p>
-  <p>v0.7.9부터 <code>core/preflight.py</code>가 실제 장비 접속 전에 장비/명령 설정을 로컬에서 검증합니다. 오류는 수집을 차단하고, 주의는 운영자가 확인 후 진행할 수 있습니다. 관련 테스트는 <code>tests/test_preflight.py</code>입니다.</p>
-  <p>v0.8.0부터 <code>tools/write_release_manifest.py</code>가 소스 ZIP과 Windows EXE ZIP의 SHA256 체크섬 파일 및 버전 단위 릴리스 매니페스트를 생성합니다. 관련 테스트는 <code>tests/test_release_manifest.py</code>입니다.</p>
-  <p>v0.8.1부터 <code>tools/verify_release_package.py</code>가 배포 ZIP의 sidecar 해시, manifest 기록, 필수 파일, 금지 파일 포함 여부를 검증합니다. 관련 테스트는 <code>tests/test_release_package_verifier.py</code>입니다.</p>
-  <p>v0.8.2부터 <code>tools/verify_release_package.ps1</code>가 버전명 포함 PowerShell 검증 스크립트로 <code>dist/</code>에 함께 생성됩니다. 이 스크립트는 Python 환경 없이 반입된 ZIP, <code>.sha256.txt</code>, <code>release_manifest.txt</code>를 검증합니다.</p>
-  <p>v0.8.3부터 수집/비교/샘플 검증 중복 실행을 GUI 진입점에서 차단합니다. 관련 회귀 테스트는 <code>tests/test_gui_formatting.py</code>의 busy guard 테스트입니다.</p>
-  <p>v0.8.4부터 <code>docs/COMMAND_GUIDE.md</code>와 <code>docs/COMMAND_GUIDE.html</code>이 배포 필수 문서에 포함됩니다. 패키지 검증 기준도 두 파일을 확인합니다.</p>
-  <p>v0.8.5부터 GUI의 도움말 메뉴와 상태 수집 화면에서 <code>COMMAND_GUIDE.html</code>을 바로 열 수 있습니다. 명령어 문서 파일명을 변경할 때는 <code>core/gui.py</code>의 <code>open_doc()</code> 호출도 함께 확인합니다.</p>
-  <p>v0.8.6부터 비교 상세 선택 행에서 기준/비교 <code>raw/*.txt</code>를 바로 열고, 마스킹된 선택 상세를 클립보드로 복사할 수 있습니다. 원본 파일 경로는 <code>DiffSummary.base_snapshot</code>, <code>DiffSummary.target_snapshot</code>, <code>DiffItem.base_raw_file</code>, <code>DiffItem.target_raw_file</code> 조합으로 계산합니다.</p>
-  <p>v0.8.7부터 README와 가이드는 특정 개발 PC의 절대 경로 대신 <code>&lt;folder-that-contains-backbone_state_tracker&gt;</code> 형태의 휴대 가능한 예시를 사용합니다. 문서를 수정할 때는 로컬 작업 경로가 배포 ZIP에 들어가지 않도록 확인합니다.</p>
-  <p>v0.8.8부터 <code>docs/RELEASE_CHECKLIST.md/html</code>이 배포 필수 문서에 포함됩니다. Python/PowerShell 패키지 검증기는 이 문서가 빠진 ZIP을 실패 처리합니다.</p>
-  <p>v0.8.9부터 Python/PowerShell 패키지 검증기는 ZIP 파일명 버전과 sidecar <code>Version</code>, manifest <code>Version</code>, manifest <code>Date stamp</code>가 일치하는지 확인합니다.</p>
-  <p>v0.8.10부터 Python/PowerShell 패키지 검증기는 sidecar의 대상 ZIP 이름과 manifest의 해당 패키지 <code>Size</code>/<code>SHA256</code> 레코드가 실제 ZIP과 일치하는지 확인합니다.</p>
-  <p>v0.8.11부터 Python/PowerShell 패키지 검증기는 ZIP 내부 엔트리가 <code>backbone_state_tracker/</code> 루트 안에 있고 절대 경로, 드라이브 경로, 빈 경로 조각, <code>..</code> 이동 조각을 쓰지 않는지 확인합니다.</p>
-  <p>v0.8.12부터 Python/PowerShell 패키지 검증기는 같은 ZIP 내부 경로가 두 번 이상 들어간 중복 엔트리를 실패 처리합니다.</p>
-  <p>v0.8.13부터 Python/PowerShell 패키지 검증기는 <code>release_manifest.txt</code> 안의 같은 <code>Package</code> 레코드가 두 번 이상 있으면 실패 처리합니다.</p>
-  <p>v0.8.14부터 <code>write_package_checksum()</code>은 <code>.sha256.txt</code>에 <code>Date stamp</code>를 기록하고, Python/PowerShell 패키지 검증기는 이 값이 ZIP 파일명 날짜와 일치하는지 확인합니다.</p>
-  <p>v0.8.15부터 GUI 첫 화면은 <code>상태 수집</code>이며, 대시보드 메뉴는 제거되었습니다. 작업 진행 마법사는 상태 수집 화면 상단에 있고, 수집 시작/입력 오류/busy 차단은 <code>작업 로그</code> 화면으로 이동합니다.</p>
-  <p>v0.8.16부터 HTML 리포트 상단 요약은 표가 아니라 라벨-값 카드 구조입니다. GUI 비교 화면의 지표는 <code>최근 변경 상세</code> 상단 요약 바로 표시되며, 수집 화면은 단계 선택 라디오 없이 <code>사용자 지정 단계명</code> 입력만 사용합니다. 빈 단계명은 <code>점검시간_YYYYMMDD_HHMM</code>으로 저장하되 내부 자동 비교 슬러그는 <code>pre_work</code>, <code>bb3_off</code>, <code>post_restore</code>를 유지해야 합니다.</p>
-  <p>v0.8.16부터 도움말 문서는 <code>EXE 옆 docs</code>, PyInstaller 내장 <code>docs</code>, 소스 <code>docs</code> 순서로 탐색합니다. EXE 빌드 스크립트는 <code>docs</code> 폴더를 <code>--add-data</code>로도 포함해야 합니다.</p>
-  <p>v0.8.17부터 GUI 첫 화면은 <code>장비 설정</code>이며, 좌측 메뉴 순서는 <code>장비 설정</code>, <code>상태 수집</code>, <code>비교 결과</code>, <code>작업 로그</code>입니다. 설정 화면의 <code>상태 수집으로 이동</code> 버튼은 단순 화면 이동이며, 저장이나 수집을 자동 실행하지 않아야 합니다.</p>
 
-  <h2>5. UI 유지보수 기준</h2>
+  <h2>4. 현재 UI 구조</h2>
   <ul>
-    <li>좌측 메뉴: 장비 설정, 상태 수집, 비교 결과, 작업 로그</li>
-    <li>장비 설정: 접속 계정, 대상 장비, 장비 목록 저장, 상태 수집으로 이동</li>
-    <li>상단 상태 바: 현재 상태, 기준 스냅샷, 비교 대상</li>
-    <li>상태 수집: 작업 진행 마법사, 사용자 지정 단계명 입력, 설정 점검, 수집 시작</li>
-    <li>작업 진행 마법사: 장비 설정 확인부터 최종 확인까지 다음 액션 안내</li>
-    <li>비교 결과: 얇은 지표 요약 바, 최근 변경 상세 목록, 판단/라인/변경 내용, 선택한 변경 행의 운영 메모</li>
-    <li>비교 상세 액션: 선택 행의 기준 원본, 비교 원본, 마스킹된 상세 복사</li>
-    <li>도움말/상태 수집 화면: 사용자 가이드, 명령어 가이드, 버전 변경내역 문서 접근</li>
-    <li>색상 기준: 초록 강조색, 흰색 표면, 회색 경계선, 위험/주의/정보 색상 분리</li>
+    <li>첫 화면과 첫 메뉴는 <code>장비 설정</code>입니다.</li>
+    <li>좌측 메뉴는 <code>장비 설정</code>, <code>비교 결과</code>, <code>작업 로그</code>입니다.</li>
+    <li>상태 수집은 장비 설정 화면 안에 통합되어 있습니다.</li>
+    <li>사용자는 단계명만 입력하며, 비우면 <code>점검시간_YYYYMMDD_HHMM</code>으로 저장됩니다.</li>
+    <li>첫 수집은 기준 스냅샷, 이후 수집은 자동 비교 대상으로 처리됩니다.</li>
   </ul>
 
-  <h2>6. 버전 업데이트 절차</h2>
+  <h2>5. 등급 분류 기준</h2>
+  <table>
+    <tr><th>등급</th><th>기준</th></tr>
+    <tr><td>Critical</td><td>장비 접속 실패, 명령 실패, 인터페이스 Down, LACP selected 수 감소, OSPF Full 이탈, major alarm, fault, abnormal, offline, missing</td></tr>
+    <tr><td>Warning</td><td>minor alarm, warning, error, 라우팅/STP/로그/리소스 변화</td></tr>
+    <tr><td>Info</td><td>접속 복구 또는 일반 출력 변화</td></tr>
+    <tr><td>Unchanged</td><td>정규화 후 의미 있는 변화가 없는 항목</td></tr>
+  </table>
+
+  <h2>6. 릴리스 절차</h2>
   <ol>
     <li><code>core/version.py</code>의 <code>APP_VERSION</code>을 올립니다.</li>
-    <li><code>CHANGELOG.md</code>에 새 버전 항목을 추가합니다.</li>
-    <li><code>docs/VERSION_HISTORY.md</code>, HTML 문서, <code>docs/RELEASE_CHECKLIST.md/html</code>을 업데이트합니다.</li>
-    <li>테스트와 smoke-check를 실행합니다.</li>
-    <li>소스 ZIP과 Windows EXE ZIP을 생성합니다.</li>
-    <li><code>dist/</code>의 ZIP, <code>.sha256.txt</code>, <code>release_manifest.txt</code>, <code>CURRENT_RELEASE.txt</code>, <code>latest/</code>를 확인합니다.</li>
-    <li><code>python .\tools\verify_release_package.py .\dist\&lt;package&gt;.zip --require-manifest</code>로 배포 ZIP을 검증합니다. 파일명, sidecar 버전/날짜, manifest의 버전/날짜/패키지 레코드, ZIP 내부 경로 안전성, ZIP/manifest 중복 엔트리 여부가 맞는지도 확인합니다.</li>
-    <li><code>powershell -ExecutionPolicy Bypass -File .\dist\&lt;version&gt;_verify_release_package.ps1 -Package .\dist\&lt;package&gt;.zip -RequireManifest</code>로 독립 PowerShell 검증도 확인합니다.</li>
-    <li>Git 브랜치, 커밋, 태그를 남깁니다.</li>
+    <li><code>CHANGELOG.md</code>와 <code>docs/VERSION_HISTORY.md/html</code>을 갱신합니다.</li>
+    <li>사용자/명령어/개발자/체크리스트 문서를 MD와 HTML 모두 갱신합니다.</li>
+    <li>전체 테스트와 smoke-check를 실행합니다.</li>
+    <li>GUI 변경 시 실제 앱 화면을 캡처해 검증합니다.</li>
+    <li>소스 ZIP과 Windows EXE ZIP을 빌드하고 Python/PowerShell 검증기를 모두 통과시킵니다.</li>
   </ol>
-
-  <h2>7. 배포 파일 생성</h2>
-  <pre><code>powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
-powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1</code></pre>
-  <p>각 ZIP에는 <code>PACKAGE_INFO.txt</code>가 포함되고, ZIP 밖에는 같은 이름의 <code>.sha256.txt</code> 파일과 버전 단위 <code>release_manifest.txt</code>가 함께 생성됩니다.</p>
-  <p>빌드 스크립트는 ZIP 생성 후 <code>tools/verify_release_package.py</code>를 자동 실행하므로 필수 파일 누락이나 <code>config/devices.yaml</code>, <code>outputs/</code>, <code>raw/</code> 같은 금지 경로가 포함되면 실패합니다. 또한 ZIP 내부 파일이 <code>backbone_state_tracker/</code> 루트 밖에 있거나 절대 경로, 드라이브 경로, <code>..</code> 이동 경로를 쓰거나 같은 경로가 중복되면 실패합니다. sidecar <code>Date stamp</code> 불일치와 <code>release_manifest.txt</code>의 같은 <code>Package</code> 레코드 중복도 실패합니다.</p>
-  <p><code>dist/</code>에는 버전명이 포함된 <code>*_verify_release_package.ps1</code> 스크립트가 생성되어, 소스 폴더 없이 ZIP과 sidecar 파일만 전달된 환경에서도 검증할 수 있습니다.</p>
-  <p>빌드 후 <code>dist/latest/</code>와 <code>dist/CURRENT_RELEASE.txt</code>는 현재 버전의 반입 대상 파일 목록으로 갱신됩니다.</p>
-
-  <h2>8. 보안 원칙</h2>
-  <ul>
-    <li>암호, 토큰, 실제 장비 출력 원본을 Git이나 배포 ZIP에 넣지 않습니다.</li>
-    <li><code>config/devices.yaml</code>과 <code>outputs/</code>는 배포 ZIP에서 제외됩니다.</li>
-    <li>리포트, GUI, 로그에 새 문자열 출력을 추가할 때는 <code>core.redaction.redact_sensitive_text()</code> 또는 <code>redact_payload()</code> 적용 여부를 확인합니다.</li>
-    <li>공유 ZIP 구성을 변경할 때는 raw 출력 폴더, 로컬 장비 설정, 실행파일이 포함되지 않는지 테스트로 확인합니다.</li>
-    <li>GUI 검색/필터를 수정할 때는 검색 대상에 민감값 원문이 들어가지 않는지 확인합니다.</li>
-    <li>수집 전 검증 규칙을 완화할 때는 변경성 명령이 통과하지 않는지 테스트를 함께 보강합니다.</li>
-    <li>장비 변경 명령은 <code>config/commands.yaml</code>에 추가하지 않습니다.</li>
-    <li>README와 docs에는 개인 개발 PC 경로나 사내 특정 경로를 직접 적지 않습니다.</li>
-  </ul>
-</main>
 </body>
 </html>

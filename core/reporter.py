@@ -31,6 +31,7 @@ CHANGE_TYPE_LABELS_KO = {
     "added": "추가",
     "removed": "삭제",
     "context": "문맥",
+    "unchanged": "변경없음",
 }
 
 
@@ -193,7 +194,7 @@ class ReportWriter:
             item_summary = redact_sensitive_text(summary_label(item))
             change_preview = redact_sensitive_text(item.change_preview or "-")
             summary_cards_html.append(
-                f"<article class='summary-card' aria-labelledby='summary-{index}'>"
+                f"<article class='summary-card filter-entry' data-severity='{escape(item.severity)}' aria-labelledby='summary-{index}'>"
                 "<div class='summary-card-head'>"
                 f"<span class='badge' style='background:{colors.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
                 f"<strong id='summary-{index}'>{escape(item.device_name)} / {escape(item.command_id)}</strong>"
@@ -211,17 +212,7 @@ class ReportWriter:
                 f"<div class='summary-field'><span class='summary-label'>요약</span><span class='summary-value'>{escape(item_summary)}</span></div>"
                 "</article>"
             )
-            details_html.append(
-                f"<section class='diff-block' id='{detail_id}'>"
-                f"<h2>{escape(item.device_name)} / {escape(item.command_id)}</h2>"
-                f"<p>{escape(item_summary)}</p>"
-                f"{render_change_table(item)}"
-                "<details class='raw-diff'>"
-                "<summary>원본 unified diff 보기</summary>"
-                f"<pre>{escape(redact_sensitive_text(item.diff or '상세 diff 없음'))}</pre>"
-                "</details>"
-                "</section>"
-            )
+            details_html.append(render_diff_block(item, detail_id, severity_label, status_label, item_summary))
 
         html = f"""<!doctype html>
 <html lang="ko">
@@ -263,8 +254,13 @@ class ReportWriter:
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 14px;
+      cursor: pointer;
+      color: var(--text);
+      font: inherit;
+      text-align: left;
     }}
     .count strong {{ display: block; font-size: 24px; margin-top: 4px; }}
+    .count.is-active {{ outline: 2px solid #01a982; border-color: #01a982; }}
     .summary-list, .diff-block {{
       background: var(--panel);
       border: 1px solid var(--line);
@@ -335,6 +331,18 @@ class ReportWriter:
     .badge {{ color: #fff; border-radius: 999px; padding: 3px 8px; font-size: 12px; font-weight: 700; }}
     .diff-block {{ padding: 14px; }}
     .diff-block h2 {{ margin: 0 0 6px; font-size: 17px; }}
+    details.diff-block > summary {{
+      cursor: pointer;
+      list-style: none;
+    }}
+    details.diff-block > summary::-webkit-details-marker {{ display: none; }}
+    .collapsed-head {{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-weight: 700;
+    }}
     .change-table-wrap {{
       overflow-x: auto;
       margin: 12px 0;
@@ -416,17 +424,35 @@ class ReportWriter:
       <h1>{escape(APP_NAME)} 스냅샷 비교 리포트</h1>
       <div class="meta">버전: v{escape(APP_VERSION)} | 기준: {escape(Path(summary.base_snapshot).name)} | 비교: {escape(Path(summary.target_snapshot).name)} | 생성: {escape(summary.generated_at)}</div>
     </header>
-    <section class="counts">
-      <div class="count">긴급<strong>{counts.get('Critical', 0)}</strong></div>
-      <div class="count">주의<strong>{counts.get('Warning', 0)}</strong></div>
-      <div class="count">정보<strong>{counts.get('Info', 0)}</strong></div>
-      <div class="count">변경없음<strong>{counts.get('Unchanged', 0)}</strong></div>
+    <section class="counts" aria-label="등급 필터">
+      <button class="count" type="button" data-filter="Critical">긴급<strong>{counts.get('Critical', 0)}</strong></button>
+      <button class="count" type="button" data-filter="Warning">주의<strong>{counts.get('Warning', 0)}</strong></button>
+      <button class="count" type="button" data-filter="Info">정보<strong>{counts.get('Info', 0)}</strong></button>
+      <button class="count" type="button" data-filter="Unchanged">변경없음<strong>{counts.get('Unchanged', 0)}</strong></button>
     </section>
     <section class="summary-list" aria-label="비교 요약">
       {''.join(summary_cards_html)}
     </section>
     {''.join(details_html)}
   </div>
+  <script>
+    const filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
+    const filterEntries = Array.from(document.querySelectorAll("[data-severity]"));
+    let activeFilter = "";
+    function applyFilter(nextFilter) {{
+      activeFilter = activeFilter === nextFilter ? "" : nextFilter;
+      filterButtons.forEach((button) => {{
+        button.classList.toggle("is-active", button.dataset.filter === activeFilter);
+      }});
+      filterEntries.forEach((entry) => {{
+        const visible = !activeFilter || entry.dataset.severity === activeFilter;
+        entry.hidden = !visible;
+      }});
+    }}
+    filterButtons.forEach((button) => {{
+      button.addEventListener("click", () => applyFilter(button.dataset.filter));
+    }});
+  </script>
 </body>
 </html>
 """
@@ -459,6 +485,36 @@ def summary_label(item: DiffItem) -> str:
 
 def change_type_label(kind: str) -> str:
     return CHANGE_TYPE_LABELS_KO.get(kind, kind)
+
+
+def render_diff_block(item: DiffItem, detail_id: str, severity_label: str, status_label: str, item_summary: str) -> str:
+    body = (
+        f"<p>{escape(item_summary)}</p>"
+        f"{render_change_table(item)}"
+        "<details class='raw-diff'>"
+        "<summary>원본 unified diff 보기</summary>"
+        f"<pre>{escape(redact_sensitive_text(item.diff or '상세 diff 없음'))}</pre>"
+        "</details>"
+    )
+    if item.severity == "Unchanged":
+        return (
+            f"<details class='diff-block filter-entry' id='{detail_id}' data-severity='{escape(item.severity)}'>"
+            "<summary>"
+            "<span class='collapsed-head'>"
+            "<span class='badge' style='background:#667085'>변경없음</span>"
+            f"<span>{escape(item.device_name)} / {escape(item.command_id)}</span>"
+            f"<span class='meta'>등급: {escape(severity_label)} | 상태: {escape(status_label)}</span>"
+            "</span>"
+            "</summary>"
+            f"{body}"
+            "</details>"
+        )
+    return (
+        f"<section class='diff-block filter-entry' id='{detail_id}' data-severity='{escape(item.severity)}'>"
+        f"<h2>{escape(item.device_name)} / {escape(item.command_id)}</h2>"
+        f"{body}"
+        "</section>"
+    )
 
 
 def render_change_table(item: DiffItem) -> str:
