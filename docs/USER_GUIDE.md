@@ -1,6 +1,6 @@
 # Backbone State Tracker 사용자 가이드
 
-문서 버전: v0.8.14
+문서 버전: v0.8.15
 작성일: 2026-06-12
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
@@ -24,11 +24,12 @@
 - 장비 1대가 접속 불가이면 해당 장비는 `device_connectivity` 긴급 항목으로 비교 결과에 포함됩니다.
 - `샘플 검증 생성`은 실제 장비에 접속하지 않고 `[샘플]` 스냅샷과 비교 리포트를 만들어 기능 확인에 사용합니다.
 - 같은 단계의 스냅샷을 같은 초에 다시 수집해도 기존 폴더를 덮지 않고 `_001` 같은 별도 폴더로 저장합니다.
-- 대시보드의 `작업 진행 마법사`를 따라가면 다음 단계 버튼으로 작업 흐름을 이어갈 수 있습니다.
+- `상태 수집` 화면의 `작업 진행 마법사`를 따라가면 다음 단계 버튼으로 작업 흐름을 이어갈 수 있습니다.
+- 상태 수집을 시작하거나 수집 입력/설정 오류가 발생하면 `작업 로그` 화면으로 자동 이동해 실행 이력과 오류를 바로 확인할 수 있습니다.
 
 ## 2. 프로그램 동작 방식
 
-1. `대시보드`의 작업 진행 마법사에서 현재 단계와 다음 액션을 확인합니다.
+1. `상태 수집` 화면의 작업 진행 마법사에서 현재 단계와 다음 액션을 확인합니다.
 2. 필요 시 `장비 설정` 화면에서 백본 3/4호기 IP, 포트, 장비 타입, 접속 계정을 입력합니다.
 3. 프로그램이 장비에 SSH로 접속해 읽기 전용 명령을 실행합니다.
 4. 장비별 접속 상태와 명령 출력이 시간별 스냅샷 폴더에 저장됩니다.
@@ -38,7 +39,7 @@
 
 ## 3. 샘플 검증 모드
 
-- `대시보드` 또는 `비교 결과` 화면의 `샘플 검증 생성` 버튼을 누르면 예제 스냅샷 3개가 생성됩니다.
+- `비교 결과` 화면의 `샘플 검증 생성` 버튼을 누르면 예제 스냅샷 3개가 생성됩니다.
 - 생성되는 스냅샷은 `[샘플] 작업 전`, `[샘플] 백본3 OFF 중`, `[샘플] 복구 후`입니다.
 - 이 기능은 SSH 접속, 계정 입력, 실제 장비 명령 실행을 하지 않습니다.
 - 백본3 접속 불가, 백본4 측 링크 DOWN, 복구 후 접속 회복 예시를 비교 리포트로 확인할 수 있습니다.
@@ -46,19 +47,15 @@
 
 ## 4. 화면 구성
 
-### 대시보드
-
-- 긴급, 주의, 정보, 변경없음 건수를 요약합니다.
-- 최근 스냅샷, 최근 리포트, 현재 비교 상태를 보여줍니다.
-- `작업 진행 마법사`가 장비 설정 확인, 작업 전 수집, 백본3 OFF 중 수집, OFF 중 변경 확인, 복구 후 수집, 최종 확인 순서로 안내합니다.
-- `다음 단계` 버튼은 완료 결과를 확인한 뒤에만 다음 작업으로 넘어가도록 설계되어 있습니다.
-
 ### 상태 수집
 
+- 첫 화면입니다. `작업 진행 마법사`가 장비 설정 확인, 작업 전 수집, 백본3 OFF 중 수집, OFF 중 변경 확인, 복구 후 수집, 최종 확인 순서로 안내합니다.
+- `다음 단계` 버튼은 완료 결과를 확인한 뒤에만 다음 작업으로 넘어가도록 설계되어 있습니다.
 - `작업 전`, `백본3 OFF 중`, `복구 후`, `사용자 지정` 단계 중 하나를 선택합니다.
 - 사용자 지정 단계는 별도 단계명이 필요할 때 사용합니다.
 - `설정 점검` 버튼은 실제 장비 접속 없이 로컬 설정을 확인합니다. 오류가 있으면 수집이 차단되고, 주의만 있으면 운영자가 확인 후 수집할 수 있습니다.
 - 예시용 IP, 장비명/IP 중복, 위험해 보이는 명령, `check` 단계 명령 누락을 먼저 확인합니다.
+- `상태 수집 시작`을 누르면 실제 수집 시작, busy 차단, 입력/설정 오류 모두 `작업 로그` 화면으로 이동합니다.
 
 ### 비교 결과
 
@@ -79,13 +76,13 @@
 
 ### 작업 로그
 
-- 수집 시작, 저장 위치, 비교 완료, 오류 메시지를 확인합니다.
+- 수집 시작, 저장 위치, 비교 완료, 입력/설정 오류 메시지를 확인합니다.
 
 ## 5. 권장 작업 순서
 
 1. `장비 설정`에서 백본 3/4호기 정보와 접속 계정을 확인합니다.
 2. `상태 수집` 화면에서 `설정 점검`을 실행해 차단 오류가 없는지 확인합니다.
-3. 대시보드의 `작업 전 수집 시작` 버튼으로 기준 스냅샷을 생성합니다.
+3. `상태 수집` 화면의 `작업 전 수집 시작` 또는 `상태 수집 시작` 버튼으로 기준 스냅샷을 생성합니다.
 4. 백본 3호기 OFF, 백본 4호기 ON 상태에서 `백본3 OFF 중 수집 시작`을 실행합니다.
 5. `OFF 중 변경 상세 확인`으로 자동 비교 결과의 긴급/주의 항목을 확인합니다.
 6. 복구 후 백본 3/4호기 ON 상태에서 `복구 후 수집 시작`을 실행합니다.
@@ -114,6 +111,8 @@
 - 리포트와 로그의 마스킹은 보조 안전장치입니다. 장비 출력 원본을 그대로 전달해야 하는 경우를 제외하고, 대외 제출 전에는 HTML/XLSX 리포트 중심으로 공유합니다.
 - 사내 반입용 ZIP에는 로컬 `config/devices.yaml`과 `outputs/`가 포함되지 않도록 유지합니다.
 - 여러 버전의 ZIP이 `dist/`에 남아 있으면 `dist/latest/` 또는 `dist/CURRENT_RELEASE.txt`에서 현재 반입 대상 버전을 먼저 확인합니다.
+- v0.8.15부터 앱 시작 화면은 `상태 수집`이며, 대시보드 메뉴는 제거되었습니다.
+- v0.8.15부터 상태 수집 시작 시 `작업 로그` 화면으로 자동 이동합니다.
 - v0.8.8부터는 ZIP 내부의 `docs/RELEASE_CHECKLIST.md/html`에서 사내 반입 전후 검증 순서를 한 번에 확인할 수 있습니다.
 - v0.8.9부터는 검증기가 ZIP 파일명, `.sha256.txt`의 `Version`, `release_manifest.txt`의 `Version`과 `Date stamp`가 서로 일치하는지도 확인합니다.
 - v0.8.10부터는 `.sha256.txt`의 대상 ZIP 이름과 `release_manifest.txt`의 해당 패키지 `Size`/`SHA256` 레코드가 실제 ZIP과 맞는지도 확인합니다.
@@ -126,7 +125,7 @@
 ## 8. 배포 ZIP 무결성 확인
 
 - v0.8.0부터 `dist/`에 ZIP 파일과 같은 이름의 `.sha256.txt` 파일이 함께 생성됩니다.
-- `dist/backbone_state_tracker_v0.8.14_YYYYMMDD_release_manifest.txt`에는 같은 버전의 소스 ZIP과 Windows EXE ZIP 이름, 크기, SHA256 값이 정리됩니다.
+- `dist/backbone_state_tracker_v0.8.15_YYYYMMDD_release_manifest.txt`에는 같은 버전의 소스 ZIP과 Windows EXE ZIP 이름, 크기, SHA256 값이 정리됩니다.
 - v0.8.3부터는 빌드 후 `dist/latest/`와 `dist/CURRENT_RELEASE.txt`가 최신 반입 대상 파일 목록으로 갱신됩니다.
 - ZIP 내부의 `PACKAGE_INFO.txt`에서 패키지 종류, 포함 파일, 제외 항목, 검증 방법을 다시 확인할 수 있습니다.
 - 사내 반입 후 PowerShell에서 아래 명령을 실행하고, 결과 해시가 `.sha256.txt` 또는 `release_manifest.txt`의 SHA256 값과 같은지 비교합니다.
@@ -134,9 +133,9 @@
 - v0.8.2부터는 ZIP 파일만 반입한 환경에서도 `*_verify_release_package.ps1` PowerShell 스크립트로 같은 검증을 수행할 수 있습니다.
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.14_YYYYMMDD_windows_exe.zip
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.15_YYYYMMDD_windows_exe.zip
 # 아래 명령은 소스/배포 작업 폴더에서 실행합니다.
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.14_YYYYMMDD_windows_exe.zip --require-manifest
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.15_YYYYMMDD_windows_exe.zip --require-manifest
 # 아래 명령은 ZIP 파일과 같은 폴더의 독립 PowerShell 검증 스크립트를 사용합니다.
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.14_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.14_YYYYMMDD_windows_exe.zip -RequireManifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.15_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.15_YYYYMMDD_windows_exe.zip -RequireManifest
 ```

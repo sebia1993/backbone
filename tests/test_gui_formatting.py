@@ -2,13 +2,25 @@ from __future__ import annotations
 
 from pathlib import Path
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from backbone_state_tracker.core.gui import BackboneStateTrackerApp
-from backbone_state_tracker.core.models import DiffItem, DiffLine, DiffSummary
+from backbone_state_tracker.core.models import Device, DiffItem, DiffLine, DiffSummary
 
 
 class GuiDiffFormattingTests(unittest.TestCase):
+    def test_initial_screen_is_collect_without_dashboard_nav(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            self.assertEqual(app.current_page, "collect")
+            self.assertNotIn("dashboard", app.nav_buttons)
+            self.assertNotIn("dashboard", app.pages)
+            self.assertIn("collect", app.nav_buttons)
+            self.assertTrue(hasattr(app, "wizard_next_button"))
+        finally:
+            app.destroy()
+
     def test_line_preview_and_location_show_inline_change(self) -> None:
         line = DiffLine(
             kind="changed",
@@ -127,6 +139,7 @@ class GuiDiffFormattingTests(unittest.TestCase):
         app = BackboneStateTrackerApp()
         app.withdraw()
         try:
+            app.show_page("collect")
             app.workflow_busy = True
             with patch("backbone_state_tracker.core.gui.messagebox.showwarning") as warning:
                 with patch.object(app, "_read_devices_from_form") as read_devices:
@@ -135,6 +148,44 @@ class GuiDiffFormattingTests(unittest.TestCase):
             read_devices.assert_not_called()
             warning.assert_called_once()
             self.assertEqual(app.compare_status_var.get(), "진행 중")
+            self.assertEqual(app.current_page, "logs")
+            self.assertIn("현재 수집 또는 비교가 진행 중입니다.", app.log_text.get("1.0", "end"))
+        finally:
+            app.destroy()
+
+    def test_collect_validation_error_moves_to_logs(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            app.show_page("collect")
+            with patch("backbone_state_tracker.core.gui.messagebox.showerror") as error:
+                with patch.object(app, "_read_devices_from_form", side_effect=ValueError("테스트 입력 오류")):
+                    app.collect_snapshot()
+
+            error.assert_called_once()
+            self.assertEqual(app.current_page, "logs")
+            self.assertIn("상태 수집을 시작하지 못했습니다: 테스트 입력 오류", app.log_text.get("1.0", "end"))
+            self.assertFalse(app.workflow_busy)
+        finally:
+            app.destroy()
+
+    def test_collect_start_moves_to_logs_before_worker_runs(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            app.show_page("collect")
+            app.username_var.set("operator")
+            app.password_var.set("password")
+            thread = MagicMock()
+            with patch.object(app, "_read_devices_from_form", return_value=[Device(name="backbone3", host="192.0.2.3")]):
+                with patch("backbone_state_tracker.core.gui.threading.Thread", return_value=thread) as thread_cls:
+                    app.collect_snapshot()
+
+            thread_cls.assert_called_once()
+            thread.start.assert_called_once()
+            self.assertEqual(app.current_page, "logs")
+            self.assertTrue(app.workflow_busy)
+            self.assertEqual(app.status_chip_var.get(), "수집 중")
         finally:
             app.destroy()
 
