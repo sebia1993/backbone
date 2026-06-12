@@ -1,11 +1,5 @@
 # Changelog
 
-## v0.8.34 - 2026-06-12
-
-- Restored Unchanged classification for normal `cpu_usage` and `memory_usage` output when the compared snapshots are identical.
-- Kept normal-range CPU and memory output changes as Info, while Critical and Warning thresholds still apply from the target snapshot's current value.
-- Added regression coverage for unchanged normal CPU/memory snapshots so the Unchanged count remains visible in real comparisons.
-
 ## v0.8.33 - 2026-06-12
 
 - Changed `cpu_usage` and `memory_usage` classification so numeric snapshot differences do not create resource warnings by themselves.

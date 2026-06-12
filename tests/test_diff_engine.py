@@ -52,31 +52,6 @@ class DiffEngineTests(unittest.TestCase):
         self.assertEqual(summary.counts["Unchanged"], 2)
         self.assertEqual(summary.counts["Critical"], 0)
 
-    def test_normal_resource_values_keep_unchanged_count_when_output_is_unchanged(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            store = SnapshotStore(root)
-            device = Device(name="backbone4", host="192.0.2.4")
-            results = [
-                self._command_result(
-                    device,
-                    command_id="cpu_usage",
-                    output="5 seconds: 10%\n1 minute: 10%\n5 minutes: 10%",
-                    category="resource",
-                ),
-                self._command_result(device, command_id="memory_usage", output="FreeRatio: 80%", category="resource"),
-                self._command_result(device, command_id="interface_brief", output="GE1/0/1 UP", category="interface"),
-            ]
-            base = store.write_snapshot("base", [device], {device.name: results})
-            target = store.write_snapshot("target", [device], {device.name: results})
-
-            summary = DiffEngine().compare(base, target)
-
-        self.assertEqual(summary.counts["Unchanged"], 4)
-        self.assertEqual(summary.counts["Info"], 0)
-        self.assertEqual(self._diff_item(summary, "cpu_usage").severity, "Unchanged")
-        self.assertEqual(self._diff_item(summary, "memory_usage").severity, "Unchanged")
-
     def test_interface_down_is_critical(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -165,7 +140,7 @@ class DiffEngineTests(unittest.TestCase):
             self.assertEqual(item.summary, "CPU usage is between 50% and 69%.")
             self.assertIn(f"current {label} CPU usage", item.change_preview)
 
-    def test_cpu_usage_below_warning_is_unchanged_when_output_is_unchanged(self) -> None:
+    def test_cpu_usage_below_warning_is_info_even_when_output_is_unchanged(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             output = "5 seconds: 49%\n1 minute: 49%\n5 minutes: 49%"
@@ -175,9 +150,10 @@ class DiffEngineTests(unittest.TestCase):
             summary = DiffEngine().compare(base, target)
 
         item = self._diff_item(summary, "cpu_usage")
-        self.assertEqual(item.status, "unchanged")
-        self.assertEqual(item.severity, "Unchanged")
-        self.assertEqual(item.summary, "No meaningful change detected.")
+        self.assertEqual(item.status, "changed")
+        self.assertEqual(item.severity, "Info")
+        self.assertEqual(item.summary, "CPU usage is below 50%.")
+        self.assertIn("current 5 seconds CPU usage 49%", item.change_preview)
 
     def test_cpu_usage_normal_numeric_change_is_info_not_warning(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -256,7 +232,7 @@ class DiffEngineTests(unittest.TestCase):
             self.assertEqual(item.severity, "Warning")
             self.assertEqual(item.summary, "Memory FreeRatio is between 31% and 40%.")
 
-    def test_memory_free_ratio_above_warning_is_unchanged_when_output_is_unchanged(self) -> None:
+    def test_memory_free_ratio_above_warning_is_info_even_when_output_is_unchanged(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             output = "FreeRatio: 41%"
@@ -266,9 +242,10 @@ class DiffEngineTests(unittest.TestCase):
             summary = DiffEngine().compare(base, target)
 
         item = self._diff_item(summary, "memory_usage")
-        self.assertEqual(item.status, "unchanged")
-        self.assertEqual(item.severity, "Unchanged")
-        self.assertEqual(item.summary, "No meaningful change detected.")
+        self.assertEqual(item.status, "changed")
+        self.assertEqual(item.severity, "Info")
+        self.assertEqual(item.summary, "Memory FreeRatio is above 40%.")
+        self.assertIn("current FreeRatio 41%", item.change_preview)
 
     def test_memory_free_ratio_normal_numeric_change_is_info_not_warning(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
