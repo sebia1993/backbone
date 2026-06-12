@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,6 +11,7 @@ from backbone_state_tracker.core.workflow import (
     BB3_OFF_STAGE,
     PRE_WORK_STAGE,
     build_snapshot_folder_label,
+    default_stage_label,
     find_latest_pre_work_snapshot,
     resolve_stage,
 )
@@ -41,18 +43,28 @@ class WorkflowTests(unittest.TestCase):
         )
 
     def test_stage_resolution_uses_stable_slug(self) -> None:
-        stage = resolve_stage(BB3_OFF_STAGE)
+        stage = resolve_stage(BB3_OFF_STAGE, "OFF 중 점검")
 
-        self.assertEqual(stage.name, BB3_OFF_STAGE)
+        self.assertEqual(stage.name, "OFF 중 점검")
         self.assertEqual(stage.slug, "bb3_off")
         self.assertTrue(stage.auto_compare)
-        self.assertEqual(build_snapshot_folder_label(stage), "bb3_off")
+        self.assertEqual(build_snapshot_folder_label(stage), "OFF 중 점검")
 
     def test_pre_work_stage_does_not_auto_compare(self) -> None:
-        stage = resolve_stage(PRE_WORK_STAGE)
+        stage = resolve_stage(PRE_WORK_STAGE, "작업 전 기준")
 
+        self.assertEqual(stage.name, "작업 전 기준")
         self.assertEqual(stage.slug, "pre_work")
         self.assertFalse(stage.auto_compare)
+
+    def test_empty_stage_label_defaults_to_check_time(self) -> None:
+        moment = datetime(2026, 6, 12, 21, 30, 45)
+
+        stage = resolve_stage(PRE_WORK_STAGE, "", moment)
+
+        self.assertEqual(default_stage_label(moment), "점검시간_20260612_2130")
+        self.assertEqual(stage.name, "점검시간_20260612_2130")
+        self.assertEqual(stage.slug, "pre_work")
 
     def test_find_latest_pre_work_snapshot(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

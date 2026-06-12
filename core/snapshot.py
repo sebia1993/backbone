@@ -13,7 +13,7 @@ from .version import APP_NAME, APP_VERSION
 
 
 def sanitize_filename(value: str, fallback: str = "item") -> str:
-    cleaned = re.sub(r"[^A-Za-z0-9_.-]+", "_", value.strip())
+    cleaned = re.sub(r"[^\w_.-]+", "_", value.strip(), flags=re.UNICODE)
     cleaned = cleaned.strip("._")
     return cleaned or fallback
 

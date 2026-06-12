@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 from .snapshot import SnapshotStore, sanitize_filename
@@ -10,6 +11,7 @@ PRE_WORK_STAGE = "작업 전"
 BB3_OFF_STAGE = "백본3 OFF 중"
 POST_RESTORE_STAGE = "복구 후"
 CUSTOM_STAGE = "사용자 지정"
+DEFAULT_STAGE_LABEL_PREFIX = "점검시간"
 
 
 @dataclass(frozen=True)
@@ -31,18 +33,24 @@ WORK_STAGE_NAMES = [stage.name for stage in WORK_STAGES]
 WORK_STAGE_BY_NAME = {stage.name: stage for stage in WORK_STAGES}
 
 
-def resolve_stage(stage_name: str, custom_label: str = "") -> WorkStage:
-    stage = WORK_STAGE_BY_NAME.get(stage_name, WORK_STAGE_BY_NAME[PRE_WORK_STAGE])
-    if stage.name != CUSTOM_STAGE:
-        return stage
+def default_stage_label(now: datetime | None = None) -> str:
+    moment = now or datetime.now()
+    return f"{DEFAULT_STAGE_LABEL_PREFIX}_{moment:%Y%m%d_%H%M}"
 
-    custom_name = custom_label.strip() or CUSTOM_STAGE
+
+def resolve_stage(stage_name: str, custom_label: str = "", now: datetime | None = None) -> WorkStage:
+    stage = WORK_STAGE_BY_NAME.get(stage_name, WORK_STAGE_BY_NAME[PRE_WORK_STAGE])
+    display_name = custom_label.strip() or default_stage_label(now)
+    if stage.name != CUSTOM_STAGE:
+        return WorkStage(display_name, stage.slug, stage.description, stage.auto_compare)
+
+    custom_name = display_name
     custom_slug = sanitize_filename(custom_name, "custom_snapshot")
     return WorkStage(custom_name, custom_slug, "사용자 지정 단계입니다.", True)
 
 
 def build_snapshot_folder_label(stage: WorkStage) -> str:
-    return stage.slug
+    return stage.name
 
 
 def find_latest_pre_work_snapshot(snapshot_dirs: list[Path]) -> Path | None:

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import tempfile
+import tkinter as tk
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -9,6 +11,24 @@ from backbone_state_tracker.core.models import Device, DiffItem, DiffLine, DiffS
 
 
 class GuiDiffFormattingTests(unittest.TestCase):
+    def _widget_texts(self, widget: tk.Widget) -> list[str]:
+        texts: list[str] = []
+        try:
+            value = str(widget.cget("text"))
+        except tk.TclError:
+            value = ""
+        if value:
+            texts.append(value)
+        for child in widget.winfo_children():
+            texts.extend(self._widget_texts(child))
+        return texts
+
+    def _widget_classes(self, widget: tk.Widget) -> list[str]:
+        classes = [widget.winfo_class()]
+        for child in widget.winfo_children():
+            classes.extend(self._widget_classes(child))
+        return classes
+
     def test_initial_screen_is_collect_without_dashboard_nav(self) -> None:
         app = BackboneStateTrackerApp()
         app.withdraw()
@@ -20,6 +40,51 @@ class GuiDiffFormattingTests(unittest.TestCase):
             self.assertTrue(hasattr(app, "wizard_next_button"))
         finally:
             app.destroy()
+
+    def test_collect_page_uses_single_custom_stage_name_input(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            collect_page = app.pages["collect"]
+            texts = self._widget_texts(collect_page)
+            classes = self._widget_classes(collect_page)
+
+            self.assertIn("사용자 지정 단계명", texts)
+            self.assertNotIn("작업 전", texts)
+            self.assertNotIn("백본3 OFF 중", texts)
+            self.assertNotIn("복구 후", texts)
+            self.assertNotIn("TRadiobutton", classes)
+        finally:
+            app.destroy()
+
+    def test_compare_page_uses_compact_metrics_above_details(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            compare_page = app.pages["compare"]
+            texts = self._widget_texts(compare_page)
+
+            self.assertIn("최근 변경 상세", texts)
+            self.assertNotIn("최근 비교 지표", texts)
+            self.assertTrue(hasattr(app, "compare_metric_bar"))
+
+            app._apply_compare_counts({"Critical": 2, "Warning": 1, "Info": 3, "Unchanged": 4})
+            self.assertEqual(app.metric_vars["Critical"].get(), "2")
+            self.assertEqual(app.metric_vars["Warning"].get(), "1")
+            self.assertEqual(app.metric_vars["Info"].get(), "3")
+            self.assertEqual(app.metric_vars["Unchanged"].get(), "4")
+        finally:
+            app.destroy()
+
+    def test_doc_lookup_checks_runtime_docs_before_packaged_fallbacks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            docs_dir = Path(tmp) / "docs"
+            docs_dir.mkdir()
+            guide = docs_dir / "USER_GUIDE.html"
+            guide.write_text("<html>guide</html>", encoding="utf-8")
+
+            with patch("backbone_state_tracker.core.gui.DOCS_DIR", docs_dir):
+                self.assertEqual(BackboneStateTrackerApp.find_doc_path("USER_GUIDE.html"), guide)
 
     def test_line_preview_and_location_show_inline_change(self) -> None:
         line = DiffLine(

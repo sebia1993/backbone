@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.16 - 2026-06-12
+
+- Changed the HTML comparison report summary from a wide table to labeled summary cards so each value remains understandable when viewed by itself.
+- Reduced the GUI comparison metrics from a large standalone section to a compact summary bar above recent change details.
+- Simplified status collection stage input to a single custom stage name field, with empty values saved as `점검시간_YYYYMMDD_HHMM`.
+- Improved Help menu document lookup so packaged EXE runs can open user, command, and version-history guides from runtime or bundled docs.
+- Added regression tests for the new report summary, comparison layout, stage-label defaults, and document lookup.
+
 ## v0.8.15 - 2026-06-12
 
 - Removed the dashboard from the main navigation and made status collection the first screen.

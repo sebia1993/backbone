@@ -1,6 +1,6 @@
 # Backbone State Tracker 릴리스 반입 체크리스트
 
-문서 버전: v0.8.15
+문서 버전: v0.8.16
 작성일: 2026-06-12  
 대상: 사외 개발 ZIP을 사내 환경으로 반입해 검증하는 운영자와 인수자
 
@@ -21,12 +21,12 @@
 반입 폴더에는 아래 파일 세트가 함께 있어야 합니다.
 
 ```text
-backbone_state_tracker_v0.8.15_YYYYMMDD_source.zip
-backbone_state_tracker_v0.8.15_YYYYMMDD_source.zip.sha256.txt
-backbone_state_tracker_v0.8.15_YYYYMMDD_windows_exe.zip
-backbone_state_tracker_v0.8.15_YYYYMMDD_windows_exe.zip.sha256.txt
-backbone_state_tracker_v0.8.15_YYYYMMDD_release_manifest.txt
-backbone_state_tracker_v0.8.15_YYYYMMDD_verify_release_package.ps1
+backbone_state_tracker_v0.8.16_YYYYMMDD_source.zip
+backbone_state_tracker_v0.8.16_YYYYMMDD_source.zip.sha256.txt
+backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip.sha256.txt
+backbone_state_tracker_v0.8.16_YYYYMMDD_release_manifest.txt
+backbone_state_tracker_v0.8.16_YYYYMMDD_verify_release_package.ps1
 CURRENT_RELEASE.txt
 ```
 
@@ -37,7 +37,7 @@ CURRENT_RELEASE.txt
 PowerShell에서 ZIP 해시를 확인합니다.
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.15_YYYYMMDD_windows_exe.zip
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip
 ```
 
 출력된 SHA256 값이 같은 이름의 `.sha256.txt` 또는 `*_release_manifest.txt`에 기록된 값과 일치해야 합니다.
@@ -46,13 +46,13 @@ Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.15_YYYYMMDD_windows
 소스 폴더가 함께 있는 환경에서는 Python 검증기를 실행합니다.
 
 ```powershell
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.15_YYYYMMDD_windows_exe.zip --require-manifest
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip --require-manifest
 ```
 
 ZIP 파일과 검증 스크립트만 있는 환경에서는 독립 PowerShell 검증기를 실행합니다.
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.15_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.15_YYYYMMDD_windows_exe.zip -RequireManifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.16_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 정상 결과는 `Verification OK`입니다.

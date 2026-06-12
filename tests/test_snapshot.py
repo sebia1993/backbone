@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from backbone_state_tracker.core.models import CommandResult, Device
-from backbone_state_tracker.core.snapshot import SnapshotStore
+from backbone_state_tracker.core.snapshot import SnapshotStore, sanitize_filename
 
 
 class SnapshotStoreTests(unittest.TestCase):
@@ -69,6 +69,9 @@ class SnapshotStoreTests(unittest.TestCase):
             second_raw = second / "raw" / "backbone3" / "device_status.txt"
             self.assertEqual(first_raw.read_text(encoding="utf-8"), "first")
             self.assertEqual(second_raw.read_text(encoding="utf-8"), "second")
+
+    def test_sanitize_filename_preserves_korean_stage_label(self) -> None:
+        self.assertEqual(sanitize_filename("점검시간_20260612_2130"), "점검시간_20260612_2130")
 
 
 if __name__ == "__main__":
