@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 사용자 가이드 v0.8.16</title>
+  <title>Backbone State Tracker 사용자 가이드 v0.8.17</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -16,7 +16,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 사용자 가이드</h1>
-  <p>문서 버전: v0.8.16<br>작성일: 2026-06-12<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
+  <p>문서 버전: v0.8.17<br>작성일: 2026-06-12<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
   <h2>1. 핵심 운영 포인트</h2>
   <div class="core">
@@ -39,6 +39,7 @@
       <li>장비 1대가 접속 불가이면 해당 장비는 <code>device_connectivity</code> 긴급 항목으로 비교 결과에 포함됩니다.</li>
       <li><code>샘플 검증 생성</code>은 실제 장비에 접속하지 않고 <code>[샘플]</code> 스냅샷과 비교 리포트를 만들어 기능 확인에 사용합니다.</li>
       <li>같은 단계의 스냅샷을 같은 초에 다시 수집해도 기존 폴더를 덮지 않고 <code>_001</code> 같은 별도 폴더로 저장합니다.</li>
+      <li>앱은 <code>장비 설정</code> 화면에서 시작합니다. 백본 3/4호기 IP, 포트, 장비 타입, 접속 계정을 먼저 확인한 뒤 <code>상태 수집으로 이동</code>을 누릅니다.</li>
       <li><code>상태 수집</code> 화면의 작업 진행 마법사를 따라가면 다음 단계 버튼으로 작업 흐름을 이어갈 수 있습니다.</li>
       <li>상태 수집을 시작하거나 수집 입력/설정 오류가 발생하면 <code>작업 로그</code> 화면으로 자동 이동해 실행 이력과 오류를 바로 확인할 수 있습니다.</li>
     </ul>
@@ -46,8 +47,8 @@
 
   <h2>2. 프로그램 동작 방식</h2>
   <ol>
-    <li><strong>상태 수집</strong> 화면의 작업 진행 마법사에서 현재 단계와 다음 액션을 확인합니다.</li>
-    <li>필요 시 <strong>장비 설정</strong> 화면에서 백본 3/4호기 IP, 포트, 장비 타입, 접속 계정을 입력합니다.</li>
+    <li><strong>장비 설정</strong> 화면에서 백본 3/4호기 IP, 포트, 장비 타입, 접속 계정을 입력합니다.</li>
+    <li><code>상태 수집으로 이동</code>을 눌러 작업 진행 마법사와 수집 입력을 확인합니다.</li>
     <li>프로그램이 SSH로 접속해 읽기 전용 명령을 실행합니다.</li>
     <li>장비별 접속 상태와 명령 출력이 시간별 스냅샷 폴더에 저장됩니다. 같은 초에 동일 단계가 다시 저장되면 폴더명 뒤에 <code>_001</code>, <code>_002</code> 순번이 붙습니다.</li>
     <li>작업 전이 아닌 단계는 최신 <code>작업 전</code> 스냅샷과 자동 비교됩니다.</li>
@@ -64,12 +65,12 @@
   </ul>
 
   <h2>4. 화면 구성</h2>
+  <h3>장비 설정</h3>
+  <p>첫 화면입니다. 백본 3/4호기 접속 정보와 SSH 계정을 입력합니다. <code>장비 목록 저장</code>은 장비 정보만 저장하고 암호는 저장하지 않습니다. 입력을 확인한 뒤 <code>상태 수집으로 이동</code> 버튼으로 다음 단계로 넘어갑니다.</p>
   <h3>상태 수집</h3>
-  <p>첫 화면입니다. 작업 진행 마법사는 장비 설정 확인, 작업 전 수집, 백본3 OFF 중 수집, OFF 중 변경 확인, 복구 후 수집, 최종 확인 순서로 안내합니다. <code>다음 단계</code> 버튼은 완료 결과를 확인한 뒤에만 다음 작업으로 넘어가도록 설계되어 있습니다. <code>사용자 지정 단계명</code>에 현장 구분명을 입력합니다. 비워두면 수집 시작 시각 기준 <code>점검시간_YYYYMMDD_HHMM</code>으로 저장됩니다. 작업 진행 마법사의 단계는 내부 자동 비교 기준으로 유지되며, 화면과 리포트에는 입력한 단계명 또는 자동 점검시간명이 표시됩니다. <code>설정 점검</code> 버튼은 실제 장비 접속 없이 로컬 설정을 확인합니다. 오류가 있으면 수집이 차단되고, 주의만 있으면 운영자가 확인 후 수집할 수 있습니다. <code>상태 수집 시작</code>을 누르면 실제 수집 시작, busy 차단, 입력/설정 오류 모두 <code>작업 로그</code> 화면으로 이동합니다.</p>
+  <p>두 번째 작업 화면입니다. 작업 진행 마법사는 장비 설정 확인, 작업 전 수집, 백본3 OFF 중 수집, OFF 중 변경 확인, 복구 후 수집, 최종 확인 순서로 안내합니다. <code>다음 단계</code> 버튼은 완료 결과를 확인한 뒤에만 다음 작업으로 넘어가도록 설계되어 있습니다. <code>사용자 지정 단계명</code>에 현장 구분명을 입력합니다. 비워두면 수집 시작 시각 기준 <code>점검시간_YYYYMMDD_HHMM</code>으로 저장됩니다. 작업 진행 마법사의 단계는 내부 자동 비교 기준으로 유지되며, 화면과 리포트에는 입력한 단계명 또는 자동 점검시간명이 표시됩니다. <code>설정 점검</code> 버튼은 실제 장비 접속 없이 로컬 설정을 확인합니다. 오류가 있으면 수집이 차단되고, 주의만 있으면 운영자가 확인 후 수집할 수 있습니다. <code>상태 수집 시작</code>을 누르면 실제 수집 시작, busy 차단, 입력/설정 오류 모두 <code>작업 로그</code> 화면으로 이동합니다.</p>
   <h3>비교 결과</h3>
   <p>기준 스냅샷과 비교 스냅샷을 직접 선택해 다시 비교합니다. <code>긴급</code>, <code>주의</code>, <code>정보</code>, <code>변경없음</code> 지표는 최근 변경 상세 상단의 얇은 요약 바로 표시됩니다. 최근 변경 상세 목록은 등급, 장비, 명령, 판단, 유형, 라인, 변경 내용을 표시합니다. <code>등급</code> 필터와 <code>검색</code> 입력으로 긴급/주의 항목, 특정 장비, 명령, 인터페이스, 변경값만 좁혀 볼 수 있습니다. 검색은 표시되는 마스킹 값 기준으로 동작하므로 비밀값 원문은 검색 결과에 노출되지 않습니다. 변경 행을 선택하면 핵심 판단, 변경 전/후 값, 원본 파일 위치, 등급별 운영 메모를 확인할 수 있습니다. 선택한 변경 행의 <code>기준 원본 열기</code>와 <code>비교 원본 열기</code> 버튼은 해당 스냅샷의 <code>raw/*.txt</code> 파일을 바로 엽니다. <code>선택 상세 복사</code>는 화면에 표시되는 마스킹된 상세 내용을 클립보드에 복사합니다. 접속 불가 장비는 일반 명령 누락을 여러 건으로 나열하지 않고 <code>device_connectivity</code> 긴급 항목 한 줄로 표시합니다.</p>
-  <h3>장비 설정</h3>
-  <p>백본 3/4호기 접속 정보와 SSH 계정을 입력합니다. 암호는 저장하지 않습니다.</p>
   <h3>작업 로그</h3>
   <p>수집, 저장, 비교, 입력/설정 오류 메시지를 시간 순서대로 확인합니다.</p>
 
@@ -101,6 +102,7 @@
     <li>v0.8.16부터 HTML 리포트 요약은 라벨-값 카드형이며, GUI 비교 지표는 최근 변경 상세 상단의 얇은 요약 바로 표시됩니다.</li>
     <li>v0.8.16부터 수집 단계 선택 버튼은 제거되고, <code>사용자 지정 단계명</code> 입력만 사용합니다. 비워두면 <code>점검시간_YYYYMMDD_HHMM</code>으로 저장됩니다.</li>
     <li>v0.8.16부터 도움말 문서는 EXE 옆 <code>docs/</code>, EXE 내장 문서, 소스 <code>docs/</code> 순서로 탐색합니다.</li>
+    <li>v0.8.17부터 앱 시작 화면과 좌측 메뉴 첫 항목은 <code>장비 설정</code>입니다. 실행 흐름은 <code>장비 설정 → 상태 수집 → 비교 결과 → 작업 로그</code> 순서입니다.</li>
     <li>v0.8.8부터는 ZIP 내부의 <code>docs/RELEASE_CHECKLIST.md/html</code>에서 사내 반입 전후 검증 순서를 한 번에 확인할 수 있습니다.</li>
     <li>v0.8.9부터는 검증기가 ZIP 파일명, <code>.sha256.txt</code>의 <code>Version</code>, <code>release_manifest.txt</code>의 <code>Version</code>과 <code>Date stamp</code>가 서로 일치하는지도 확인합니다.</li>
     <li>v0.8.10부터는 <code>.sha256.txt</code>의 대상 ZIP 이름과 <code>release_manifest.txt</code>의 해당 패키지 <code>Size</code>/<code>SHA256</code> 레코드가 실제 ZIP과 맞는지도 확인합니다.</li>
@@ -113,18 +115,18 @@
   <h2>8. 배포 ZIP 무결성 확인</h2>
   <ul>
     <li>v0.8.0부터 <code>dist/</code>에 ZIP 파일과 같은 이름의 <code>.sha256.txt</code> 파일이 함께 생성됩니다.</li>
-    <li><code>dist/backbone_state_tracker_v0.8.16_YYYYMMDD_release_manifest.txt</code>에는 같은 버전의 소스 ZIP과 Windows EXE ZIP 이름, 크기, SHA256 값이 정리됩니다.</li>
+    <li><code>dist/backbone_state_tracker_v0.8.17_YYYYMMDD_release_manifest.txt</code>에는 같은 버전의 소스 ZIP과 Windows EXE ZIP 이름, 크기, SHA256 값이 정리됩니다.</li>
     <li>v0.8.3부터는 빌드 후 <code>dist/latest/</code>와 <code>dist/CURRENT_RELEASE.txt</code>가 최신 반입 대상 파일 목록으로 갱신됩니다.</li>
     <li>ZIP 내부의 <code>PACKAGE_INFO.txt</code>에서 패키지 종류, 포함 파일, 제외 항목, 검증 방법을 다시 확인할 수 있습니다.</li>
     <li>사내 반입 후 PowerShell에서 아래 명령을 실행하고, 결과 해시가 <code>.sha256.txt</code> 또는 <code>release_manifest.txt</code>의 SHA256 값과 같은지 비교합니다.</li>
     <li>v0.8.1부터는 소스/배포 작업 폴더가 있는 경우 <code>tools/verify_release_package.py</code>로 ZIP 내부 필수 파일과 금지 파일 포함 여부까지 함께 점검할 수 있습니다.</li>
     <li>v0.8.2부터는 ZIP 파일만 반입한 환경에서도 <code>*_verify_release_package.ps1</code> PowerShell 스크립트로 같은 검증을 수행할 수 있습니다.</li>
   </ul>
-  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip
+  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip
 # 아래 명령은 소스/배포 작업 폴더에서 실행합니다.
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip --require-manifest
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip --require-manifest
 # 아래 명령은 ZIP 파일과 같은 폴더의 독립 PowerShell 검증 스크립트를 사용합니다.
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.16_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.17_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
 </main>
 </body>
 </html>

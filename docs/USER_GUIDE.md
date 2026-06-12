@@ -1,6 +1,6 @@
 # Backbone State Tracker 사용자 가이드
 
-문서 버전: v0.8.16
+문서 버전: v0.8.17
 작성일: 2026-06-12
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
@@ -24,13 +24,14 @@
 - 장비 1대가 접속 불가이면 해당 장비는 `device_connectivity` 긴급 항목으로 비교 결과에 포함됩니다.
 - `샘플 검증 생성`은 실제 장비에 접속하지 않고 `[샘플]` 스냅샷과 비교 리포트를 만들어 기능 확인에 사용합니다.
 - 같은 단계의 스냅샷을 같은 초에 다시 수집해도 기존 폴더를 덮지 않고 `_001` 같은 별도 폴더로 저장합니다.
+- 앱은 `장비 설정` 화면에서 시작합니다. 백본 3/4호기 IP, 포트, 장비 타입, 접속 계정을 먼저 확인한 뒤 `상태 수집으로 이동`을 누릅니다.
 - `상태 수집` 화면의 `작업 진행 마법사`를 따라가면 다음 단계 버튼으로 작업 흐름을 이어갈 수 있습니다.
 - 상태 수집을 시작하거나 수집 입력/설정 오류가 발생하면 `작업 로그` 화면으로 자동 이동해 실행 이력과 오류를 바로 확인할 수 있습니다.
 
 ## 2. 프로그램 동작 방식
 
-1. `상태 수집` 화면의 작업 진행 마법사에서 현재 단계와 다음 액션을 확인합니다.
-2. 필요 시 `장비 설정` 화면에서 백본 3/4호기 IP, 포트, 장비 타입, 접속 계정을 입력합니다.
+1. `장비 설정` 화면에서 백본 3/4호기 IP, 포트, 장비 타입, 접속 계정을 입력합니다.
+2. `상태 수집으로 이동`을 눌러 작업 진행 마법사와 수집 입력을 확인합니다.
 3. 프로그램이 장비에 SSH로 접속해 읽기 전용 명령을 실행합니다.
 4. 장비별 접속 상태와 명령 출력이 시간별 스냅샷 폴더에 저장됩니다.
    같은 초에 동일 단계가 다시 저장되면 폴더명 뒤에 `_001`, `_002` 순번이 붙습니다.
@@ -47,9 +48,15 @@
 
 ## 4. 화면 구성
 
+### 장비 설정
+
+- 첫 화면입니다. 백본 3/4호기 접속 정보와 SSH 계정을 입력합니다.
+- `장비 목록 저장`은 장비 정보만 저장합니다. 암호는 저장하지 않습니다.
+- 입력을 확인한 뒤 `상태 수집으로 이동` 버튼으로 다음 단계로 넘어갑니다.
+
 ### 상태 수집
 
-- 첫 화면입니다. `작업 진행 마법사`가 장비 설정 확인, 작업 전 수집, 백본3 OFF 중 수집, OFF 중 변경 확인, 복구 후 수집, 최종 확인 순서로 안내합니다.
+- 두 번째 작업 화면입니다. `작업 진행 마법사`가 장비 설정 확인, 작업 전 수집, 백본3 OFF 중 수집, OFF 중 변경 확인, 복구 후 수집, 최종 확인 순서로 안내합니다.
 - `다음 단계` 버튼은 완료 결과를 확인한 뒤에만 다음 작업으로 넘어가도록 설계되어 있습니다.
 - `사용자 지정 단계명`에 현장 구분명을 입력합니다. 비워두면 수집 시작 시각 기준 `점검시간_YYYYMMDD_HHMM`으로 저장됩니다.
 - 작업 진행 마법사의 단계는 내부 자동 비교 기준으로 유지되며, 화면과 리포트에는 입력한 단계명 또는 자동 점검시간명이 표시됩니다.
@@ -69,11 +76,6 @@
 - 선택한 변경 행의 `기준 원본 열기`와 `비교 원본 열기` 버튼은 해당 스냅샷의 `raw/*.txt` 파일을 바로 엽니다.
 - `선택 상세 복사`는 화면에 표시되는 마스킹된 상세 내용을 클립보드에 복사합니다.
 - 접속 불가 장비는 일반 명령 누락을 여러 건으로 나열하지 않고 `device_connectivity` 긴급 항목 한 줄로 표시합니다.
-
-### 장비 설정
-
-- 백본 3/4호기 접속 정보와 SSH 계정을 입력합니다.
-- `장비 목록 저장`은 장비 정보만 저장합니다. 암호는 저장하지 않습니다.
 
 ### 작업 로그
 
@@ -118,6 +120,7 @@
 - v0.8.16부터 HTML 리포트 요약은 라벨-값 카드형이며, GUI 비교 지표는 최근 변경 상세 상단의 얇은 요약 바로 표시됩니다.
 - v0.8.16부터 수집 단계 선택 버튼은 제거되고, `사용자 지정 단계명` 입력만 사용합니다. 비워두면 `점검시간_YYYYMMDD_HHMM`으로 저장됩니다.
 - v0.8.16부터 도움말 문서는 EXE 옆 `docs/`, EXE 내장 문서, 소스 `docs/` 순서로 탐색합니다.
+- v0.8.17부터 앱 시작 화면과 좌측 메뉴 첫 항목은 `장비 설정`입니다. 실행 흐름은 `장비 설정 → 상태 수집 → 비교 결과 → 작업 로그` 순서입니다.
 - v0.8.8부터는 ZIP 내부의 `docs/RELEASE_CHECKLIST.md/html`에서 사내 반입 전후 검증 순서를 한 번에 확인할 수 있습니다.
 - v0.8.9부터는 검증기가 ZIP 파일명, `.sha256.txt`의 `Version`, `release_manifest.txt`의 `Version`과 `Date stamp`가 서로 일치하는지도 확인합니다.
 - v0.8.10부터는 `.sha256.txt`의 대상 ZIP 이름과 `release_manifest.txt`의 해당 패키지 `Size`/`SHA256` 레코드가 실제 ZIP과 맞는지도 확인합니다.
@@ -130,7 +133,7 @@
 ## 8. 배포 ZIP 무결성 확인
 
 - v0.8.0부터 `dist/`에 ZIP 파일과 같은 이름의 `.sha256.txt` 파일이 함께 생성됩니다.
-- `dist/backbone_state_tracker_v0.8.16_YYYYMMDD_release_manifest.txt`에는 같은 버전의 소스 ZIP과 Windows EXE ZIP 이름, 크기, SHA256 값이 정리됩니다.
+- `dist/backbone_state_tracker_v0.8.17_YYYYMMDD_release_manifest.txt`에는 같은 버전의 소스 ZIP과 Windows EXE ZIP 이름, 크기, SHA256 값이 정리됩니다.
 - v0.8.3부터는 빌드 후 `dist/latest/`와 `dist/CURRENT_RELEASE.txt`가 최신 반입 대상 파일 목록으로 갱신됩니다.
 - ZIP 내부의 `PACKAGE_INFO.txt`에서 패키지 종류, 포함 파일, 제외 항목, 검증 방법을 다시 확인할 수 있습니다.
 - 사내 반입 후 PowerShell에서 아래 명령을 실행하고, 결과 해시가 `.sha256.txt` 또는 `release_manifest.txt`의 SHA256 값과 같은지 비교합니다.
@@ -138,9 +141,9 @@
 - v0.8.2부터는 ZIP 파일만 반입한 환경에서도 `*_verify_release_package.ps1` PowerShell 스크립트로 같은 검증을 수행할 수 있습니다.
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip
 # 아래 명령은 소스/배포 작업 폴더에서 실행합니다.
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip --require-manifest
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip --require-manifest
 # 아래 명령은 ZIP 파일과 같은 폴더의 독립 PowerShell 검증 스크립트를 사용합니다.
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.16_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.16_YYYYMMDD_windows_exe.zip -RequireManifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.17_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip -RequireManifest
 ```

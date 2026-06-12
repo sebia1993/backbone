@@ -29,15 +29,43 @@ class GuiDiffFormattingTests(unittest.TestCase):
             classes.extend(self._widget_classes(child))
         return classes
 
-    def test_initial_screen_is_collect_without_dashboard_nav(self) -> None:
+    def _find_widget_by_text(self, widget: tk.Widget, text: str) -> tk.Widget | None:
+        try:
+            value = str(widget.cget("text"))
+        except tk.TclError:
+            value = ""
+        if value == text:
+            return widget
+        for child in widget.winfo_children():
+            found = self._find_widget_by_text(child, text)
+            if found is not None:
+                return found
+        return None
+
+    def test_initial_screen_is_settings_with_workflow_order_nav(self) -> None:
         app = BackboneStateTrackerApp()
         app.withdraw()
         try:
-            self.assertEqual(app.current_page, "collect")
+            self.assertEqual(app.current_page, "settings")
             self.assertNotIn("dashboard", app.nav_buttons)
             self.assertNotIn("dashboard", app.pages)
+            self.assertEqual(list(app.nav_buttons), ["settings", "collect", "compare", "logs"])
+            self.assertIn("settings", app.nav_buttons)
             self.assertIn("collect", app.nav_buttons)
             self.assertTrue(hasattr(app, "wizard_next_button"))
+        finally:
+            app.destroy()
+
+    def test_settings_page_moves_to_collection(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            app.show_page("settings")
+            button = self._find_widget_by_text(app.pages["settings"], "상태 수집으로 이동")
+            self.assertIsNotNone(button)
+            button.invoke()
+
+            self.assertEqual(app.current_page, "collect")
         finally:
             app.destroy()
 

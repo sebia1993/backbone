@@ -96,7 +96,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.device_rows: list[dict[str, tk.Variable]] = []
         self.pages: dict[str, tk.Frame] = {}
         self.nav_buttons: dict[str, tk.Button] = {}
-        self.current_page = "collect"
+        self.current_page = "settings"
         self.last_counts = {key: 0 for key in SEVERITY_META}
         self.last_diff_summary: DiffSummary | None = None
         self.diff_detail_rows: list[tuple[DiffItem, DiffLine]] = []
@@ -118,8 +118,8 @@ class BackboneStateTrackerApp(tk.Tk):
         self.baseline_var = tk.StringVar()
         self.target_var = tk.StringVar()
         self.compare_status_var = tk.StringVar(value="작업 전 스냅샷을 수집하면 자동 비교 기준으로 지정됩니다.")
-        self.page_title_var = tk.StringVar(value="상태 수집")
-        self.page_description_var = tk.StringVar(value="작업 전, 백본3 OFF 중, 복구 후 단계별 스냅샷을 생성합니다.")
+        self.page_title_var = tk.StringVar(value="장비 설정")
+        self.page_description_var = tk.StringVar(value="백본 3/4호기 접속 계정과 대상 장비 정보를 먼저 확인합니다.")
         self.baseline_display_var = tk.StringVar(value="-")
         self.target_display_var = tk.StringVar(value="-")
         self.latest_snapshot_var = tk.StringVar(value="-")
@@ -215,7 +215,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.content.rowconfigure(0, weight=1)
 
         self._build_pages()
-        self.show_page("collect")
+        self.show_page("settings")
 
     def _build_sidebar(self, parent: tk.Frame) -> None:
         parent.columnconfigure(0, weight=1)
@@ -244,9 +244,9 @@ class BackboneStateTrackerApp(tk.Tk):
         ).grid(row=0, column=1, sticky="w")
 
         nav_items = [
+            ("settings", "장비 설정", "접속 계정과 대상 장비"),
             ("collect", "상태 수집", "작업 단계별 스냅샷"),
             ("compare", "비교 결과", "기준/대상 변경점"),
-            ("settings", "장비 설정", "접속 계정과 대상 장비"),
             ("logs", "작업 로그", "실행 이력과 오류"),
         ]
         for row, (key, title, subtitle) in enumerate(nav_items, start=1):
@@ -1043,6 +1043,9 @@ class BackboneStateTrackerApp(tk.Tk):
         actions.grid(row=3, column=0, columnspan=5, sticky="ew", pady=(12, 0))
         ttk.Button(actions, text="장비 목록 불러오기", style="Secondary.TButton", command=self.load_devices_dialog).pack(side="left")
         ttk.Button(actions, text="장비 목록 저장", style="Primary.TButton", command=self.save_devices_to_default).pack(side="left", padx=(8, 0))
+        ttk.Button(actions, text="상태 수집으로 이동", style="Secondary.TButton", command=lambda: self.show_page("collect")).pack(
+            side="left", padx=(8, 0)
+        )
 
     def _build_logs_page(self) -> None:
         page = self._make_page("logs")
@@ -1077,7 +1080,7 @@ class BackboneStateTrackerApp(tk.Tk):
         titles = {
             "collect": ("상태 수집", "작업 전, 백본3 OFF 중, 복구 후 단계별 스냅샷을 생성합니다."),
             "compare": ("비교 결과", "선택한 두 스냅샷의 명령 출력 차이를 리포트로 생성합니다."),
-            "settings": ("장비 설정", "백본 3/4호기 접속 계정과 대상 장비 정보를 관리합니다."),
+            "settings": ("장비 설정", "백본 3/4호기 접속 계정과 대상 장비 정보를 먼저 확인합니다."),
             "logs": ("작업 로그", "수집, 비교, 오류 이력을 시간 순서대로 확인합니다."),
         }
         for key, frame in self.pages.items():
@@ -1086,7 +1089,7 @@ class BackboneStateTrackerApp(tk.Tk):
             else:
                 frame.lower()
         self.current_page = page
-        title, description = titles.get(page, titles["collect"])
+        title, description = titles.get(page, titles["settings"])
         self.page_title_var.set(title)
         self.page_description_var.set(description)
         self._update_nav_state()
