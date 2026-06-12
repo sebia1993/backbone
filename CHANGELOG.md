@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.27 - 2026-06-12
+
+- Blocked `설정 점검` while collection, comparison, or sample validation work is already running.
+- Disabled the preflight and snapshot refresh buttons during busy workflows to reduce accidental overlapping actions.
+- Added GUI regression coverage for the preflight busy guard and busy-state button locking.
+- Updated README, operator, command, developer, release checklist, and version history documents for v0.8.27.
+
 ## v0.8.26 - 2026-06-12
 
 - Made the `장비 설정` screen vertically scrollable so added target device rows do not push collection controls out of reach.
