@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.21 - 2026-06-12
+
+- Labeled sample snapshots as `샘플:` in the top runtime summary so sample validation comparisons are easier to distinguish from real maintenance baselines.
+- Added GUI regression coverage for sample snapshot display names.
+- Updated README, operator, developer, release checklist, and version history documents for v0.8.21.
+
 ## v0.8.20 - 2026-06-12
 
 - Prevented sample validation snapshots such as `sample_pre_work` from being selected as real pre-work baselines.
