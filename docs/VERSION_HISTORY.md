@@ -1,21 +1,21 @@
 # Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.8.20  
+문서 버전: v0.8.21  
 작성일: 2026-06-12  
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
 
-### v0.8.20 - 2026-06-12
+### v0.8.21 - 2026-06-12
 
-- 샘플 검증 스냅샷(`sample_pre_work`)이 실제 작업 전 기준 스냅샷으로 선택되지 않도록 제외했습니다.
-- 샘플만 존재하는 상태에서 첫 실제 수집을 시작하면 여전히 `작업 전` 기준으로 저장되도록 보장했습니다.
-- workflow 함수와 GUI 기본 수집 단계에 대한 회귀 테스트를 추가했습니다.
+- GUI 상단 런타임 요약의 `기준`/`비교 대상`에 샘플 스냅샷이 선택되면 `샘플:` 접두어를 붙여 실제 작업 기준과 구분했습니다.
+- 샘플 스냅샷 표시명에 대한 GUI 회귀 테스트를 추가했습니다.
 
 ## 2. 이전 주요 변경
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.8.20 | 2026-06-12 | 샘플 검증 스냅샷이 실제 작업 전 기준으로 선택되지 않도록 제외했습니다. |
 | v0.8.19 | 2026-06-12 | HTML 비교 리포트 등급 필터 전환성과 한글 폰트 가독성을 개선했습니다. |
 | v0.8.18 | 2026-06-12 | 수집 기능을 `장비 설정`에 통합하고 마법사/별도 수집 메뉴를 제거했습니다. |
 | v0.8.17 | 2026-06-12 | 앱 시작 화면을 `장비 설정`으로 재배치했습니다. |
@@ -29,6 +29,12 @@
 | v0.8.9 | 2026-06-12 | ZIP 파일명, sidecar, manifest의 버전/날짜 일치 검증을 추가했습니다. |
 | v0.8.8 | 2026-06-12 | 릴리스 반입 체크리스트를 필수 문서로 추가했습니다. |
 | v0.8.7 이하 | 2026-06-11 이전 | 스냅샷 비교, redaction, 공유 ZIP, 샘플 검증, GUI 상세 비교 기능을 단계적으로 추가했습니다. |
+
+### v0.8.20 - 2026-06-12
+
+- 샘플 검증 스냅샷(`sample_pre_work`)이 실제 작업 전 기준 스냅샷으로 선택되지 않도록 제외했습니다.
+- 샘플만 존재하는 상태에서 첫 실제 수집을 시작하면 여전히 `작업 전` 기준으로 저장되도록 보장했습니다.
+- workflow 함수와 GUI 기본 수집 단계에 대한 회귀 테스트를 추가했습니다.
 
 ### v0.8.19 - 2026-06-12
 
@@ -52,15 +58,15 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.20 산출물 이름
+## 3. v0.8.21 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.20_20260612_source.zip
-dist\backbone_state_tracker_v0.8.20_20260612_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.20_20260612_windows_exe.zip
-dist\backbone_state_tracker_v0.8.20_20260612_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.20_20260612_release_manifest.txt
-dist\backbone_state_tracker_v0.8.20_20260612_verify_release_package.ps1
+dist\backbone_state_tracker_v0.8.21_20260612_source.zip
+dist\backbone_state_tracker_v0.8.21_20260612_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.21_20260612_windows_exe.zip
+dist\backbone_state_tracker_v0.8.21_20260612_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.21_20260612_release_manifest.txt
+dist\backbone_state_tracker_v0.8.21_20260612_verify_release_package.ps1
 ```
 
 ## 4. 릴리스 검증 기준

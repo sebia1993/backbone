@@ -26,6 +26,7 @@ from .workflow import (
     WorkStage,
     build_snapshot_folder_label,
     find_latest_pre_work_snapshot,
+    is_sample_snapshot,
     resolve_stage,
     severity_to_korean,
 )
@@ -1308,13 +1309,26 @@ class BackboneStateTrackerApp(tk.Tk):
             self.metric_vars[key].set(str(value))
 
     def _update_runtime_summary(self) -> None:
-        self.baseline_display_var.set(self.baseline_var.get() or "-")
-        self.target_display_var.set(self.target_var.get() or "-")
+        self.baseline_display_var.set(self._snapshot_display_name(self.baseline_var.get()))
+        self.target_display_var.set(self._snapshot_display_name(self.target_var.get()))
         if self.latest_report and self.latest_report.exists():
             self.latest_report_var.set(self.latest_report.name)
         if self.latest_share_bundle and self.latest_share_bundle.exists():
             self.latest_share_bundle_var.set(self.latest_share_bundle.name)
         self._refresh_busy_sensitive_widgets()
+
+    def _snapshot_display_name(self, snapshot_name: str) -> str:
+        name = snapshot_name.strip()
+        if not name:
+            return "-"
+        snapshot_dir = self.snapshot_store.root_dir / name
+        try:
+            snapshot = SnapshotStore.load_snapshot(snapshot_dir)
+        except Exception:
+            return name
+        if is_sample_snapshot(snapshot_dir, snapshot.stage_slug):
+            return f"샘플: {name}"
+        return name
 
     @staticmethod
     def _format_counts(counts: dict[str, int]) -> str:

@@ -1,6 +1,6 @@
 # Backbone State Tracker 사용자 가이드
 
-문서 버전: v0.8.20  
+문서 버전: v0.8.21  
 작성일: 2026-06-12  
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
@@ -60,15 +60,16 @@
 - `비교 결과`의 `샘플 검증 생성`은 실제 장비에 접속하지 않습니다.
 - 샘플은 백본3 접속 실패, 백본4 링크 변화, 복구 후 상태 예시를 생성해 UI와 리포트 동작을 검증합니다.
 - 샘플 스냅샷은 실제 작업 전 기준 스냅샷으로 사용되지 않습니다. 샘플만 있는 상태에서 첫 실제 수집을 시작하면 여전히 `작업 전` 기준으로 저장됩니다.
+- 샘플 스냅샷이 상단 `기준` 또는 `비교 대상`에 표시될 때는 `샘플:` 접두어가 붙습니다.
 
 ## 8. 배포 ZIP 확인
 
 Windows EXE ZIP 예시:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.20_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.20_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.20_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.20_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.21_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.21_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.21_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.21_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 사내 메일이 `.exe`, `.py`, `.ps1` 포함 ZIP을 차단할 수 있습니다. 이 경우 승인된 내부 파일 반입 절차를 사용하세요.
