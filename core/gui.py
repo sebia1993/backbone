@@ -21,18 +21,13 @@ from .reporter import ReportWriter, change_type_label, summary_label
 from .snapshot import SnapshotStore
 from .version import APP_NAME, APP_VERSION
 from .workflow import (
+    CUSTOM_STAGE,
     PRE_WORK_STAGE,
     WorkStage,
     build_snapshot_folder_label,
     find_latest_pre_work_snapshot,
     resolve_stage,
     severity_to_korean,
-)
-from .workflow_wizard import (
-    WorkflowWizardState,
-    action_stage_name,
-    build_workflow_wizard_state,
-    find_latest_stage_snapshot,
 )
 
 
@@ -80,6 +75,7 @@ SEVERITY_FILTERS = {
     "정보": "Info",
     "변경없음": "Unchanged",
 }
+SEVERITY_FILTER_LABELS = {value: label for label, value in SEVERITY_FILTERS.items() if value}
 
 
 class BackboneStateTrackerApp(tk.Tk):
@@ -102,11 +98,8 @@ class BackboneStateTrackerApp(tk.Tk):
         self.diff_detail_rows: list[tuple[DiffItem, DiffLine]] = []
         self.selected_diff_detail: tuple[DiffItem, DiffLine] | None = None
         self.workflow_busy = False
-        self.off_review_confirmed = False
-        self.final_review_confirmed = False
-        self.workflow_step_widgets: list[dict[str, tk.Widget]] = []
         self.busy_sensitive_widgets: list[tk.Widget] = []
-        self.current_wizard_state: WorkflowWizardState | None = None
+        self.metric_chips: dict[str, tk.Frame] = {}
 
         self._ensure_runtime_config_files()
 
@@ -130,9 +123,6 @@ class BackboneStateTrackerApp(tk.Tk):
         self.diff_filter_status_var = tk.StringVar(value="필터: -")
         self.preflight_status_var = tk.StringVar(value="설정 점검 전")
         self.status_chip_var = tk.StringVar(value="대기")
-        self.wizard_title_var = tk.StringVar(value="작업 진행")
-        self.wizard_message_var = tk.StringVar(value="작업 흐름을 확인하세요.")
-        self.wizard_next_label_var = tk.StringVar(value="다음 단계")
         self.metric_vars = {key: tk.StringVar(value="0") for key in SEVERITY_META}
 
         self._configure_styles()
@@ -152,14 +142,14 @@ class BackboneStateTrackerApp(tk.Tk):
         except tk.TclError:
             pass
 
-        base_font = ("Segoe UI", 10)
+        base_font = ("Malgun Gothic", 10)
         style.configure(".", font=base_font, background=PALETTE["bg"], foreground=PALETTE["text"])
         style.configure("App.TFrame", background=PALETTE["bg"])
         style.configure("Surface.TFrame", background=PALETTE["surface"])
         style.configure("Muted.TLabel", background=PALETTE["surface"], foreground=PALETTE["muted"])
-        style.configure("Title.TLabel", background=PALETTE["bg"], foreground=PALETTE["text"], font=("Segoe UI", 18, "bold"))
-        style.configure("Subtle.TLabel", background=PALETTE["bg"], foreground=PALETTE["muted"], font=("Segoe UI", 10))
-        style.configure("SectionTitle.TLabel", background=PALETTE["surface"], foreground=PALETTE["text"], font=("Segoe UI", 11, "bold"))
+        style.configure("Title.TLabel", background=PALETTE["bg"], foreground=PALETTE["text"], font=("Malgun Gothic", 18, "bold"))
+        style.configure("Subtle.TLabel", background=PALETTE["bg"], foreground=PALETTE["muted"], font=("Malgun Gothic", 10))
+        style.configure("SectionTitle.TLabel", background=PALETTE["surface"], foreground=PALETTE["text"], font=("Malgun Gothic", 11, "bold"))
         style.configure("Primary.TButton", padding=(14, 8), background=PALETTE["accent"], foreground="#FFFFFF", borderwidth=0)
         style.map("Primary.TButton", background=[("active", PALETTE["accent_dark"]), ("pressed", PALETTE["accent_dark"])])
         style.configure("Secondary.TButton", padding=(12, 8), background=PALETTE["surface_alt"], foreground=PALETTE["text"])
@@ -229,7 +219,7 @@ class BackboneStateTrackerApp(tk.Tk):
             text="BST",
             bg=PALETTE["accent"],
             fg="#FFFFFF",
-            font=("Segoe UI", 11, "bold"),
+            font=("Malgun Gothic", 11, "bold"),
             width=5,
             height=2,
         )
@@ -240,12 +230,11 @@ class BackboneStateTrackerApp(tk.Tk):
             bg=PALETTE["sidebar"],
             fg=PALETTE["text"],
             justify="left",
-            font=("Segoe UI", 11, "bold"),
+            font=("Malgun Gothic", 11, "bold"),
         ).grid(row=0, column=1, sticky="w")
 
         nav_items = [
-            ("settings", "장비 설정", "접속 계정과 대상 장비"),
-            ("collect", "상태 수집", "작업 단계별 스냅샷"),
+            ("settings", "장비 설정", "접속 계정/대상 장비/상태 수집"),
             ("compare", "비교 결과", "기준/대상 변경점"),
             ("logs", "작업 로그", "실행 이력과 오류"),
         ]
@@ -263,20 +252,20 @@ class BackboneStateTrackerApp(tk.Tk):
                 activebackground=PALETTE["accent_soft"],
                 activeforeground=PALETTE["accent_dark"],
                 fg=PALETTE["text"],
-                font=("Segoe UI", 10, "bold"),
+                font=("Malgun Gothic", 10, "bold"),
                 command=lambda page=key: self.show_page(page),
             )
             button.grid(row=row, column=0, sticky="ew", padx=12, pady=3)
             self.nav_buttons[key] = button
 
-        parent.rowconfigure(5, weight=1)
+        parent.rowconfigure(4, weight=1)
         footer = tk.Label(
             parent,
             text=f"v{APP_VERSION}\n읽기 전용 점검 명령만 실행",
             bg=PALETTE["sidebar"],
             fg=PALETTE["muted"],
             justify="left",
-            font=("Segoe UI", 9),
+            font=("Malgun Gothic", 9),
         )
         footer.grid(row=6, column=0, sticky="sw", padx=18, pady=18)
 
@@ -304,13 +293,12 @@ class BackboneStateTrackerApp(tk.Tk):
     def _topbar_stat(self, parent: tk.Frame, label: str, variable: tk.StringVar, column: int) -> None:
         cell = tk.Frame(parent, bg=PALETTE["surface"], padx=14, pady=8)
         cell.grid(row=0, column=column, sticky="nsew")
-        tk.Label(cell, text=label, bg=PALETTE["surface"], fg=PALETTE["muted"], font=("Segoe UI", 8)).pack(anchor="w")
-        tk.Label(cell, textvariable=variable, bg=PALETTE["surface"], fg=PALETTE["text"], font=("Segoe UI", 9, "bold")).pack(anchor="w")
+        tk.Label(cell, text=label, bg=PALETTE["surface"], fg=PALETTE["muted"], font=("Malgun Gothic", 8)).pack(anchor="w")
+        tk.Label(cell, textvariable=variable, bg=PALETTE["surface"], fg=PALETTE["text"], font=("Malgun Gothic", 9, "bold")).pack(anchor="w")
 
     def _build_pages(self) -> None:
-        self._build_collect_page()
-        self._build_compare_page()
         self._build_settings_page()
+        self._build_compare_page()
         self._build_logs_page()
 
     def _make_page(self, key: str) -> tk.Frame:
@@ -334,77 +322,9 @@ class BackboneStateTrackerApp(tk.Tk):
             text=title,
             bg=PALETTE["surface"],
             fg=PALETTE["text"],
-            font=("Segoe UI", 11, "bold"),
+            font=("Malgun Gothic", 11, "bold"),
         ).grid(row=0, column=0, sticky="ew", padx=16, pady=(14, 8))
         return section
-
-    def _build_workflow_wizard_section(self, parent: tk.Frame, row: int) -> None:
-        wizard = self._make_section(parent, "작업 진행 마법사", row)
-        wizard.rowconfigure(1, weight=1)
-        wizard_body = tk.Frame(wizard, bg=PALETTE["surface"], padx=16, pady=16)
-        wizard_body.grid(row=1, column=0, sticky="nsew")
-        wizard_body.columnconfigure(0, weight=1)
-
-        self.workflow_steps_frame = tk.Frame(wizard_body, bg=PALETTE["surface"])
-        self.workflow_steps_frame.grid(row=0, column=0, sticky="ew")
-        for column in range(6):
-            self.workflow_steps_frame.columnconfigure(column, weight=1)
-        self._build_wizard_step_cards()
-
-        current = tk.Frame(
-            wizard_body,
-            bg=PALETTE["surface_alt"],
-            highlightbackground=PALETTE["border"],
-            highlightthickness=1,
-            padx=14,
-            pady=14,
-        )
-        current.grid(row=1, column=0, sticky="ew", pady=(14, 0))
-        current.columnconfigure(0, weight=1)
-        tk.Label(
-            current,
-            textvariable=self.wizard_title_var,
-            bg=PALETTE["surface_alt"],
-            fg=PALETTE["text"],
-            font=("Segoe UI", 12, "bold"),
-        ).grid(row=0, column=0, sticky="w")
-        tk.Label(
-            current,
-            textvariable=self.wizard_message_var,
-            bg=PALETTE["surface_alt"],
-            fg=PALETTE["muted"],
-            font=("Segoe UI", 9),
-            wraplength=720,
-            justify="left",
-        ).grid(row=1, column=0, sticky="w", pady=(4, 0))
-        self.wizard_next_button = ttk.Button(
-            current,
-            textvariable=self.wizard_next_label_var,
-            style="Primary.TButton",
-            command=self._run_wizard_next_action,
-        )
-        self.wizard_next_button.grid(row=0, column=1, rowspan=2, sticky="e", padx=(14, 0))
-
-    def _build_wizard_step_cards(self) -> None:
-        self.workflow_step_widgets = []
-        for column in range(6):
-            card = tk.Frame(
-                self.workflow_steps_frame,
-                bg=PALETTE["surface_alt"],
-                highlightbackground=PALETTE["border"],
-                highlightthickness=1,
-                padx=10,
-                pady=10,
-            )
-            card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 8, 0))
-            marker = tk.Frame(card, bg=PALETTE["neutral_soft"], height=5)
-            marker.grid(row=0, column=0, sticky="ew", pady=(0, 8))
-            title = tk.Label(card, text="-", bg=PALETTE["surface_alt"], fg=PALETTE["text"], font=("Segoe UI", 9, "bold"), wraplength=130)
-            title.grid(row=1, column=0, sticky="w")
-            status = tk.Label(card, text="-", bg=PALETTE["surface_alt"], fg=PALETTE["muted"], font=("Segoe UI", 8), wraplength=130)
-            status.grid(row=2, column=0, sticky="w", pady=(5, 0))
-            card.columnconfigure(0, weight=1)
-            self.workflow_step_widgets.append({"card": card, "marker": marker, "title": title, "status": status})
 
     def _metric_card(self, parent: tk.Frame, column: int, title: str, variable: tk.StringVar, accent: str, soft: str) -> None:
         card = tk.Frame(
@@ -417,17 +337,26 @@ class BackboneStateTrackerApp(tk.Tk):
         card.columnconfigure(1, weight=1)
         stripe = tk.Frame(card, bg=accent, width=5)
         stripe.grid(row=0, column=0, rowspan=2, sticky="nsw")
-        tk.Label(card, text=title, bg=PALETTE["surface"], fg=PALETTE["muted"], font=("Segoe UI", 9, "bold")).grid(
+        tk.Label(card, text=title, bg=PALETTE["surface"], fg=PALETTE["muted"], font=("Malgun Gothic", 9, "bold")).grid(
             row=0, column=1, sticky="w", padx=14, pady=(12, 0)
         )
-        tk.Label(card, textvariable=variable, bg=PALETTE["surface"], fg=accent, font=("Segoe UI", 24, "bold")).grid(
+        tk.Label(card, textvariable=variable, bg=PALETTE["surface"], fg=accent, font=("Malgun Gothic", 24, "bold")).grid(
             row=1, column=1, sticky="w", padx=14, pady=(0, 12)
         )
         badge = tk.Frame(card, bg=soft, width=28, height=28)
         badge.grid(row=0, column=2, rowspan=2, padx=14, pady=14)
         badge.grid_propagate(False)
 
-    def _metric_chip(self, parent: tk.Frame, column: int, title: str, variable: tk.StringVar, accent: str, soft: str) -> None:
+    def _metric_chip(
+        self,
+        parent: tk.Frame,
+        column: int,
+        title: str,
+        variable: tk.StringVar,
+        accent: str,
+        soft: str,
+        severity: str,
+    ) -> None:
         chip = tk.Frame(
             parent,
             bg=soft,
@@ -435,38 +364,16 @@ class BackboneStateTrackerApp(tk.Tk):
             highlightthickness=1,
             padx=10,
             pady=5,
+            cursor="hand2",
         )
         chip.grid(row=0, column=column, sticky="w", padx=(0 if column == 0 else 8, 0))
-        tk.Label(chip, text=title, bg=soft, fg=accent, font=("Segoe UI", 9, "bold")).pack(side="left")
-        tk.Label(chip, textvariable=variable, bg=soft, fg=accent, font=("Segoe UI", 10, "bold")).pack(side="left", padx=(6, 0))
-
-    def _refresh_wizard(self) -> None:
-        if not hasattr(self, "wizard_next_button"):
-            return
-
-        snapshots = self.snapshot_store.list_snapshots()
-        state = build_workflow_wizard_state(
-            snapshots,
-            device_ready=self._has_ready_device_config(),
-            busy=self.workflow_busy,
-            off_review_confirmed=self.off_review_confirmed,
-            final_review_confirmed=self.final_review_confirmed,
-            latest_counts=self.last_counts,
-        )
-        self.current_wizard_state = state
-        self.wizard_title_var.set(self._active_step_title(state))
-        self.wizard_message_var.set(state.message)
-        self.wizard_next_label_var.set(state.next_label)
-        self.wizard_next_button.configure(state="normal" if state.next_enabled else "disabled")
-        self._refresh_busy_sensitive_widgets()
-
-        for step, widgets in zip(state.steps, self.workflow_step_widgets):
-            colors = self._wizard_status_colors(step.status)
-            for key in ("card", "title", "status"):
-                widgets[key].configure(bg=colors["bg"])
-            widgets["marker"].configure(bg=colors["accent"])
-            widgets["title"].configure(text=step.title, fg=colors["fg"])
-            widgets["status"].configure(text=f"{self._wizard_status_label(step.status)} · {step.detail}", fg=colors["muted"])
+        title_label = tk.Label(chip, text=title, bg=soft, fg=accent, font=("Malgun Gothic", 9, "bold"), cursor="hand2")
+        title_label.pack(side="left")
+        value_label = tk.Label(chip, textvariable=variable, bg=soft, fg=accent, font=("Malgun Gothic", 10, "bold"), cursor="hand2")
+        value_label.pack(side="left", padx=(6, 0))
+        for widget in (chip, title_label, value_label):
+            widget.bind("<Button-1>", lambda _event, selected=severity: self.set_diff_severity_filter(selected))
+        self.metric_chips[severity] = chip
 
     def _track_busy_sensitive(self, widget: tk.Widget) -> None:
         self.busy_sensitive_widgets.append(widget)
@@ -488,69 +395,17 @@ class BackboneStateTrackerApp(tk.Tk):
         if show_logs:
             self.show_page("logs")
         messagebox.showwarning("작업 진행 중", message)
-        self._refresh_wizard()
+        self._refresh_busy_sensitive_widgets()
         return True
 
     @staticmethod
     def _operation_busy_message(action_name: str) -> str:
         return f"현재 수집 또는 비교가 진행 중입니다. 완료 후 {action_name}을 다시 실행하세요."
 
-    def _run_wizard_next_action(self) -> None:
-        state = self.current_wizard_state
-        if state is None or not state.next_enabled:
-            return
-
-        stage_name = action_stage_name(state.next_action)
-        if stage_name is not None:
-            self.stage_var.set(stage_name)
-            self.show_page("collect")
-            self.collect_stage(stage_name)
-            return
-
-        if state.next_action == "open_settings":
-            self.show_page("settings")
-            return
-        if state.next_action == "review_off":
-            self._review_stage_from_wizard("bb3_off")
-            return
-        if state.next_action == "review_final":
-            self._review_stage_from_wizard("post_restore")
-            return
-        if state.next_action == "open_report":
-            self.open_last_report()
-
     def _default_collect_stage_name(self) -> str:
-        state = self.current_wizard_state
-        if state is not None:
-            stage_name = action_stage_name(state.next_action)
-            if stage_name is not None:
-                return stage_name
-        return self.stage_var.get() or PRE_WORK_STAGE
-
-    def _review_stage_from_wizard(self, stage_slug: str) -> None:
-        snapshots = self.snapshot_store.list_snapshots()
-        baseline = find_latest_pre_work_snapshot(snapshots)
-        target = find_latest_stage_snapshot(snapshots, stage_slug)
-        if baseline is None or target is None:
-            messagebox.showerror("비교 오류", "비교할 기준 또는 대상 스냅샷을 찾을 수 없습니다.")
-            return
-
-        self.baseline_var.set(baseline.name)
-        self.target_var.set(target.name)
-        if stage_slug == "bb3_off":
-            self.off_review_confirmed = True
-        elif stage_slug == "post_restore":
-            self.final_review_confirmed = True
-        self.show_page("compare")
-        self._refresh_wizard()
-
-        if not self._last_summary_matches_target(target.name):
-            self.compare_selected()
-
-    def _last_summary_matches_target(self, target_name: str) -> bool:
-        if self.last_diff_summary is None:
-            return False
-        return Path(self.last_diff_summary.target_snapshot).name == target_name
+        if find_latest_pre_work_snapshot(self.snapshot_store.list_snapshots()) is None:
+            return PRE_WORK_STAGE
+        return CUSTOM_STAGE
 
     def _has_ready_device_config(self) -> bool:
         for row in self.device_rows:
@@ -558,72 +413,42 @@ class BackboneStateTrackerApp(tk.Tk):
                 return True
         return False
 
-    @staticmethod
-    def _active_step_title(state: WorkflowWizardState) -> str:
-        current = next((step for step in state.steps if step.key == state.active_step), None)
-        if current is None:
-            return "작업 진행 완료"
-        return f"현재 단계: {current.title}"
-
-    @staticmethod
-    def _wizard_status_label(status: str) -> str:
-        return {
-            "complete": "완료",
-            "current": "진행 가능",
-            "pending": "대기",
-            "locked": "잠김",
-        }.get(status, status)
-
-    @staticmethod
-    def _wizard_status_colors(status: str) -> dict[str, str]:
-        if status == "complete":
-            return {"bg": PALETTE["accent_soft"], "accent": PALETTE["accent"], "fg": PALETTE["accent_dark"], "muted": PALETTE["accent_dark"]}
-        if status == "current":
-            return {"bg": PALETTE["info_soft"], "accent": PALETTE["info"], "fg": PALETTE["text"], "muted": PALETTE["info"]}
-        if status == "locked":
-            return {"bg": PALETTE["neutral_soft"], "accent": PALETTE["border"], "fg": PALETTE["muted"], "muted": PALETTE["muted"]}
-        return {"bg": PALETTE["surface_alt"], "accent": PALETTE["border"], "fg": PALETTE["text"], "muted": PALETTE["muted"]}
-
-    def _build_collect_page(self) -> None:
-        page = self._make_page("collect")
-        page.rowconfigure(2, weight=1)
-
-        self._build_workflow_wizard_section(page, 0)
-
-        stage_section = self._make_section(page, "수집 단계", 1)
+    def _build_collection_section(self, parent: tk.Frame, row: int) -> None:
+        stage_section = self._make_section(parent, "상태 수집", row)
         form = tk.Frame(stage_section, bg=PALETTE["surface"], padx=16, pady=16)
         form.grid(row=1, column=0, sticky="ew")
         form.columnconfigure(1, weight=1)
 
-        tk.Label(form, text="사용자 지정 단계명", bg=PALETTE["surface"], fg=PALETTE["muted"], font=("Segoe UI", 9)).grid(
+        tk.Label(form, text="수집 단계명(선택)", bg=PALETTE["surface"], fg=PALETTE["muted"], font=("Malgun Gothic", 9)).grid(
             row=0, column=0, sticky="w"
         )
-        ttk.Entry(form, textvariable=self.custom_label_var).grid(row=0, column=1, columnspan=3, sticky="ew", padx=(8, 12))
+        ttk.Entry(form, textvariable=self.custom_label_var).grid(row=0, column=1, sticky="ew", padx=(8, 12))
         ttk.Button(form, text="설정 점검", style="Secondary.TButton", command=self.run_preflight_check).grid(
             row=0,
-            column=4,
+            column=2,
             sticky="e",
             padx=(0, 8),
         )
         collect_button = ttk.Button(form, text="상태 수집 시작", style="Primary.TButton", command=self.collect_snapshot)
-        collect_button.grid(row=0, column=5, sticky="e")
+        collect_button.grid(row=0, column=3, sticky="e")
         self._track_busy_sensitive(collect_button)
         tk.Label(
             form,
-            text="비워두면 수집 시작 시각 기준 점검시간으로 저장됩니다.",
+            text="단계명을 입력하지 않으면 점검시간_YYYYMMDD_HHMM 형식으로 저장됩니다. 첫 수집은 기준 스냅샷으로, 이후 수집은 최신 기준과 자동 비교됩니다.",
             bg=PALETTE["surface"],
             fg=PALETTE["muted"],
-            font=("Segoe UI", 9),
-        ).grid(row=1, column=0, columnspan=6, sticky="w", pady=(10, 0))
+            font=("Malgun Gothic", 9),
+        ).grid(row=1, column=0, columnspan=4, sticky="w", pady=(10, 0))
         tk.Label(form, textvariable=self.preflight_status_var, bg=PALETTE["surface"], fg=PALETTE["muted"]).grid(
             row=2,
             column=0,
-            columnspan=6,
+            columnspan=4,
             sticky="w",
             pady=(10, 0),
         )
 
-        command_section = self._make_section(page, "점검 명령 세트", 2)
+    def _build_command_set_section(self, parent: tk.Frame, row: int) -> None:
+        command_section = self._make_section(parent, "점검 명령 세트", row)
         command_body = tk.Frame(command_section, bg=PALETTE["surface"], padx=16, pady=16)
         command_body.grid(row=1, column=0, sticky="nsew")
         command_body.columnconfigure(0, weight=1)
@@ -639,9 +464,6 @@ class BackboneStateTrackerApp(tk.Tk):
             style="Secondary.TButton",
             command=lambda: self.open_doc("COMMAND_GUIDE.html"),
         ).grid(row=0, column=1, sticky="e", padx=(0, 8))
-        ttk.Button(command_body, text="장비 설정으로 이동", style="Secondary.TButton", command=lambda: self.show_page("settings")).grid(
-            row=0, column=2, sticky="e"
-        )
 
     def _build_compare_page(self) -> None:
         page = self._make_page("compare")
@@ -690,7 +512,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.compare_metric_bar.columnconfigure(4, weight=1)
         for column, key in enumerate(["Critical", "Warning", "Info", "Unchanged"]):
             label, accent, soft = SEVERITY_META[key]
-            self._metric_chip(self.compare_metric_bar, column, label, self.metric_vars[key], accent, soft)
+            self._metric_chip(self.compare_metric_bar, column, label, self.metric_vars[key], accent, soft, key)
 
         filter_bar = tk.Frame(detail_body, bg=PALETTE["surface"])
         filter_bar.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 10))
@@ -772,7 +594,7 @@ class BackboneStateTrackerApp(tk.Tk):
             relief="flat",
             padx=12,
             pady=10,
-            font=("Consolas", 10),
+            font=("Malgun Gothic", 10),
         )
         self.diff_detail_text.grid(row=4, column=0, columnspan=2, sticky="nsew", pady=(8, 0))
         self._set_diff_detail_actions_enabled(False)
@@ -797,9 +619,33 @@ class BackboneStateTrackerApp(tk.Tk):
 
         total_rows = 0
         severity_filter = self._selected_diff_severity_filter()
+        include_unchanged = severity_filter == "Unchanged"
         query = self.diff_search_var.get().strip()
         for item in summary.items:
             if item.status == "unchanged":
+                if not include_unchanged:
+                    continue
+                line = DiffLine(kind="unchanged", target_text=summary_label(item))
+                total_rows += 1
+                if not self._diff_row_matches_filter(item, line, severity_filter, query):
+                    continue
+                row_index = len(self.diff_detail_rows)
+                self.diff_detail_rows.append((item, line))
+                self.diff_tree.insert(
+                    "",
+                    "end",
+                    iid=str(row_index),
+                    values=(
+                        severity_to_korean(item.severity),
+                        item.device_name,
+                        item.command_id,
+                        self._shorten(summary_label(item), 80),
+                        change_type_label(line.kind),
+                        "-",
+                        "의미 있는 변경 없음",
+                    ),
+                    tags=(f"severity_{item.severity}",),
+                )
                 continue
             for line in item.changed_lines:
                 if line.kind == "context":
@@ -826,6 +672,7 @@ class BackboneStateTrackerApp(tk.Tk):
                 )
 
         self.diff_filter_status_var.set(f"표시: {len(self.diff_detail_rows)} / {total_rows}")
+        self._update_metric_chip_state()
         if self.diff_detail_rows:
             self._set_diff_detail_text("위 목록에서 변경 행을 선택하면 기준/비교 값을 확인할 수 있습니다.")
         elif total_rows:
@@ -836,6 +683,10 @@ class BackboneStateTrackerApp(tk.Tk):
     def _on_diff_filter_changed(self, _event: tk.Event | None = None) -> None:
         self._render_diff_details()
 
+    def set_diff_severity_filter(self, severity: str) -> None:
+        self.diff_severity_filter_var.set(SEVERITY_FILTER_LABELS.get(severity, "전체"))
+        self._render_diff_details()
+
     def reset_diff_filters(self) -> None:
         self.diff_severity_filter_var.set("전체")
         self.diff_search_var.set("")
@@ -843,6 +694,14 @@ class BackboneStateTrackerApp(tk.Tk):
 
     def _selected_diff_severity_filter(self) -> str:
         return SEVERITY_FILTERS.get(self.diff_severity_filter_var.get(), "")
+
+    def _update_metric_chip_state(self) -> None:
+        selected = self._selected_diff_severity_filter()
+        for severity, chip in self.metric_chips.items():
+            _label, accent, _soft = SEVERITY_META[severity]
+            border = accent if severity == selected else PALETTE["border"]
+            thickness = 2 if severity == selected else 1
+            chip.configure(highlightbackground=border, highlightthickness=thickness)
 
     @staticmethod
     def _diff_row_matches_filter(item: DiffItem, line: DiffLine, severity_filter: str, query: str) -> bool:
@@ -991,7 +850,7 @@ class BackboneStateTrackerApp(tk.Tk):
 
     def _build_settings_page(self) -> None:
         page = self._make_page("settings")
-        page.rowconfigure(1, weight=1)
+        page.rowconfigure(3, weight=1)
 
         access = self._make_section(page, "접속 계정", 0)
         access_body = tk.Frame(access, bg=PALETTE["surface"], padx=16, pady=16)
@@ -1013,7 +872,7 @@ class BackboneStateTrackerApp(tk.Tk):
 
         headers = ["사용", "장비명", "IP/호스트", "포트", "장비 타입"]
         for column, header in enumerate(headers):
-            tk.Label(body, text=header, bg=PALETTE["surface"], fg=PALETTE["muted"], font=("Segoe UI", 9, "bold")).grid(
+            tk.Label(body, text=header, bg=PALETTE["surface"], fg=PALETTE["muted"], font=("Malgun Gothic", 9, "bold")).grid(
                 row=0, column=column, sticky="w", padx=4, pady=(0, 6)
             )
 
@@ -1043,9 +902,9 @@ class BackboneStateTrackerApp(tk.Tk):
         actions.grid(row=3, column=0, columnspan=5, sticky="ew", pady=(12, 0))
         ttk.Button(actions, text="장비 목록 불러오기", style="Secondary.TButton", command=self.load_devices_dialog).pack(side="left")
         ttk.Button(actions, text="장비 목록 저장", style="Primary.TButton", command=self.save_devices_to_default).pack(side="left", padx=(8, 0))
-        ttk.Button(actions, text="상태 수집으로 이동", style="Secondary.TButton", command=lambda: self.show_page("collect")).pack(
-            side="left", padx=(8, 0)
-        )
+
+        self._build_collection_section(page, 2)
+        self._build_command_set_section(page, 3)
 
     def _build_logs_page(self) -> None:
         page = self._make_page("logs")
@@ -1068,7 +927,7 @@ class BackboneStateTrackerApp(tk.Tk):
             relief="flat",
             padx=12,
             pady=12,
-            font=("Consolas", 10),
+            font=("Malgun Gothic", 10),
         )
         self.log_text.grid(row=0, column=0, sticky="nsew")
         scroll = ttk.Scrollbar(log_frame, command=self.log_text.yview)
@@ -1078,9 +937,8 @@ class BackboneStateTrackerApp(tk.Tk):
 
     def show_page(self, page: str) -> None:
         titles = {
-            "collect": ("상태 수집", "작업 전, 백본3 OFF 중, 복구 후 단계별 스냅샷을 생성합니다."),
             "compare": ("비교 결과", "선택한 두 스냅샷의 명령 출력 차이를 리포트로 생성합니다."),
-            "settings": ("장비 설정", "백본 3/4호기 접속 계정과 대상 장비 정보를 먼저 확인합니다."),
+            "settings": ("장비 설정", "접속 계정, 대상 장비, 상태 수집을 한 화면에서 실행합니다."),
             "logs": ("작업 로그", "수집, 비교, 오류 이력을 시간 순서대로 확인합니다."),
         }
         for key, frame in self.pages.items():
@@ -1108,7 +966,7 @@ class BackboneStateTrackerApp(tk.Tk):
             self.log(f"장비 목록을 불러왔습니다: {path}")
         except Exception as exc:
             self.log(f"장비 목록을 불러오지 못했습니다: {exc}")
-        self._refresh_wizard()
+        self._refresh_busy_sensitive_widgets()
 
     def _apply_devices(self, devices: list[Device]) -> None:
         for row, device in zip(self.device_rows, devices):
@@ -1225,7 +1083,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.status_chip_var.set("수집 중")
         self.compare_status_var.set(f"[{stage.name}] 상태 수집 중")
         self.workflow_busy = True
-        self._refresh_wizard()
+        self._refresh_busy_sensitive_widgets()
         self.show_page("logs")
 
         def worker() -> None:
@@ -1262,14 +1120,14 @@ class BackboneStateTrackerApp(tk.Tk):
         self.workflow_busy = False
         self._update_diff_details(None)
         self._update_runtime_summary()
-        self._refresh_wizard()
+        self._refresh_busy_sensitive_widgets()
 
     def _set_failed_status(self, status: str) -> None:
         self.status_chip_var.set(status)
         self.compare_status_var.set(status)
         self.workflow_busy = False
         self._update_runtime_summary()
-        self._refresh_wizard()
+        self._refresh_busy_sensitive_widgets()
 
     def _select_snapshot_after_collect(self, snapshot_dir: Path, stage: WorkStage) -> None:
         self.refresh_snapshots(log_message=False)
@@ -1278,14 +1136,12 @@ class BackboneStateTrackerApp(tk.Tk):
             self.baseline_var.set(snapshot_dir.name)
         elif stage.slug == "bb3_off":
             self.target_var.set(snapshot_dir.name)
-            self.off_review_confirmed = False
         elif stage.slug == "post_restore":
             self.target_var.set(snapshot_dir.name)
-            self.final_review_confirmed = False
         else:
             self.target_var.set(snapshot_dir.name)
         self._update_runtime_summary()
-        self._refresh_wizard()
+        self._refresh_busy_sensitive_widgets()
 
     def _auto_compare_against_pre_work(self, target_dir: Path) -> None:
         snapshot_dirs = [path for path in self.snapshot_store.list_snapshots() if path != target_dir]
@@ -1352,7 +1208,7 @@ class BackboneStateTrackerApp(tk.Tk):
         if log_message:
             self.log(f"스냅샷 목록을 새로고침했습니다: {len(values)}개")
         self._update_runtime_summary()
-        self._refresh_wizard()
+        self._refresh_busy_sensitive_widgets()
 
     def compare_selected(self) -> None:
         if self._reject_if_busy("스냅샷 비교"):
@@ -1369,7 +1225,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.status_chip_var.set("비교 중")
         self.compare_status_var.set("선택 항목 비교 중")
         self.workflow_busy = True
-        self._refresh_wizard()
+        self._refresh_busy_sensitive_widgets()
 
         def worker() -> None:
             try:
@@ -1401,7 +1257,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.status_chip_var.set("샘플 생성 중")
         self.compare_status_var.set("샘플 검증 데이터 생성 중")
         self.workflow_busy = True
-        self._refresh_wizard()
+        self._refresh_busy_sensitive_widgets()
         try:
             result = create_mock_validation_artifacts(self.snapshot_store)
         except Exception:
@@ -1438,13 +1294,13 @@ class BackboneStateTrackerApp(tk.Tk):
         self.workflow_busy = False
         self._apply_compare_summary(summary)
         self._update_runtime_summary()
-        self._refresh_wizard()
+        self._refresh_busy_sensitive_widgets()
 
     def _apply_compare_summary(self, summary: DiffSummary) -> None:
         self.last_diff_summary = summary
         self._apply_compare_counts(summary.counts)
         self._update_diff_details(summary)
-        self._refresh_wizard()
+        self._refresh_busy_sensitive_widgets()
 
     def _apply_compare_counts(self, counts: dict[str, int]) -> None:
         self.last_counts = {key: int(counts.get(key, 0)) for key in SEVERITY_META}
@@ -1458,7 +1314,7 @@ class BackboneStateTrackerApp(tk.Tk):
             self.latest_report_var.set(self.latest_report.name)
         if self.latest_share_bundle and self.latest_share_bundle.exists():
             self.latest_share_bundle_var.set(self.latest_share_bundle.name)
-        self._refresh_wizard()
+        self._refresh_busy_sensitive_widgets()
 
     @staticmethod
     def _format_counts(counts: dict[str, int]) -> str:

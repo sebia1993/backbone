@@ -1,6 +1,6 @@
 # Backbone State Tracker
 
-Version: `v0.8.17`
+Version: `v0.8.18`
 
 Windows GUI utility for collecting read-only status snapshots from backbone 3
 and 4, then comparing snapshots to track operational changes during maintenance.
@@ -9,32 +9,19 @@ and 4, then comparing snapshots to track operational changes during maintenance.
 
 - Connects to backbone devices over SSH.
 - Runs read-only display/check commands from `config/commands.yaml`.
-- Includes Korean MD/HTML guidance that explains each bundled check command and its operational meaning.
-- Opens the Korean command guide from the Help menu and the status collection screen.
-- Opens the user guide, command guide, and version history from packaged or local `docs` folders.
-- Runs a local preflight check for device and command configuration before collection.
-- Blocks duplicate collection, comparison, and sample validation starts while another operation is already running.
-- Saves command outputs as timestamped snapshots.
-- Keeps repeated snapshots separate even when the same stage is collected twice in the same second.
-- Compares snapshots by device and command.
-- Tracks per-device connectivity so an unreachable backbone is reported as a single Critical comparison item.
-- Generates offline sample validation snapshots and reports without connecting to real devices.
-- Masks obvious secret strings in GUI logs, snapshot metadata, and comparison reports while preserving per-command raw output files.
-- Automatically compares `백본3 OFF 중`, `복구 후`, and custom snapshots against the latest `작업 전` snapshot.
-- Writes HTML, XLSX, and JSON comparison reports.
-- Shows labeled summary cards in the HTML comparison report so each value is readable without relying on table headers.
-- Creates a shared report ZIP with redacted reports and guides, excluding snapshot raw output folders.
-- Writes SHA256 checksum sidecars, a release manifest, `PACKAGE_INFO.txt`, a release import checklist, and Python/PowerShell release ZIP content, version, manifest-record, path-safety, and duplicate-entry verification.
-- Provides a Korean bright-console UI with left navigation ordered by workflow: settings, collection, comparison, and logs.
-- Shows line-level snapshot differences so operators can see the exact before/after output that changed.
-- Filters and searches GUI comparison detail rows by severity, device, command, judgment, line, and changed values.
-- Highlights GUI comparison rows with impact, line location, before/after values, and severity-specific follow-up guidance.
-- Opens the selected comparison row's base/target raw output and copies the selected detail for handoff notes.
-- Shows HTML comparison details in one-line inline form, such as `old value → new value`, with horizontal scrolling for long command output.
-- Shows compact comparison metrics above the GUI change-detail list instead of taking a separate large section.
-- Guides the operator through a status-collection workflow wizard: device check, pre-work collection, BB3 OFF collection, OFF review, restore collection, and final review.
-- Uses a single custom collection stage-name field; empty stage names are saved as `점검시간_YYYYMMDD_HHMM`.
-- Moves to the work log automatically when status collection starts or when collection input validation fails.
+- Starts on `장비 설정`.
+- Combines access account, target devices, and status collection in the settings screen.
+- Uses a single optional collection stage-name field. Empty input is saved as `점검시간_YYYYMMDD_HHMM`.
+- Saves the first collection as the baseline snapshot and automatically compares later collections against the latest baseline.
+- Moves to `작업 로그` automatically when collection starts or input/preflight validation fails.
+- Tracks per-device connectivity so an unreachable backbone is reported as one Critical `device_connectivity` comparison item.
+- Shows clickable `긴급`, `주의`, `정보`, `변경없음` summary cards in the GUI and HTML report.
+- Collapses unchanged HTML detail blocks by default.
+- Generates HTML, XLSX, and JSON comparison reports.
+- Creates a shared report ZIP with redacted reports, guides, and guide images while excluding snapshot raw output folders.
+- Includes Korean MD/HTML user, command, developer, version-history, and release-checklist documents.
+- Includes user-guide screenshots under `docs/images/`.
+- Writes SHA256 sidecars, a release manifest, `PACKAGE_INFO.txt`, and Python/PowerShell release ZIP verification helpers.
 
 ## Quick Start
 
@@ -44,13 +31,8 @@ python -m pip install -r requirements.txt
 python app.py
 ```
 
-Replace `<folder-that-contains-backbone_state_tracker>` with the folder where the
-project or transferred ZIP was extracted.
-
-Use the GUI to enter backbone 3/4 device IPs, SSH username, and password on
-the first `장비 설정` screen, then move to `상태 수집` for the optional custom
-collection stage name. Passwords are never saved to configuration or report
-files.
+Use the first `장비 설정` screen to enter backbone 3/4 device IPs, SSH username,
+and password. Passwords are never saved to configuration or report files.
 
 ## Important Files
 
@@ -58,10 +40,11 @@ files.
 - `config/commands.yaml`: read-only command set.
 - `outputs/snapshots/`: generated snapshot and comparison outputs.
 - `docs/USER_GUIDE.md`: operator guide.
-- `docs/COMMAND_GUIDE.md`: Korean command meaning and check-point guide.
+- `docs/COMMAND_GUIDE.md`: command meaning and check-point guide.
 - `docs/DEVELOPER_GUIDE_BEGINNER.md`: beginner developer guide.
 - `docs/VERSION_HISTORY.md`: version-by-version change history.
-- `docs/RELEASE_CHECKLIST.md`: Korean release import and verification checklist.
+- `docs/RELEASE_CHECKLIST.md`: release import and verification checklist.
+- `docs/images/`: user-guide screenshots.
 
 ## Test
 
@@ -74,51 +57,31 @@ python app.py --smoke-check
 
 ## Source ZIP
 
-Source ZIP only. This does not include a Windows `.exe`.
-
 ```powershell
-cd "<folder-that-contains-backbone_state_tracker>\backbone_state_tracker"
 powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
 ```
 
-The generated ZIP is written to `dist\`. It excludes `.git`, runtime outputs,
+The source ZIP is written to `dist\`. It excludes `.git`, runtime outputs,
 local `config\devices.yaml`, caches, build folders, and virtual environments.
-The ZIP also includes `PACKAGE_INFO.txt` and `docs\RELEASE_CHECKLIST.md/html`.
-A matching `.sha256.txt` sidecar and version-level `release_manifest.txt` are
-written to `dist\` for transfer checks.
-`dist\latest\` and `dist\CURRENT_RELEASE.txt` are refreshed with the current
-version artifacts so older ZIP files in `dist\` are easier to avoid.
 
 ## Windows Executable ZIP
 
-This package includes `BackboneStateTracker.exe` plus config examples and guides.
-
 ```powershell
-cd "<folder-that-contains-backbone_state_tracker>\backbone_state_tracker"
 powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 ```
 
 The generated ZIP is written to `dist\` as:
 
 ```text
-backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.18_YYYYMMDD_windows_exe.zip
 ```
 
-The ZIP also includes `PACKAGE_INFO.txt`, `RUN_FIRST.txt`, and the release
-import checklist under `docs\`. A matching `.sha256.txt` sidecar and
-version-level `release_manifest.txt` are written to `dist\`. After moving a ZIP
-into the internal environment, verify it with:
+After moving a ZIP into the internal environment, verify it with:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip --require-manifest
-```
-
-If only the release files were transferred, use the standalone PowerShell helper
-that is written next to the ZIP files:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.17_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.17_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.18_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.18_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.18_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.18_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 Corporate mail systems may block ZIP files containing `.exe`, `.py`, or `.ps1`

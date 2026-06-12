@@ -43,6 +43,10 @@ class ReportWriterTests(unittest.TestCase):
             html = paths["html"].read_text(encoding="utf-8")
             self.assertIn("summary-list", html)
             self.assertIn("summary-card", html)
+            self.assertIn('data-filter="Critical"', html)
+            self.assertIn('data-filter="Unchanged"', html)
+            self.assertIn('data-severity=', html)
+            self.assertIn("function applyFilter", html)
             self.assertIn("<span class='summary-label'>변경 수</span>", html)
             self.assertIn("<span class='summary-label'>첫 변경</span>", html)
             self.assertIn("<span class='summary-label'>요약</span>", html)
@@ -68,6 +72,20 @@ class ReportWriterTests(unittest.TestCase):
             self.assertIn("base_text", rows[0])
             self.assertTrue(any("GE1/0/1 UP" in row for row in rows[1:]))
             self.assertTrue(any("GE1/0/1 DOWN" in row for row in rows[1:]))
+
+    def test_html_collapses_unchanged_detail_blocks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(root, "base", "GE1/0/1 UP")
+            target = self._snapshot(root, "target", "GE1/0/1 UP")
+            summary = DiffEngine().compare(base, target)
+
+            paths = ReportWriter().write_reports(summary)
+
+            html = paths["html"].read_text(encoding="utf-8")
+            self.assertIn("<details class='diff-block filter-entry'", html)
+            self.assertIn("data-severity='Unchanged'", html)
+            self.assertIn("collapsed-head", html)
 
     def test_reports_redact_sensitive_values_but_keep_raw_output(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -137,6 +155,9 @@ class ReportWriterTests(unittest.TestCase):
                 self.assertIn("docs/USER_GUIDE.md", names)
                 self.assertIn("docs/COMMAND_GUIDE.md", names)
                 self.assertIn("docs/COMMAND_GUIDE.html", names)
+                self.assertIn("docs/images/settings-collection.png", names)
+                self.assertIn("docs/images/compare-results.png", names)
+                self.assertIn("docs/images/work-log.png", names)
                 self.assertFalse(any("/raw/" in name or name.startswith("raw/") for name in names))
                 self.assertFalse(any(name.endswith("devices.yaml") for name in names))
                 self.assertFalse(any(name.endswith(".exe") for name in names))

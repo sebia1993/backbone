@@ -11,10 +11,10 @@ from backbone_state_tracker.core.snapshot import SnapshotStore
 
 
 class DiffEngineTests(unittest.TestCase):
-    def _snapshot(self, root: Path, label: str, output: str, command_id: str = "interface_brief") -> Path:
+    def _snapshot(self, root: Path, label: str, output: str, command_id: str = "interface_brief", category: str = "interface") -> Path:
         store = SnapshotStore(root)
         device = Device(name="backbone4", host="192.0.2.4")
-        result = self._command_result(device, command_id=command_id, output=output)
+        result = self._command_result(device, command_id=command_id, output=output, category=category)
         return store.write_snapshot(label, [device], {device.name: [result]})
 
     def _command_result(
@@ -22,6 +22,7 @@ class DiffEngineTests(unittest.TestCase):
         device: Device,
         command_id: str = "interface_brief",
         output: str = "GE1/0/1 UP",
+        category: str = "interface",
     ) -> CommandResult:
         return CommandResult(
             device_name=device.name,
@@ -29,7 +30,7 @@ class DiffEngineTests(unittest.TestCase):
             command_id=command_id,
             command="display interface brief",
             description="Interface summary",
-            category="interface",
+            category=category,
             phase="check",
             success=True,
             output=output,
@@ -59,6 +60,49 @@ class DiffEngineTests(unittest.TestCase):
         changed = [item for item in summary.items if item.status == "changed"]
         self.assertEqual(len(changed), 1)
         self.assertEqual(changed[0].severity, "Critical")
+
+    def test_lacp_selected_count_decrease_is_critical(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(root, "base", "Aggregation1 selected ports: 4", command_id="link_aggregation_summary")
+            target = self._snapshot(root, "target", "Aggregation1 selected ports: 2", command_id="link_aggregation_summary")
+
+            summary = DiffEngine().compare(base, target)
+
+        changed = [item for item in summary.items if item.status == "changed"]
+        self.assertEqual(changed[0].severity, "Critical")
+
+    def test_hardware_major_alarm_is_critical(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(root, "base", "No alarm", command_id="alarm_status", category="hardware")
+            target = self._snapshot(root, "target", "Major alarm: power failure", command_id="alarm_status", category="hardware")
+
+            summary = DiffEngine().compare(base, target)
+
+        changed = [item for item in summary.items if item.status == "changed"]
+        self.assertEqual(changed[0].severity, "Critical")
+
+    def test_minor_alarm_in_log_is_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            device = Device(name="backbone4", host="192.0.2.4")
+            store = SnapshotStore(root)
+            base = store.write_snapshot(
+                "base",
+                [device],
+                {device.name: [self._command_result(device, command_id="recent_log", output="No alarm", category="log")]},
+            )
+            target = store.write_snapshot(
+                "target",
+                [device],
+                {device.name: [self._command_result(device, command_id="recent_log", output="Minor alarm: fan speed changed", category="log")]},
+            )
+
+            summary = DiffEngine().compare(base, target)
+
+        changed = [item for item in summary.items if item.status == "changed"]
+        self.assertEqual(changed[0].severity, "Warning")
 
     def test_changed_lines_include_before_after_values_and_line_numbers(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

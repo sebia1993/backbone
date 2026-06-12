@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.8.18 - 2026-06-12
+
+- Integrated status collection into the `장비 설정` screen and removed the separate collection menu and workflow wizard.
+- Replaced collection-stage selection controls with one optional custom stage-name field. Empty input is saved as `점검시간_YYYYMMDD_HHMM`.
+- Made first collection become the baseline snapshot and later collections auto-compare against the latest baseline.
+- Added clickable severity summary cards in the GUI and HTML report for `긴급`, `주의`, `정보`, and `변경없음`.
+- Collapsed unchanged HTML detail blocks by default.
+- Reworked Critical/Warning criteria for connectivity failures, LACP selected-count decreases, major/minor alarms, and operational state changes.
+- Added actual app screenshots to the user guide and included `docs/images/` in shared/report release packaging.
+- Updated README, operator, command, developer, release checklist, and version history documents for v0.8.18.
+
 ## v0.8.17 - 2026-06-12
 
 - Reordered the GUI workflow so the app opens on `장비 설정` and the left navigation follows `장비 설정 → 상태 수집 → 비교 결과 → 작업 로그`.
