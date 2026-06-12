@@ -24,6 +24,8 @@ SUMMARY_LABELS_KO = {
     "Output changed.": "출력 변경 감지",
     "Target device connection failed.": "비교 시점 장비 접속 실패",
     "Target device connection restored.": "비교 시점 장비 접속 복구",
+    "CPU usage is 70% or higher.": "CPU 사용률 70% 이상",
+    "CPU usage is between 50% and 69%.": "CPU 사용률 50~69%",
     "Memory FreeRatio is 30% or lower.": "메모리 FreeRatio 30% 이하",
     "Memory FreeRatio is between 31% and 40%.": "메모리 FreeRatio 31~40%",
     "Power State is not Normal.": "전원 State 비정상",

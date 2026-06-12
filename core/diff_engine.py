@@ -56,6 +56,8 @@ HEALTHY_ALERT_PATTERNS = [
 ]
 
 MAX_CHANGED_LINES = 500
+CPU_CRITICAL_USAGE = 70.0
+CPU_WARNING_USAGE = 50.0
 MEMORY_CRITICAL_FREE_RATIO = 30.0
 MEMORY_WARNING_FREE_RATIO = 40.0
 
@@ -153,11 +155,14 @@ class DiffEngine:
                 )
             )
             added_lines = [line[1:] for line in diff_text.splitlines() if line.startswith("+") and not line.startswith("+++")]
+            health_line = None
             if health is not None:
-                severity, summary, _health_line = health
+                severity, summary, health_line = health
             else:
                 severity, summary = classify_change(target_result, added_lines, diff_text)
             changed_lines = build_changed_lines(base_lines, target_lines)
+            if health_line is not None:
+                changed_lines = [health_line] + changed_lines
             change_count, changed_lines, change_preview = summarize_changed_lines(changed_lines)
             items.append(
                 DiffItem(
@@ -541,10 +546,49 @@ def assess_target_health(result: CommandResult, target_lines: list[tuple[int, st
             ),
         )
 
+    if result.command_id == "cpu_usage":
+        return assess_cpu_usage(target_lines)
     if result.command_id == "memory_usage":
         return assess_memory_free_ratio(target_lines)
     if result.command_id == "power_status":
         return assess_power_state(target_lines)
+    return None
+
+
+def assess_cpu_usage(target_lines: list[tuple[int, str]]) -> tuple[str, str, DiffLine] | None:
+    values = find_cpu_usage_values(target_lines)
+    if not values:
+        return None
+
+    critical = max((value for value in values if value[2] >= CPU_CRITICAL_USAGE), key=lambda value: value[2], default=None)
+    if critical is not None:
+        line_no, label, usage, source = critical
+        display_value = format_threshold_number(usage)
+        return (
+            "Critical",
+            "CPU usage is 70% or higher.",
+            DiffLine(
+                kind="changed",
+                target_line_no=line_no,
+                base_text="expected CPU usage < 50%",
+                target_text=f"current {label} CPU usage {display_value}% ({source})",
+            ),
+        )
+
+    warning = max((value for value in values if value[2] >= CPU_WARNING_USAGE), key=lambda value: value[2], default=None)
+    if warning is not None:
+        line_no, label, usage, source = warning
+        display_value = format_threshold_number(usage)
+        return (
+            "Warning",
+            "CPU usage is between 50% and 69%.",
+            DiffLine(
+                kind="changed",
+                target_line_no=line_no,
+                base_text="expected CPU usage < 50%",
+                target_text=f"current {label} CPU usage {display_value}% ({source})",
+            ),
+        )
     return None
 
 
@@ -663,6 +707,41 @@ def selected_counts(lines: list[str]) -> list[int]:
         ):
             counts.extend(int(match.group(1)) for match in pattern.finditer(line))
     return counts
+
+
+def find_cpu_usage_values(lines: list[tuple[int, str]]) -> list[tuple[int, str, float, str]]:
+    values: list[tuple[int, str, float, str]] = []
+    seen: set[tuple[int, str]] = set()
+    patterns = [
+        ("5 seconds", re.compile(r"\b5\s*(?:seconds?|secs?)\b", re.IGNORECASE)),
+        ("1 minute", re.compile(r"\b1\s*(?:minutes?|mins?)\b", re.IGNORECASE)),
+        ("5 minutes", re.compile(r"\b5\s*(?:minutes?|mins?)\b|\b5minutes\b", re.IGNORECASE)),
+    ]
+    for line_no, line in lines:
+        for label, pattern in patterns:
+            for match in pattern.finditer(line):
+                usage = cpu_usage_near_label(line, match.start(), match.end())
+                if usage is None:
+                    continue
+                key = (line_no, label)
+                if key in seen:
+                    continue
+                seen.add(key)
+                values.append((line_no, label, usage, line))
+    return values
+
+
+def cpu_usage_near_label(line: str, start: int, end: int) -> float | None:
+    after = line[end : min(len(line), end + 80)]
+    after_match = re.search(r"\s*[:=]?\s*([0-9]+(?:\.[0-9]+)?)\s*%", after)
+    if after_match:
+        return float(after_match.group(1))
+
+    before = line[max(0, start - 80) : start]
+    before_matches = list(re.finditer(r"([0-9]+(?:\.[0-9]+)?)\s*%", before))
+    if before_matches:
+        return float(before_matches[-1].group(1))
+    return None
 
 
 def find_memory_free_ratio(lines: list[tuple[int, str]]) -> tuple[int, float, str] | None:

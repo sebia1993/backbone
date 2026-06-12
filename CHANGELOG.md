@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.30 - 2026-06-12
+
+- Added `cpu_usage` threshold checks for parsed 5 seconds, 1 minute, and 5 minutes values.
+- Marked CPU usage of 70% or higher as Critical and 50% through 69% as Warning.
+- Applied CPU checks to the current target snapshot value even when the compared output did not change.
+- Added diff-engine regression coverage for CPU boundary values, label variants, critical priority, and value-before-label parsing.
+- Updated README, operator, command, developer, release checklist, and version history documents for v0.8.30.
+
 ## v0.8.29 - 2026-06-12
 
 - Added `memory_usage` FreeRatio threshold checks: 30% or lower is Critical, and 31% through 40% is Warning.
