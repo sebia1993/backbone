@@ -1,6 +1,6 @@
 # Backbone State Tracker 사용자 가이드
 
-문서 버전: v0.8.32
+문서 버전: v0.8.33
 작성일: 2026-06-12  
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
@@ -52,7 +52,7 @@
 
 - `긴급`: 장비 접속 실패, 명령 실패, 인터페이스 Down, LACP selected 수 감소, OSPF Full 이탈, `cpu_usage` 5초/1분/5분 값 중 70% 이상, `memory_usage` FreeRatio 30% 이하, `power_status` State가 Normal이 아닌 상태, major alarm, fault, abnormal, offline, missing 같은 즉시 확인이 필요한 변화입니다.
 - `주의`: `cpu_usage` 5초/1분/5분 값 중 50~69%, `memory_usage` FreeRatio 31~40%, minor alarm, warning, error, 라우팅/STP/로그/리소스 변화처럼 영향 확인이 필요한 변화입니다.
-- `정보`: 접속 복구 또는 긴급/주의 키워드가 없는 일반 출력 변화입니다.
+- `정보`: 접속 복구, `cpu_usage` 5초/1분/5분 값이 모두 50% 미만, `memory_usage` FreeRatio 40% 초과, 또는 긴급/주의 키워드가 없는 일반 출력 변화입니다.
 - `변경없음`: 의미 있는 변경이 감지되지 않은 항목입니다. HTML 리포트에서는 해당 등급을 선택한 뒤 필요 시 접힌 상세를 펼쳐 확인합니다.
 
 ## 6. HTML 리포트
@@ -79,9 +79,9 @@
 Windows EXE ZIP 예시:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.32_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.32_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.32_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.32_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.33_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.33_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.33_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.33_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 사내 메일이 `.exe`, `.py`, `.ps1` 포함 ZIP을 차단할 수 있습니다. 이 경우 승인된 내부 파일 반입 절차를 사용하세요.

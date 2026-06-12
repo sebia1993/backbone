@@ -140,7 +140,7 @@ class DiffEngineTests(unittest.TestCase):
             self.assertEqual(item.summary, "CPU usage is between 50% and 69%.")
             self.assertIn(f"current {label} CPU usage", item.change_preview)
 
-    def test_cpu_usage_below_warning_keeps_unchanged_result(self) -> None:
+    def test_cpu_usage_below_warning_is_info_even_when_output_is_unchanged(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             output = "5 seconds: 49%\n1 minute: 49%\n5 minutes: 49%"
@@ -150,8 +150,23 @@ class DiffEngineTests(unittest.TestCase):
             summary = DiffEngine().compare(base, target)
 
         item = self._diff_item(summary, "cpu_usage")
-        self.assertEqual(item.status, "unchanged")
-        self.assertEqual(item.severity, "Unchanged")
+        self.assertEqual(item.status, "changed")
+        self.assertEqual(item.severity, "Info")
+        self.assertEqual(item.summary, "CPU usage is below 50%.")
+        self.assertIn("current 5 seconds CPU usage 49%", item.change_preview)
+
+    def test_cpu_usage_normal_numeric_change_is_info_not_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(root, "base", "5 seconds: 10%\n1 minute: 10%\n5 minutes: 10%", command_id="cpu_usage", category="resource")
+            target = self._snapshot(root, "target", "5 seconds: 49%\n1 minute: 20%\n5 minutes: 10%", command_id="cpu_usage", category="resource")
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "cpu_usage")
+        self.assertEqual(item.status, "changed")
+        self.assertEqual(item.severity, "Info")
+        self.assertEqual(item.summary, "CPU usage is below 50%.")
 
     def test_cpu_usage_critical_takes_priority_over_warning(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -217,7 +232,7 @@ class DiffEngineTests(unittest.TestCase):
             self.assertEqual(item.severity, "Warning")
             self.assertEqual(item.summary, "Memory FreeRatio is between 31% and 40%.")
 
-    def test_memory_free_ratio_above_warning_keeps_unchanged_result(self) -> None:
+    def test_memory_free_ratio_above_warning_is_info_even_when_output_is_unchanged(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             output = "FreeRatio: 41%"
@@ -227,8 +242,41 @@ class DiffEngineTests(unittest.TestCase):
             summary = DiffEngine().compare(base, target)
 
         item = self._diff_item(summary, "memory_usage")
-        self.assertEqual(item.status, "unchanged")
-        self.assertEqual(item.severity, "Unchanged")
+        self.assertEqual(item.status, "changed")
+        self.assertEqual(item.severity, "Info")
+        self.assertEqual(item.summary, "Memory FreeRatio is above 40%.")
+        self.assertIn("current FreeRatio 41%", item.change_preview)
+
+    def test_memory_free_ratio_normal_numeric_change_is_info_not_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(root, "base", "FreeRatio: 80%", command_id="memory_usage", category="resource")
+            target = self._snapshot(root, "target", "FreeRatio: 41%", command_id="memory_usage", category="resource")
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "memory_usage")
+        self.assertEqual(item.status, "changed")
+        self.assertEqual(item.severity, "Info")
+        self.assertEqual(item.summary, "Memory FreeRatio is above 40%.")
+
+    def test_unparsed_cpu_and_memory_changes_are_info_not_resource_warning(self) -> None:
+        samples = [
+            ("cpu_usage", "CPU output unavailable", "CPU output format changed"),
+            ("memory_usage", "Memory output unavailable", "Memory output format changed"),
+        ]
+        for command_id, base_output, target_output in samples:
+            with self.subTest(command_id=command_id), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                base = self._snapshot(root, "base", base_output, command_id=command_id, category="resource")
+                target = self._snapshot(root, "target", target_output, command_id=command_id, category="resource")
+
+                summary = DiffEngine().compare(base, target)
+
+            item = self._diff_item(summary, command_id)
+            self.assertEqual(item.status, "changed")
+            self.assertEqual(item.severity, "Info")
+            self.assertEqual(item.summary, "Output changed.")
 
     def test_memory_free_ratio_table_format_is_warning(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

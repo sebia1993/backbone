@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.33 - 2026-06-12
+
+- Changed `cpu_usage` and `memory_usage` classification so numeric snapshot differences do not create resource warnings by themselves.
+- Classified normal CPU usage below 50% and memory FreeRatio above 40% as Info, even when the compared output is unchanged.
+- Kept Critical and Warning threshold behavior for CPU and memory based on the target snapshot's current value.
+- Added regression coverage for normal-range CPU/memory values and unparsed CPU/memory output changes.
+
 ## v0.8.32 - 2026-06-12
 
 - Fixed generated HTML report filtering so selected severity views hide non-selected shortcut, summary, and detail items reliably.
