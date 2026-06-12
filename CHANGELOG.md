@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.28 - 2026-06-12
+
+- Replaced the HTML report `변경 항목 바로가기` section with `상태별 바로가기` buttons for Critical, Warning, Info, and Unchanged items.
+- Made HTML status cards filter the shortcut buttons, summary cards, and detail blocks together.
+- Kept the default HTML report view focused on Critical and Warning; Info and Unchanged stay hidden until their status card is selected.
+- Added reporter regression coverage for all-severity status shortcuts and hidden-by-default Info/Unchanged behavior.
+- Updated README, operator, command, developer, release checklist, and version history documents for v0.8.28.
+
 ## v0.8.27 - 2026-06-12
 
 - Blocked `설정 점검` while collection, comparison, or sample validation work is already running.
