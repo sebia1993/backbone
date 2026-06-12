@@ -202,7 +202,7 @@ class ReportWriter:
             status_label = status_to_korean(item.status)
             item_summary = redact_sensitive_text(summary_label(item))
             change_preview = redact_sensitive_text(item.change_preview or "-")
-            default_hidden_attr = "" if item.severity in {"Critical", "Warning"} else " hidden"
+            default_hidden_attr = " hidden"
             card_html = (
                 f"<article class='summary-card' data-severity='{escape(item.severity)}' aria-labelledby='summary-{index}'{default_hidden_attr}>"
                 "<div class='summary-card-head'>"
@@ -237,10 +237,10 @@ class ReportWriter:
             details_html.append(render_diff_block(item, detail_id, severity_label, status_label, item_summary))
 
         status_jump_html = (
-            "<section class='jump-list' aria-label='상태별 바로가기'>"
+            "<section class='jump-list' aria-label='상태별 바로가기' data-jump-list hidden>"
             "<div class='jump-head'>"
             "<strong>상태별 바로가기</strong>"
-            "<span class='meta'>상단 상태 카드를 클릭하면 해당 상태의 장비/명령 버튼만 표시합니다. 기본 보기: 긴급/주의.</span>"
+            "<span class='meta'>상단 상태 카드를 클릭하면 선택한 상태의 장비/명령 버튼만 표시합니다.</span>"
             "</div>"
             f"<div class='jump-actions'>{''.join(status_jump_buttons_html)}</div>"
             "<p class='meta jump-empty' data-jump-empty hidden>선택한 상태의 바로가기 항목 없음</p>"
@@ -248,7 +248,7 @@ class ReportWriter:
         )
         visible_summary_html = (
             "".join(summary_cards_html)
-            + "<p class='meta summary-empty' data-summary-empty hidden>표시할 요약 없음. 정보/변경없음은 상단 상태 카드를 선택하세요.</p>"
+            + "<p class='meta summary-empty' data-summary-empty hidden>선택한 상태의 요약 항목 없음</p>"
         )
         unchanged_summary_html = ""
         if unchanged_summary_cards_html:
@@ -539,7 +539,7 @@ class ReportWriter:
       <button class="count" type="button" data-filter="Unchanged">변경없음<strong>{counts.get('Unchanged', 0)}</strong></button>
     </section>
     {status_jump_html}
-    <section class="summary-list" aria-label="비교 요약">
+    <section class="summary-list" aria-label="비교 요약" data-summary-list hidden>
       {visible_summary_html}
     </section>
     {unchanged_summary_html}
@@ -551,13 +551,15 @@ class ReportWriter:
     const summaryCards = Array.from(document.querySelectorAll(".summary-card[data-severity]"));
     const summaryLinks = Array.from(document.querySelectorAll("[data-target-severity]"));
     const jumpButtons = Array.from(document.querySelectorAll("[data-jump-target]"));
+    const jumpList = document.querySelector("[data-jump-list]");
+    const summaryList = document.querySelector("[data-summary-list]");
     const unchangedSummary = document.querySelector("[data-summary-severity='Unchanged']");
     const summaryEmpty = document.querySelector("[data-summary-empty]");
     const jumpEmpty = document.querySelector("[data-jump-empty]");
-    const defaultVisibleSeverities = new Set(["Critical", "Warning"]);
+    const mainSummaryCards = summaryCards.filter((card) => !card.closest("[data-summary-severity='Unchanged']"));
     let activeFilter = "";
     function severityVisible(severity) {{
-      return activeFilter ? severity === activeFilter : defaultVisibleSeverities.has(severity);
+      return activeFilter ? severity === activeFilter : false;
     }}
     function focusTarget(target) {{
       if (!target) return;
@@ -586,11 +588,19 @@ class ReportWriter:
         const visible = severityVisible(button.dataset.jumpSeverity);
         button.hidden = !visible;
       }});
+      if (jumpList) {{
+        jumpList.hidden = !activeFilter;
+      }}
+      if (summaryList) {{
+        summaryList.hidden = !activeFilter || activeFilter === "Unchanged";
+      }}
       if (summaryEmpty) {{
-        summaryEmpty.hidden = summaryCards.some((card) => !card.hidden);
+        const hasVisibleMainSummary = mainSummaryCards.some((card) => !card.hidden);
+        summaryEmpty.hidden = !activeFilter || activeFilter === "Unchanged" || hasVisibleMainSummary;
       }}
       if (jumpEmpty) {{
-        jumpEmpty.hidden = jumpButtons.some((button) => !button.hidden);
+        const hasVisibleJump = jumpButtons.some((button) => !button.hidden);
+        jumpEmpty.hidden = !activeFilter || hasVisibleJump;
       }}
       if (unchangedSummary) {{
         unchangedSummary.hidden = !severityVisible("Unchanged");
@@ -673,7 +683,7 @@ def snapshot_display_name(snapshot_dir: Path) -> str:
 
 
 def render_diff_block(item: DiffItem, detail_id: str, severity_label: str, status_label: str, item_summary: str) -> str:
-    default_hidden_attr = "" if item.severity in {"Critical", "Warning"} else " hidden"
+    default_hidden_attr = " hidden"
     body = (
         f"<p>{escape(item_summary)}</p>"
         f"{render_change_table(item)}"

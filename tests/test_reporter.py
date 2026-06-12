@@ -70,14 +70,20 @@ class ReportWriterTests(unittest.TestCase):
             self.assertIn("<span class='jump-main'>backbone4 / interface_brief</span>", html)
             self.assertIn("<span class='jump-count'>1건</span>", html)
             self.assertIn("<span class='jump-main'>backbone4 / device_connectivity</span>", html)
+            self.assertIn("data-jump-severity='Critical' hidden", html)
             self.assertIn("data-jump-severity='Unchanged' hidden", html)
+            self.assertIn("<section class='jump-list' aria-label='상태별 바로가기' data-jump-list hidden>", html)
+            self.assertIn('<section class="summary-list" aria-label="비교 요약" data-summary-list hidden>', html)
             self.assertIn('document.querySelectorAll(".diff-block[data-severity]")', html)
             self.assertIn('document.querySelectorAll(".summary-card[data-severity]")', html)
             self.assertIn("function applyFilter", html)
             self.assertIn("function setFilter", html)
-            self.assertIn('const defaultVisibleSeverities = new Set(["Critical", "Warning"]);', html)
+            self.assertNotIn("defaultVisibleSeverities", html)
+            self.assertIn("return activeFilter ? severity === activeFilter : false;", html)
             self.assertIn("button.hidden = !visible;", html)
             self.assertIn("card.hidden = !visible;", html)
+            self.assertIn("jumpList.hidden = !activeFilter;", html)
+            self.assertIn('summaryList.hidden = !activeFilter || activeFilter === "Unchanged";', html)
             self.assertIn("function focusTarget", html)
             self.assertIn("target.scrollIntoView", html)
             self.assertIn("target.focus", html)
@@ -135,7 +141,7 @@ class ReportWriterTests(unittest.TestCase):
             self.assertIn("target.open = true;", html)
             self.assertNotIn("<details class='summary-list unchanged-summary' data-summary-severity='Unchanged' open", html)
 
-    def test_html_status_shortcuts_filter_all_severities_and_hide_info_by_default(self) -> None:
+    def test_html_status_shortcuts_filter_all_severities_and_hide_until_selected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             report_path = Path(tmp) / "report.html"
             summary = DiffSummary(
@@ -198,14 +204,24 @@ class ReportWriterTests(unittest.TestCase):
             for severity in ("Critical", "Warning", "Info", "Unchanged"):
                 self.assertIn(f"data-jump-severity='{severity}'", html)
                 self.assertIn(f"data-filter=\"{severity}\"", html)
+                self.assertIn(f"data-jump-severity='{severity}' hidden", html)
+            self.assertIn("<article class='summary-card' data-severity='Critical' aria-labelledby='summary-1' hidden>", html)
+            self.assertIn("<article class='summary-card' data-severity='Warning' aria-labelledby='summary-2' hidden>", html)
             self.assertIn("data-jump-severity='Info' hidden", html)
             self.assertIn("data-jump-severity='Unchanged' hidden", html)
             self.assertIn("<article class='summary-card' data-severity='Info' aria-labelledby='summary-3' hidden>", html)
+            self.assertIn("<section class='diff-block filter-entry' id='diff-1' data-severity='Critical' tabindex='-1' hidden>", html)
+            self.assertIn("<section class='diff-block filter-entry' id='diff-2' data-severity='Warning' tabindex='-1' hidden>", html)
             self.assertIn("<section class='diff-block filter-entry' id='diff-3' data-severity='Info' tabindex='-1' hidden>", html)
             self.assertIn("<details class='diff-block filter-entry' id='diff-4' data-severity='Unchanged' tabindex='-1' hidden>", html)
+            self.assertIn("<section class='jump-list' aria-label='상태별 바로가기' data-jump-list hidden>", html)
+            self.assertIn('<section class="summary-list" aria-label="비교 요약" data-summary-list hidden>', html)
             self.assertIn("function severityVisible", html)
+            self.assertIn("return activeFilter ? severity === activeFilter : false;", html)
             self.assertIn("summaryCards.forEach((card) =>", html)
             self.assertIn("jumpButtons.forEach((button) =>", html)
+            self.assertIn("const mainSummaryCards = summaryCards.filter", html)
+            self.assertIn('activeFilter === nextFilter ? "" : nextFilter', html)
             self.assertIn("setFilter(\"\");", html)
 
     def test_html_meta_labels_sample_snapshots(self) -> None:
