@@ -26,8 +26,10 @@ SUMMARY_LABELS_KO = {
     "Target device connection restored.": "비교 시점 장비 접속 복구",
     "CPU usage is 70% or higher.": "CPU 사용률 70% 이상",
     "CPU usage is between 50% and 69%.": "CPU 사용률 50~69%",
+    "CPU usage is below 50%.": "CPU 사용률 50% 미만",
     "Memory FreeRatio is 30% or lower.": "메모리 FreeRatio 30% 이하",
     "Memory FreeRatio is between 31% and 40%.": "메모리 FreeRatio 31~40%",
+    "Memory FreeRatio is above 40%.": "메모리 FreeRatio 40% 초과",
     "Power State is not Normal.": "전원 State 비정상",
 }
 

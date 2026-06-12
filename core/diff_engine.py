@@ -589,7 +589,18 @@ def assess_cpu_usage(target_lines: list[tuple[int, str]]) -> tuple[str, str, Dif
                 target_text=f"current {label} CPU usage {display_value}% ({source})",
             ),
         )
-    return None
+    line_no, label, usage, source = max(values, key=lambda value: value[2])
+    display_value = format_threshold_number(usage)
+    return (
+        "Info",
+        "CPU usage is below 50%.",
+        DiffLine(
+            kind="changed",
+            target_line_no=line_no,
+            base_text="expected CPU usage < 50%",
+            target_text=f"current {label} CPU usage {display_value}% ({source})",
+        ),
+    )
 
 
 def assess_memory_free_ratio(target_lines: list[tuple[int, str]]) -> tuple[str, str, DiffLine] | None:
@@ -621,7 +632,16 @@ def assess_memory_free_ratio(target_lines: list[tuple[int, str]]) -> tuple[str, 
                 target_text=f"current FreeRatio {display_value}% ({source})",
             ),
         )
-    return None
+    return (
+        "Info",
+        "Memory FreeRatio is above 40%.",
+        DiffLine(
+            kind="changed",
+            target_line_no=line_no,
+            base_text="expected FreeRatio > 40%",
+            target_text=f"current FreeRatio {display_value}% ({source})",
+        ),
+    )
 
 
 def assess_power_state(target_lines: list[tuple[int, str]]) -> tuple[str, str, DiffLine] | None:
@@ -644,6 +664,8 @@ def assess_power_state(target_lines: list[tuple[int, str]]) -> tuple[str, str, D
 def classify_change(result: CommandResult, added_lines: list[str], diff_text: str) -> tuple[str, str]:
     if not result.success:
         return "Critical", "Target snapshot command failed."
+    if result.command_id in {"cpu_usage", "memory_usage"}:
+        return "Info", "Output changed."
 
     target_lines = added_lines or target_lines_from_diff(diff_text)
     base_lines = base_lines_from_diff(diff_text)
