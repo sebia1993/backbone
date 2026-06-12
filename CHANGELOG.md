@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.32 - 2026-06-12
+
+- Fixed generated HTML report filtering so selected severity views hide non-selected shortcut, summary, and detail items reliably.
+- Added a strong `[hidden]` CSS rule to prevent component display styles from overriding hidden state.
+- Synchronized `hidden` and `aria-hidden` attributes when HTML severity filters change.
+- Updated reporter regression coverage and release documents for v0.8.32.
+
 ## v0.8.31 - 2026-06-12
 
 - Changed the HTML report default view so status shortcuts, summary cards, and detail blocks stay hidden until an operator selects a severity card.

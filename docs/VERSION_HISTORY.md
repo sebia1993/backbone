@@ -1,22 +1,23 @@
 # Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.8.31
+문서 버전: v0.8.32
 작성일: 2026-06-12  
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
 
-### v0.8.31 - 2026-06-12
+### v0.8.32 - 2026-06-12
 
-- HTML 비교 리포트 초기 화면에서 상태 카드만 표시하고, 바로가기/요약/상세 블록은 숨기도록 변경했습니다.
-- `긴급`, `주의`, `정보`, `변경없음` 중 선택한 상태의 항목만 바로가기 버튼, 요약 카드, 상세 블록에 표시합니다.
-- 같은 상태 카드를 다시 누르면 선택을 해제하고 초기 숨김 상태로 돌아갑니다.
-- 선택 상태별 바로가기와 초기 숨김 동작에 대한 리포터 회귀 테스트를 갱신했습니다.
+- HTML 비교 리포트에서 선택하지 않은 상태 항목이 함께 보일 수 있는 숨김 표시 문제를 수정했습니다.
+- `[hidden]` CSS 규칙을 강화해 바로가기 버튼, 요약 카드, 상세 블록의 숨김 상태가 display 스타일에 덮이지 않게 했습니다.
+- 상태 필터 변경 시 `hidden`과 `aria-hidden`을 함께 갱신하도록 보강했습니다.
+- HTML 숨김 CSS와 상태별 표시 동작에 대한 리포터 회귀 테스트를 갱신했습니다.
 
 ## 2. 이전 주요 변경
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.8.31 | 2026-06-12 | HTML 비교 리포트에서 상태 카드 선택 전 상세를 숨기고 선택한 상태만 표시하도록 변경했습니다. |
 | v0.8.30 | 2026-06-12 | CPU 5초/1분/5분 사용률 구조화 임계치 판정을 추가했습니다. |
 | v0.8.29 | 2026-06-12 | memory FreeRatio와 power State 구조화 임계치 판정을 추가했습니다. |
 | v0.8.28 | 2026-06-12 | HTML 비교 리포트에서 `상태별 바로가기`와 기본 긴급/주의 중심 표시를 추가했습니다. |
@@ -41,6 +42,13 @@
 | v0.8.9 | 2026-06-12 | ZIP 파일명, sidecar, manifest의 버전/날짜 일치 검증을 추가했습니다. |
 | v0.8.8 | 2026-06-12 | 릴리스 반입 체크리스트를 필수 문서로 추가했습니다. |
 | v0.8.7 이하 | 2026-06-11 이전 | 스냅샷 비교, redaction, 공유 ZIP, 샘플 검증, GUI 상세 비교 기능을 단계적으로 추가했습니다. |
+
+### v0.8.31 - 2026-06-12
+
+- HTML 비교 리포트 초기 화면에서 상태 카드만 표시하고, 바로가기/요약/상세 블록은 숨기도록 변경했습니다.
+- `긴급`, `주의`, `정보`, `변경없음` 중 선택한 상태의 항목만 바로가기 버튼, 요약 카드, 상세 블록에 표시합니다.
+- 같은 상태 카드를 다시 누르면 선택을 해제하고 초기 숨김 상태로 돌아갑니다.
+- 선택 상태별 바로가기와 초기 숨김 동작에 대한 리포터 회귀 테스트를 갱신했습니다.
 
 ### v0.8.30 - 2026-06-12
 
@@ -133,15 +141,15 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.31 산출물 이름
+## 3. v0.8.32 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.31_20260612_source.zip
-dist\backbone_state_tracker_v0.8.31_20260612_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.31_20260612_windows_exe.zip
-dist\backbone_state_tracker_v0.8.31_20260612_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.31_20260612_release_manifest.txt
-dist\backbone_state_tracker_v0.8.31_20260612_verify_release_package.ps1
+dist\backbone_state_tracker_v0.8.32_20260612_source.zip
+dist\backbone_state_tracker_v0.8.32_20260612_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.32_20260612_windows_exe.zip
+dist\backbone_state_tracker_v0.8.32_20260612_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.32_20260612_release_manifest.txt
+dist\backbone_state_tracker_v0.8.32_20260612_verify_release_package.ps1
 ```
 
 ## 4. 릴리스 검증 기준

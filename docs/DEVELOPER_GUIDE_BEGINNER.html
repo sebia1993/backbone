@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.31</title>
+  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.32</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -15,7 +15,7 @@
 </head>
 <body>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p>문서 버전: v0.8.31<br>작성일: 2026-06-12<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
+  <p>문서 버전: v0.8.32<br>작성일: 2026-06-12<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
 
   <h2>1. 프로젝트 목적</h2>
   <p>백본 3/4호기의 작업 전후 상태를 읽기 전용 명령으로 수집하고, 스냅샷 간 변경점을 GUI와 HTML/XLSX/JSON 리포트로 확인하는 Windows 운영 도구입니다.</p>
@@ -49,7 +49,7 @@ python app.py --smoke-check</code></pre>
     <li>사용자는 단계명만 입력하며, 비우면 <code>점검시간_YYYYMMDD_HHMM</code>으로 저장됩니다.</li>
     <li>수집/비교/샘플 검증 중에는 <code>_track_busy_sensitive()</code>에 등록된 실행 버튼을 비활성화합니다. 실행 흐름에 영향을 주는 버튼을 새로 만들면 같은 목록에 등록합니다.</li>
     <li>첫 수집은 기준 스냅샷, 이후 수집은 자동 비교 대상으로 처리됩니다.</li>
-    <li>HTML 리포트는 처음에는 등급 카드만 보이고, 사용자가 <code>긴급</code>/<code>주의</code>/<code>정보</code>/<code>변경없음</code> 중 하나를 선택해야 해당 상태의 바로가기 버튼, 요약 카드, 상세 블록이 표시됩니다.</li>
+    <li>HTML 리포트는 처음에는 등급 카드만 보이고, 사용자가 <code>긴급</code>/<code>주의</code>/<code>정보</code>/<code>변경없음</code> 중 하나를 선택해야 해당 상태의 바로가기 버튼, 요약 카드, 상세 블록이 표시됩니다. 숨김 상태는 <code>[hidden]</code> CSS와 <code>aria-hidden</code> 동기화로 보강합니다.</li>
     <li>샘플 검증 스냅샷은 실제 작업 전 기준 후보에서 제외합니다.</li>
     <li>GUI 상단 요약과 HTML 리포트 상단 메타에는 샘플 스냅샷을 <code>샘플:</code> 접두어로 표시합니다.</li>
   </ul>
