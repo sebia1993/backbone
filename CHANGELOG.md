@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.24 - 2026-06-12
+
+- Added `변경 항목 바로가기` buttons to HTML comparison reports for changed Critical, Warning, and Info items only.
+- Each jump button shows severity, device name, command ID, and change count, then moves directly to the matching command detail block.
+- Added JavaScript focus highlighting so the destination block is easier to identify after jumping.
+- Added reporter regression coverage for changed-item jump buttons and the no-change fallback state.
+- Updated README, operator, developer, release checklist, and version history documents for v0.8.24.
+
 ## v0.8.23 - 2026-06-12
 
 - Collapsed `변경없음` summary cards in HTML comparison reports by default, not only the lower detail blocks.
