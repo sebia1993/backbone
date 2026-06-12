@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.20 - 2026-06-12
+
+- Prevented sample validation snapshots such as `sample_pre_work` from being selected as real pre-work baselines.
+- Kept first real collection in `작업 전` mode even when only sample validation snapshots already exist.
+- Added workflow and GUI regression tests for sample baseline exclusion.
+- Updated README, operator, developer, release checklist, and version history documents for v0.8.20.
+
 ## v0.8.19 - 2026-06-12
 
 - Improved HTML comparison report filtering so the severity summary cards remain visible while details are filtered.

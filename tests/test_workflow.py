@@ -78,6 +78,19 @@ class WorkflowTests(unittest.TestCase):
         self.assertIsNotNone(latest)
         self.assertEqual(latest.name, second.name)
 
+    def test_find_latest_pre_work_snapshot_ignores_sample_snapshots(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            sample = self._snapshot(root, "[샘플] 작업 전", "sample_pre_work", "sample_pre_work")
+
+            latest_without_real_baseline = find_latest_pre_work_snapshot([sample])
+            real = self._snapshot(root, PRE_WORK_STAGE, "pre_work", "pre_work_real")
+            latest_with_real_baseline = find_latest_pre_work_snapshot([sample, real])
+
+        self.assertIsNone(latest_without_real_baseline)
+        self.assertIsNotNone(latest_with_real_baseline)
+        self.assertEqual(latest_with_real_baseline.name, real.name)
+
 
 if __name__ == "__main__":
     unittest.main()
