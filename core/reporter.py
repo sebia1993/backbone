@@ -9,9 +9,9 @@ from pathlib import Path
 from .models import DiffItem, DiffLine, DiffSummary
 from .redaction import redact_payload, redact_sensitive_text
 from .report_bundle import create_share_report_bundle
-from .snapshot import sanitize_filename
+from .snapshot import SnapshotStore, sanitize_filename
 from .version import APP_NAME, APP_VERSION
-from .workflow import severity_to_korean, status_to_korean
+from .workflow import is_sample_snapshot, severity_to_korean, status_to_korean
 
 
 SUMMARY_LABELS_KO = {
@@ -179,6 +179,8 @@ class ReportWriter:
     @staticmethod
     def _write_html(path: Path, summary: DiffSummary) -> None:
         counts = summary.counts
+        base_display_name = snapshot_display_name(Path(summary.base_snapshot))
+        target_display_name = snapshot_display_name(Path(summary.target_snapshot))
         summary_cards_html = []
         details_html = []
         colors = {
@@ -422,7 +424,7 @@ class ReportWriter:
   <div class="wrap">
     <header>
       <h1>{escape(APP_NAME)} 스냅샷 비교 리포트</h1>
-      <div class="meta">버전: v{escape(APP_VERSION)} | 기준: {escape(Path(summary.base_snapshot).name)} | 비교: {escape(Path(summary.target_snapshot).name)} | 생성: {escape(summary.generated_at)}</div>
+      <div class="meta">버전: v{escape(APP_VERSION)} | 기준: {escape(base_display_name)} | 비교: {escape(target_display_name)} | 생성: {escape(summary.generated_at)}</div>
     </header>
     <section class="counts" aria-label="등급 필터">
       <button class="count" type="button" data-filter="Critical">긴급<strong>{counts.get('Critical', 0)}</strong></button>
@@ -496,6 +498,17 @@ def summary_label(item: DiffItem) -> str:
 
 def change_type_label(kind: str) -> str:
     return CHANGE_TYPE_LABELS_KO.get(kind, kind)
+
+
+def snapshot_display_name(snapshot_dir: Path) -> str:
+    name = snapshot_dir.name
+    try:
+        snapshot = SnapshotStore.load_snapshot(snapshot_dir)
+    except Exception:
+        return name
+    if is_sample_snapshot(snapshot_dir, snapshot.stage_slug):
+        return f"샘플: {name}"
+    return name
 
 
 def render_diff_block(item: DiffItem, detail_id: str, severity_label: str, status_label: str, item_summary: str) -> str:
