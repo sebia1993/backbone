@@ -107,6 +107,88 @@ class DiffEngineTests(unittest.TestCase):
         changed = [item for item in summary.items if item.status == "changed"]
         self.assertEqual(changed[0].severity, "Warning")
 
+    def test_cpu_usage_critical_even_when_output_is_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = "5 seconds: 70%\n1 minute: 20%\n5 minutes: 10%"
+            base = self._snapshot(root, "base", output, command_id="cpu_usage", category="resource")
+            target = self._snapshot(root, "target", output, command_id="cpu_usage", category="resource")
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "cpu_usage")
+        self.assertEqual(item.status, "changed")
+        self.assertEqual(item.severity, "Critical")
+        self.assertEqual(item.summary, "CPU usage is 70% or higher.")
+        self.assertIn("current 5 seconds CPU usage 70%", item.change_preview)
+
+    def test_cpu_usage_warning_threshold_boundaries(self) -> None:
+        samples = [
+            ("1 minute: 50%", "1 minute"),
+            ("5 minutes: 69%", "5 minutes"),
+        ]
+        for output, label in samples:
+            with self.subTest(output=output), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                base = self._snapshot(root, "base", "5 seconds: 10%\n1 minute: 10%\n5 minutes: 10%", command_id="cpu_usage", category="resource")
+                target = self._snapshot(root, "target", output, command_id="cpu_usage", category="resource")
+
+                summary = DiffEngine().compare(base, target)
+
+            item = self._diff_item(summary, "cpu_usage")
+            self.assertEqual(item.severity, "Warning")
+            self.assertEqual(item.summary, "CPU usage is between 50% and 69%.")
+            self.assertIn(f"current {label} CPU usage", item.change_preview)
+
+    def test_cpu_usage_below_warning_keeps_unchanged_result(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = "5 seconds: 49%\n1 minute: 49%\n5 minutes: 49%"
+            base = self._snapshot(root, "base", output, command_id="cpu_usage", category="resource")
+            target = self._snapshot(root, "target", output, command_id="cpu_usage", category="resource")
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "cpu_usage")
+        self.assertEqual(item.status, "unchanged")
+        self.assertEqual(item.severity, "Unchanged")
+
+    def test_cpu_usage_critical_takes_priority_over_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(root, "base", "5 seconds: 10%\n1 minute: 10%\n5 minutes: 10%", command_id="cpu_usage", category="resource")
+            target = self._snapshot(root, "target", "5 seconds: 49%\n1 minute: 69%\n5 minutes: 70%", command_id="cpu_usage", category="resource")
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "cpu_usage")
+        self.assertEqual(item.severity, "Critical")
+        self.assertIn("current 5 minutes CPU usage 70%", item.change_preview)
+
+    def test_cpu_usage_label_variants_are_parsed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(root, "base", "5 sec: 10%\n1 min: 10%\n5minutes 10%", command_id="cpu_usage", category="resource")
+            target = self._snapshot(root, "target", "5 sec = 51%\n1 min: 49%\n5minutes 49%", command_id="cpu_usage", category="resource")
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "cpu_usage")
+        self.assertEqual(item.severity, "Warning")
+        self.assertIn("current 5 seconds CPU usage 51%", item.change_preview)
+
+    def test_cpu_usage_value_before_label_is_parsed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(root, "base", "10% in last 5 seconds", command_id="cpu_usage", category="resource")
+            target = self._snapshot(root, "target", "72% in last 5 seconds", command_id="cpu_usage", category="resource")
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "cpu_usage")
+        self.assertEqual(item.severity, "Critical")
+        self.assertEqual(item.summary, "CPU usage is 70% or higher.")
+
     def test_memory_free_ratio_critical_even_when_output_is_unchanged(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

@@ -1,22 +1,23 @@
 # Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.8.29
+문서 버전: v0.8.30
 작성일: 2026-06-12  
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
 
-### v0.8.29 - 2026-06-12
+### v0.8.30 - 2026-06-12
 
-- `memory_usage`의 FreeRatio 기준을 추가했습니다. 30% 이하는 긴급, 31~40%는 주의입니다.
-- `power_status`에서 파싱된 State 값이 Normal이 아니면 긴급으로 표시합니다.
-- 두 기준은 비교 대상 스냅샷의 현재값 기준으로 적용해 출력이 동일해도 위험 상태면 리포트에 노출합니다.
-- FreeRatio 경계값, 표 형식 파싱, 비정상 power State, 변경없지만 위험한 출력에 대한 회귀 테스트를 추가했습니다.
+- `cpu_usage`의 5초/1분/5분 CPU 사용률 기준을 추가했습니다.
+- 세 값 중 하나라도 70% 이상이면 긴급, 50~69%이면 주의로 표시합니다.
+- CPU 기준은 비교 대상 스냅샷의 현재값 기준으로 적용해 출력이 동일해도 위험 상태면 리포트에 노출합니다.
+- CPU 경계값, 라벨 변형, 긴급 우선순위, 값이 라벨 앞에 있는 출력에 대한 회귀 테스트를 추가했습니다.
 
 ## 2. 이전 주요 변경
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.8.29 | 2026-06-12 | memory FreeRatio와 power State 구조화 임계치 판정을 추가했습니다. |
 | v0.8.28 | 2026-06-12 | HTML 비교 리포트에서 `상태별 바로가기`와 기본 긴급/주의 중심 표시를 추가했습니다. |
 | v0.8.27 | 2026-06-12 | 진행 중 중복 실행을 줄이기 위해 `설정 점검`과 스냅샷 새로고침 버튼 잠금을 강화했습니다. |
 | v0.8.26 | 2026-06-12 | `장비 설정` 화면을 스크롤 가능하게 만들고 대상 장비 입력 요약을 추가했습니다. |
@@ -39,6 +40,13 @@
 | v0.8.9 | 2026-06-12 | ZIP 파일명, sidecar, manifest의 버전/날짜 일치 검증을 추가했습니다. |
 | v0.8.8 | 2026-06-12 | 릴리스 반입 체크리스트를 필수 문서로 추가했습니다. |
 | v0.8.7 이하 | 2026-06-11 이전 | 스냅샷 비교, redaction, 공유 ZIP, 샘플 검증, GUI 상세 비교 기능을 단계적으로 추가했습니다. |
+
+### v0.8.29 - 2026-06-12
+
+- `memory_usage`의 FreeRatio 기준을 추가했습니다. 30% 이하는 긴급, 31~40%는 주의입니다.
+- `power_status`에서 파싱된 State 값이 Normal이 아니면 긴급으로 표시합니다.
+- 두 기준은 비교 대상 스냅샷의 현재값 기준으로 적용해 출력이 동일해도 위험 상태면 리포트에 노출합니다.
+- FreeRatio 경계값, 표 형식 파싱, 비정상 power State, 변경없지만 위험한 출력에 대한 회귀 테스트를 추가했습니다.
 
 ### v0.8.28 - 2026-06-12
 
@@ -117,15 +125,15 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.29 산출물 이름
+## 3. v0.8.30 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.29_20260612_source.zip
-dist\backbone_state_tracker_v0.8.29_20260612_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.29_20260612_windows_exe.zip
-dist\backbone_state_tracker_v0.8.29_20260612_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.29_20260612_release_manifest.txt
-dist\backbone_state_tracker_v0.8.29_20260612_verify_release_package.ps1
+dist\backbone_state_tracker_v0.8.30_20260612_source.zip
+dist\backbone_state_tracker_v0.8.30_20260612_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.30_20260612_windows_exe.zip
+dist\backbone_state_tracker_v0.8.30_20260612_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.30_20260612_release_manifest.txt
+dist\backbone_state_tracker_v0.8.30_20260612_verify_release_package.ps1
 ```
 
 ## 4. 릴리스 검증 기준
