@@ -38,6 +38,9 @@ class DiffEngineTests(unittest.TestCase):
             ended_at="2026-06-11T10:00:01",
         )
 
+    def _diff_item(self, summary, command_id: str):
+        return next(item for item in summary.items if item.command_id == command_id)
+
     def test_ignores_clock_like_noise(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -103,6 +106,115 @@ class DiffEngineTests(unittest.TestCase):
 
         changed = [item for item in summary.items if item.status == "changed"]
         self.assertEqual(changed[0].severity, "Warning")
+
+    def test_memory_free_ratio_critical_even_when_output_is_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = "Memory statistics\nFreeRatio: 30%"
+            base = self._snapshot(root, "base", output, command_id="memory_usage", category="resource")
+            target = self._snapshot(root, "target", output, command_id="memory_usage", category="resource")
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "memory_usage")
+        self.assertEqual(item.status, "changed")
+        self.assertEqual(item.severity, "Critical")
+        self.assertEqual(item.summary, "Memory FreeRatio is 30% or lower.")
+        self.assertIn("current FreeRatio 30%", item.change_preview)
+
+    def test_memory_free_ratio_warning_threshold_boundaries(self) -> None:
+        for value in (31, 40):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                base = self._snapshot(root, "base", "FreeRatio: 70%", command_id="memory_usage", category="resource")
+                target = self._snapshot(root, "target", f"FreeRatio = {value}", command_id="memory_usage", category="resource")
+
+                summary = DiffEngine().compare(base, target)
+
+            item = self._diff_item(summary, "memory_usage")
+            self.assertEqual(item.severity, "Warning")
+            self.assertEqual(item.summary, "Memory FreeRatio is between 31% and 40%.")
+
+    def test_memory_free_ratio_above_warning_keeps_unchanged_result(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = "FreeRatio: 41%"
+            base = self._snapshot(root, "base", output, command_id="memory_usage", category="resource")
+            target = self._snapshot(root, "target", output, command_id="memory_usage", category="resource")
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "memory_usage")
+        self.assertEqual(item.status, "unchanged")
+        self.assertEqual(item.severity, "Unchanged")
+
+    def test_memory_free_ratio_table_format_is_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(
+                root,
+                "base",
+                "Slot Total Used Free FreeRatio\n1 1000 200 800 80%",
+                command_id="memory_usage",
+                category="resource",
+            )
+            target = self._snapshot(
+                root,
+                "target",
+                "Slot Total Used Free FreeRatio\n1 1000 650 350 35%",
+                command_id="memory_usage",
+                category="resource",
+            )
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "memory_usage")
+        self.assertEqual(item.severity, "Warning")
+
+    def test_power_status_non_normal_state_is_critical(self) -> None:
+        samples = [
+            "State: Abnormal",
+            "PowerID State Mode\n1 Absent AC",
+            "Power 1 Fault",
+        ]
+        for output in samples:
+            with self.subTest(output=output), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                base = self._snapshot(root, "base", "Power 1 Normal", command_id="power_status", category="hardware")
+                target = self._snapshot(root, "target", output, command_id="power_status", category="hardware")
+
+                summary = DiffEngine().compare(base, target)
+
+            item = self._diff_item(summary, "power_status")
+            self.assertEqual(item.status, "changed")
+            self.assertEqual(item.severity, "Critical")
+            self.assertEqual(item.summary, "Power State is not Normal.")
+
+    def test_power_status_non_normal_state_is_critical_even_when_output_is_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = "Power 1 Absent"
+            base = self._snapshot(root, "base", output, command_id="power_status", category="hardware")
+            target = self._snapshot(root, "target", output, command_id="power_status", category="hardware")
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "power_status")
+        self.assertEqual(item.status, "changed")
+        self.assertEqual(item.severity, "Critical")
+
+    def test_power_status_all_normal_keeps_unchanged_result(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = "Power 1 Normal\nPower 2 Normal"
+            base = self._snapshot(root, "base", output, command_id="power_status", category="hardware")
+            target = self._snapshot(root, "target", output, command_id="power_status", category="hardware")
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "power_status")
+        self.assertEqual(item.status, "unchanged")
+        self.assertEqual(item.severity, "Unchanged")
 
     def test_changed_lines_include_before_after_values_and_line_numbers(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

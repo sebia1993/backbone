@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.29 - 2026-06-12
+
+- Added `memory_usage` FreeRatio threshold checks: 30% or lower is Critical, and 31% through 40% is Warning.
+- Added `power_status` State checks so any parsed State value other than Normal is Critical.
+- Applied these checks to the current target snapshot value even when the compared output did not change.
+- Added diff-engine regression coverage for FreeRatio boundaries, table parsing, non-normal power states, and unchanged-but-risky outputs.
+- Updated README, operator, command, developer, release checklist, and version history documents for v0.8.29.
+
 ## v0.8.28 - 2026-06-12
 
 - Replaced the HTML report `변경 항목 바로가기` section with `상태별 바로가기` buttons for Critical, Warning, Info, and Unchanged items.

@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.28
+문서 버전: v0.8.29
 작성일: 2026-06-12  
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -69,12 +69,12 @@ GUI 변경이 있으면 실제 앱을 실행해 화면이 비어 있지 않은�
 
 `core/diff_engine.py`의 `classify_change()`가 분류합니다.
 
-- `Critical`: 장비 접속 실패, 명령 실패, 인터페이스 Down, LACP selected 수 감소, OSPF Full 이탈, major alarm, fault, abnormal, offline, missing.
-- `Warning`: minor alarm, warning, error, 라우팅/STP/로그/리소스 변화.
+- `Critical`: 장비 접속 실패, 명령 실패, 인터페이스 Down, LACP selected 수 감소, OSPF Full 이탈, `memory_usage` FreeRatio 30% 이하, `power_status` State 비정상, major alarm, fault, abnormal, offline, missing.
+- `Warning`: `memory_usage` FreeRatio 31~40%, minor alarm, warning, error, 라우팅/STP/로그/리소스 변화.
 - `Info`: 접속 복구 또는 일반 출력 변화.
 - `Unchanged`: 정규화 후 의미 있는 변화가 없는 항목.
 
-건강 상태를 의미하는 `No alarm`, `No fault`, `Normal`, `None`은 알람 키워드 오탐을 줄이기 위해 분류용 haystack에서 제외합니다.
+건강 상태를 의미하는 `No alarm`, `No fault`, `Normal`, `None`은 알람 키워드 오탐을 줄이기 위해 분류용 haystack에서 제외합니다. 단, `power_status`의 State 판정은 별도 구조화 파서로 처리하므로 State가 Normal이 아니면 출력 변경 여부와 관계없이 긴급으로 표시합니다.
 
 ## 7. 문서와 스크린샷
 
