@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 사용자 가이드 v0.8.24</title>
+  <title>Backbone State Tracker 사용자 가이드 v0.8.25</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -16,11 +16,12 @@
 </head>
 <body>
   <h1>Backbone State Tracker 사용자 가이드</h1>
-  <p>문서 버전: v0.8.24<br>작성일: 2026-06-12<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
+  <p>문서 버전: v0.8.25<br>작성일: 2026-06-12<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
   <h2>1. 핵심 흐름</h2>
   <ol>
     <li><code>장비 설정</code>에서 접속 계정, 백본3/4 대상 장비, 상태 수집을 한 화면에서 처리합니다.</li>
+    <li>대상 장비는 기본 2개 행으로 시작하며, 추가 장비가 있으면 <code>장비 추가</code>로 행을 늘립니다.</li>
     <li>첫 상태 수집은 기준 스냅샷으로 저장됩니다.</li>
     <li>이후 상태 수집은 사용자가 입력한 단계명으로 저장하고 최신 기준 스냅샷과 자동 비교합니다.</li>
     <li>단계명을 비우면 <code>점검시간_YYYYMMDD_HHMM</code> 이름으로 저장됩니다.</li>
@@ -33,6 +34,9 @@
   <ul>
     <li>계정에는 SSH 접속 계정을 입력합니다. 암호는 저장하지 않습니다.</li>
     <li>대상 장비에는 백본3/4호기의 IP, 포트, 장비 타입을 입력합니다.</li>
+    <li>추가 점검 대상이 있으면 <code>장비 추가</code>를 눌러 새 행에 장비명, IP/호스트, 포트를 입력합니다.</li>
+    <li>장비명과 IP/호스트가 모두 비어 있는 추가 행은 저장과 수집 대상에서 제외됩니다.</li>
+    <li><code>장비 목록 불러오기</code>로 3대 이상이 들어 있는 YAML을 읽으면 필요한 만큼 행이 자동으로 늘어납니다.</li>
     <li><code>설정 점검</code>은 장비 목록과 명령 세트 설정을 로컬에서 먼저 검증합니다.</li>
     <li><code>상태 수집 시작</code>은 읽기 전용 점검 명령만 실행합니다.</li>
   </ul>
@@ -74,8 +78,8 @@
 
   <h2>7. 배포 ZIP 확인</h2>
   <p>샘플 검증 스냅샷은 실제 작업 전 기준으로 사용되지 않습니다. 샘플만 있는 상태에서 첫 실제 수집을 시작하면 <code>작업 전</code> 기준으로 저장됩니다. 샘플 스냅샷이 프로그램 상단 <code>기준</code>/<code>비교 대상</code> 또는 HTML 리포트 상단 <code>기준</code>/<code>비교</code>에 표시될 때는 <code>샘플:</code> 접두어가 붙습니다.</p>
-  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.24_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.24_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.24_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.24_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
+  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.25_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.25_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.25_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.25_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
 </body>
 </html>

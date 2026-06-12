@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.24</title>
+  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.25</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -15,7 +15,7 @@
 </head>
 <body>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p>문서 버전: v0.8.24<br>작성일: 2026-06-12<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
+  <p>문서 버전: v0.8.25<br>작성일: 2026-06-12<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
 
   <h2>1. 프로젝트 목적</h2>
   <p>백본 3/4호기의 작업 전후 상태를 읽기 전용 명령으로 수집하고, 스냅샷 간 변경점을 GUI와 HTML/XLSX/JSON 리포트로 확인하는 Windows 운영 도구입니다.</p>
@@ -42,6 +42,8 @@ python app.py --smoke-check</code></pre>
     <li>첫 화면과 첫 메뉴는 <code>장비 설정</code>입니다.</li>
     <li>좌측 메뉴는 <code>장비 설정</code>, <code>비교 결과</code>, <code>작업 로그</code>입니다.</li>
     <li>상태 수집은 장비 설정 화면 안에 통합되어 있습니다.</li>
+    <li>대상 장비는 기본 2개 입력 행을 만들고, <code>장비 추가</code>로 필요한 만큼 행을 늘립니다.</li>
+    <li>장비 YAML을 불러올 때 3대 이상이면 행을 자동 확장하고, 더 짧은 목록을 불러오면 남는 행은 빈 기본값으로 초기화합니다.</li>
     <li>사용자는 단계명만 입력하며, 비우면 <code>점검시간_YYYYMMDD_HHMM</code>으로 저장됩니다.</li>
     <li>첫 수집은 기준 스냅샷, 이후 수집은 자동 비교 대상으로 처리됩니다.</li>
     <li>HTML 리포트는 등급 카드를 항상 보이고, 변경이 있는 장비/명령은 <code>변경 항목 바로가기</code> 버튼으로 상세 블록에 직접 이동합니다.</li>

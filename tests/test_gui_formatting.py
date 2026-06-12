@@ -69,6 +69,7 @@ class GuiDiffFormattingTests(unittest.TestCase):
 
             self.assertIn("접속 계정", texts)
             self.assertIn("대상 장비", texts)
+            self.assertIn("장비 추가", texts)
             self.assertIn("상태 수집", texts)
             self.assertNotIn("수집 구분", texts)
             self.assertIn("수집 단계명(선택)", texts)
@@ -77,6 +78,67 @@ class GuiDiffFormattingTests(unittest.TestCase):
             self.assertEqual(app.stage_var.get(), "작업 전")
             self.assertNotIn("TRadiobutton", classes)
             self.assertNotIn("작업 진행 마법사", texts)
+        finally:
+            app.destroy()
+
+    def test_add_device_row_keeps_blank_row_out_of_collection_targets(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            initial_count = len(app.device_rows)
+            app.add_device_row()
+
+            self.assertEqual(initial_count, 2)
+            self.assertEqual(len(app.device_rows), 3)
+            added = app.device_rows[-1]
+            self.assertTrue(added["enabled"].get())
+            self.assertEqual(added["name"].get(), "")
+            self.assertEqual(added["host"].get(), "")
+            self.assertEqual(added["port"].get(), "22")
+            self.assertEqual(added["device_type"].get(), "hp_comware")
+            self.assertEqual(len(app._read_devices_from_form()), 2)
+        finally:
+            app.destroy()
+
+    def test_apply_devices_expands_target_rows_for_more_than_two_devices(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            devices = [
+                Device(name="backbone3", host="192.0.2.3"),
+                Device(name="backbone4", host="192.0.2.4"),
+                Device(name="backbone5", host="192.0.2.5", port=2022, device_type="hp_comware"),
+            ]
+
+            app._apply_devices(devices)
+
+            self.assertEqual(len(app.device_rows), 3)
+            self.assertEqual(app.device_rows[2]["name"].get(), "backbone5")
+            self.assertEqual(app.device_rows[2]["host"].get(), "192.0.2.5")
+            self.assertEqual(app.device_rows[2]["port"].get(), "2022")
+            self.assertEqual([device.name for device in app._read_devices_from_form()], ["backbone3", "backbone4", "backbone5"])
+        finally:
+            app.destroy()
+
+    def test_apply_devices_clears_stale_extra_rows_when_shorter_list_is_loaded(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            app._apply_devices(
+                [
+                    Device(name="backbone3", host="192.0.2.3"),
+                    Device(name="backbone4", host="192.0.2.4"),
+                    Device(name="temporary", host="192.0.2.99"),
+                ]
+            )
+            app._apply_devices([Device(name="backbone3", host="192.0.2.3")])
+
+            self.assertEqual(len(app.device_rows), 3)
+            self.assertEqual(app.device_rows[1]["name"].get(), "")
+            self.assertEqual(app.device_rows[1]["host"].get(), "")
+            self.assertEqual(app.device_rows[2]["name"].get(), "")
+            self.assertEqual(app.device_rows[2]["host"].get(), "")
+            self.assertEqual([device.name for device in app._read_devices_from_form()], ["backbone3"])
         finally:
             app.destroy()
 

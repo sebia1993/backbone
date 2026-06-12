@@ -1,6 +1,6 @@
 # Backbone State Tracker
 
-Version: `v0.8.24`
+Version: `v0.8.25`
 
 Windows GUI utility for collecting read-only status snapshots from backbone 3
 and 4, then comparing snapshots to track operational changes during maintenance.
@@ -11,6 +11,7 @@ and 4, then comparing snapshots to track operational changes during maintenance.
 - Runs read-only display/check commands from `config/commands.yaml`.
 - Starts on `장비 설정`.
 - Combines access account, target devices, and status collection in the settings screen.
+- Keeps two default target device rows and lets operators add more rows when extra backbone targets need the same check.
 - Uses a single optional collection stage-name field. Empty input is saved as `점검시간_YYYYMMDD_HHMM`.
 - Saves the first collection as the baseline snapshot and automatically compares later collections against the latest baseline.
 - Moves to `작업 로그` automatically when collection starts or input/preflight validation fails.
@@ -37,7 +38,8 @@ python app.py
 ```
 
 Use the first `장비 설정` screen to enter backbone 3/4 device IPs, SSH username,
-and password. Passwords are never saved to configuration or report files.
+and password. Use `장비 추가` only when more target devices need to be included.
+Passwords are never saved to configuration or report files.
 
 ## Important Files
 
@@ -78,15 +80,15 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 The generated ZIP is written to `dist\` as:
 
 ```text
-backbone_state_tracker_v0.8.24_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.25_YYYYMMDD_windows_exe.zip
 ```
 
 After moving a ZIP into the internal environment, verify it with:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.24_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.24_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.24_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.24_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.25_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.25_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.25_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.25_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 Corporate mail systems may block ZIP files containing `.exe`, `.py`, or `.ps1`
