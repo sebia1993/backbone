@@ -178,7 +178,7 @@ class ReportWriter:
     @staticmethod
     def _write_html(path: Path, summary: DiffSummary) -> None:
         counts = summary.counts
-        rows_html = []
+        summary_cards_html = []
         details_html = []
         colors = {
             "Critical": "#b42318",
@@ -192,18 +192,24 @@ class ReportWriter:
             status_label = status_to_korean(item.status)
             item_summary = redact_sensitive_text(summary_label(item))
             change_preview = redact_sensitive_text(item.change_preview or "-")
-            rows_html.append(
-                "<tr>"
-                f"<td><span class='badge' style='background:{colors.get(item.severity, '#667085')}'>{escape(severity_label)}</span></td>"
-                f"<td>{escape(status_label)}</td>"
-                f"<td>{escape(item.device_name)}</td>"
-                f"<td>{escape(item.command_id)}</td>"
-                f"<td>{escape(item.category)}</td>"
-                f"<td>{item.change_count}</td>"
-                f"<td>{escape(change_preview)}</td>"
-                f"<td>{escape(item_summary)}</td>"
-                f"<td><a href='#{detail_id}'>상세</a></td>"
-                "</tr>"
+            summary_cards_html.append(
+                f"<article class='summary-card' aria-labelledby='summary-{index}'>"
+                "<div class='summary-card-head'>"
+                f"<span class='badge' style='background:{colors.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
+                f"<strong id='summary-{index}'>{escape(item.device_name)} / {escape(item.command_id)}</strong>"
+                f"<a class='summary-link' href='#{detail_id}'>상세 보기</a>"
+                "</div>"
+                "<div class='summary-meta'>"
+                f"<div class='summary-item'><span class='summary-label'>등급</span><span class='summary-value'>{escape(severity_label)}</span></div>"
+                f"<div class='summary-item'><span class='summary-label'>상태</span><span class='summary-value'>{escape(status_label)}</span></div>"
+                f"<div class='summary-item'><span class='summary-label'>장비</span><span class='summary-value'>{escape(item.device_name)}</span></div>"
+                f"<div class='summary-item'><span class='summary-label'>명령</span><span class='summary-value'>{escape(item.command_id)}</span></div>"
+                f"<div class='summary-item'><span class='summary-label'>분류</span><span class='summary-value'>{escape(item.category)}</span></div>"
+                f"<div class='summary-item'><span class='summary-label'>변경 수</span><span class='summary-value'>{item.change_count}</span></div>"
+                "</div>"
+                f"<div class='summary-field'><span class='summary-label'>첫 변경</span><span class='summary-value'>{escape(change_preview)}</span></div>"
+                f"<div class='summary-field'><span class='summary-label'>요약</span><span class='summary-value'>{escape(item_summary)}</span></div>"
+                "</article>"
             )
             details_html.append(
                 f"<section class='diff-block' id='{detail_id}'>"
@@ -259,12 +265,69 @@ class ReportWriter:
       padding: 14px;
     }}
     .count strong {{ display: block; font-size: 24px; margin-top: 4px; }}
-    .table-panel, .diff-block {{
+    .summary-list, .diff-block {{
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
       overflow: hidden;
       margin-bottom: 16px;
+    }}
+    .summary-list {{ padding: 12px; }}
+    .summary-card {{
+      border: 1px solid #e3e8ee;
+      border-radius: 8px;
+      padding: 14px;
+      background: #fff;
+    }}
+    .summary-card + .summary-card {{ margin-top: 10px; }}
+    .summary-card-head {{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }}
+    .summary-card-head strong {{
+      font-size: 15px;
+      overflow-wrap: anywhere;
+    }}
+    .summary-link {{
+      margin-left: auto;
+      font-size: 13px;
+      font-weight: 700;
+    }}
+    .summary-meta {{
+      display: grid;
+      grid-template-columns: repeat(6, minmax(110px, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
+    }}
+    .summary-item, .summary-field {{
+      background: #f8fbfc;
+      border: 1px solid #eaeef2;
+      border-radius: 6px;
+      padding: 8px 10px;
+    }}
+    .summary-field {{
+      display: grid;
+      grid-template-columns: 90px minmax(0, 1fr);
+      gap: 10px;
+      margin-top: 8px;
+    }}
+    .summary-label {{
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }}
+    .summary-field .summary-label {{ margin-bottom: 0; }}
+    .summary-value {{
+      display: block;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }}
     table {{ width: 100%; border-collapse: collapse; }}
     th, td {{ padding: 10px; border-bottom: 1px solid #eaeef2; text-align: left; font-size: 13px; vertical-align: top; }}
@@ -341,8 +404,9 @@ class ReportWriter:
     a:hover {{ text-decoration: underline; }}
     @media (max-width: 900px) {{
       .counts {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
-      .table-panel {{ overflow-x: auto; }}
-      table {{ min-width: 1000px; }}
+      .summary-meta {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+      .summary-field {{ display: block; }}
+      .summary-link {{ margin-left: 0; }}
     }}
   </style>
 </head>
@@ -358,23 +422,8 @@ class ReportWriter:
       <div class="count">정보<strong>{counts.get('Info', 0)}</strong></div>
       <div class="count">변경없음<strong>{counts.get('Unchanged', 0)}</strong></div>
     </section>
-    <section class="table-panel">
-      <table>
-        <thead>
-          <tr>
-            <th>등급</th>
-            <th>상태</th>
-            <th>장비</th>
-            <th>명령</th>
-            <th>분류</th>
-            <th>변경 수</th>
-            <th>첫 변경 내용</th>
-            <th>요약</th>
-            <th>상세</th>
-          </tr>
-        </thead>
-        <tbody>{''.join(rows_html)}</tbody>
-      </table>
+    <section class="summary-list" aria-label="비교 요약">
+      {''.join(summary_cards_html)}
     </section>
     {''.join(details_html)}
   </div>

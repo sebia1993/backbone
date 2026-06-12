@@ -124,6 +124,7 @@ $StagingRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("${ProjectName}_exe_
 $PayloadRoot = Join-Path $StagingRoot $ProjectName
 $CommandsData = (Join-Path $ProjectRoot "config\commands.yaml") + ";config"
 $DevicesExampleData = (Join-Path $ProjectRoot "config\devices.example.yaml") + ";config"
+$DocsData = (Join-Path $ProjectRoot "docs") + ";docs"
 
 try {
     Push-Location $ProjectRoot
@@ -138,6 +139,7 @@ try {
             --paths $ParentDir `
             --add-data $CommandsData `
             --add-data $DevicesExampleData `
+            --add-data $DocsData `
             --distpath $PyInstallerDist `
             --workpath $PyInstallerWork `
             --specpath $PyInstallerSpec `

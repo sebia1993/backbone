@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.15</title>
+  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.16</title>
   <style>
     body { font-family: "Segoe UI", "Malgun Gothic", sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; background: #f4f7fa; }
     main { max-width: 980px; margin: 0 auto; background: #fff; border: 1px solid #d9e3ea; padding: 30px; }
@@ -17,7 +17,7 @@
 <body>
 <main>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p>문서 버전: v0.8.15<br>작성일: 2026-06-12<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
+  <p>문서 버전: v0.8.16<br>작성일: 2026-06-12<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
 
   <h2>1. 프로젝트 목적</h2>
   <p>백본 3/4호기의 작업 전후 상태를 수집하고 특정 시점끼리 비교해 변경점을 추적하는 Windows GUI 프로그램입니다. 장비 설정 변경이 아니라 읽기 전용 점검과 리포트 생성을 목표로 합니다.</p>
@@ -87,14 +87,16 @@ python app.py --smoke-check</code></pre>
   <p>v0.8.13부터 Python/PowerShell 패키지 검증기는 <code>release_manifest.txt</code> 안의 같은 <code>Package</code> 레코드가 두 번 이상 있으면 실패 처리합니다.</p>
   <p>v0.8.14부터 <code>write_package_checksum()</code>은 <code>.sha256.txt</code>에 <code>Date stamp</code>를 기록하고, Python/PowerShell 패키지 검증기는 이 값이 ZIP 파일명 날짜와 일치하는지 확인합니다.</p>
   <p>v0.8.15부터 GUI 첫 화면은 <code>상태 수집</code>이며, 대시보드 메뉴는 제거되었습니다. 작업 진행 마법사는 상태 수집 화면 상단에 있고, 수집 시작/입력 오류/busy 차단은 <code>작업 로그</code> 화면으로 이동합니다.</p>
+  <p>v0.8.16부터 HTML 리포트 상단 요약은 표가 아니라 라벨-값 카드 구조입니다. GUI 비교 화면의 지표는 <code>최근 변경 상세</code> 상단 요약 바로 표시되며, 수집 화면은 단계 선택 라디오 없이 <code>사용자 지정 단계명</code> 입력만 사용합니다. 빈 단계명은 <code>점검시간_YYYYMMDD_HHMM</code>으로 저장하되 내부 자동 비교 슬러그는 <code>pre_work</code>, <code>bb3_off</code>, <code>post_restore</code>를 유지해야 합니다.</p>
+  <p>v0.8.16부터 도움말 문서는 <code>EXE 옆 docs</code>, PyInstaller 내장 <code>docs</code>, 소스 <code>docs</code> 순서로 탐색합니다. EXE 빌드 스크립트는 <code>docs</code> 폴더를 <code>--add-data</code>로도 포함해야 합니다.</p>
 
   <h2>5. UI 유지보수 기준</h2>
   <ul>
     <li>좌측 메뉴: 상태 수집, 비교 결과, 장비 설정, 작업 로그</li>
     <li>상단 상태 바: 현재 상태, 기준 스냅샷, 비교 대상</li>
-    <li>상태 수집: 작업 진행 마법사, 단계 선택, 설정 점검, 수집 시작</li>
+    <li>상태 수집: 작업 진행 마법사, 사용자 지정 단계명 입력, 설정 점검, 수집 시작</li>
     <li>작업 진행 마법사: 장비 설정 확인부터 최종 확인까지 다음 액션 안내</li>
-    <li>비교 결과: 최근 변경 상세 목록, 판단/라인/변경 내용, 선택한 변경 행의 운영 메모</li>
+    <li>비교 결과: 얇은 지표 요약 바, 최근 변경 상세 목록, 판단/라인/변경 내용, 선택한 변경 행의 운영 메모</li>
     <li>비교 상세 액션: 선택 행의 기준 원본, 비교 원본, 마스킹된 상세 복사</li>
     <li>도움말/상태 수집 화면: 사용자 가이드, 명령어 가이드, 버전 변경내역 문서 접근</li>
     <li>색상 기준: 초록 강조색, 흰색 표면, 회색 경계선, 위험/주의/정보 색상 분리</li>

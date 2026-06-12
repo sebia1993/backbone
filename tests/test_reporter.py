@@ -41,6 +41,12 @@ class ReportWriterTests(unittest.TestCase):
             paths = ReportWriter().write_reports(summary)
 
             html = paths["html"].read_text(encoding="utf-8")
+            self.assertIn("summary-list", html)
+            self.assertIn("summary-card", html)
+            self.assertIn("<span class='summary-label'>변경 수</span>", html)
+            self.assertIn("<span class='summary-label'>첫 변경</span>", html)
+            self.assertIn("<span class='summary-label'>요약</span>", html)
+            self.assertNotIn("<th>첫 변경 내용</th>", html)
             self.assertIn("변경 내용", html)
             self.assertIn("change-inline", html)
             self.assertIn("1 → 1", html)
