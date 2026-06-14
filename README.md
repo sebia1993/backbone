@@ -1,6 +1,6 @@
 # Backbone State Tracker
 
-Version: `v0.8.51`
+Version: `v0.8.52`
 
 Windows GUI utility for collecting read-only status snapshots from backbone 3
 and 4, then comparing snapshots to track operational changes during maintenance.
@@ -12,6 +12,7 @@ and 4, then comparing snapshots to track operational changes during maintenance.
 - Adds `vrrp_status` with `show vrrp` to capture VRRP master/backup and virtual router state.
 - Verifies the bundled command set remains preflight-safe and read-only without warnings.
 - Keeps command guide MD/HTML entries aligned with the bundled command set.
+- Applies an AirWave-inspired operations-console theme with a dark navigation rail, Aruba teal action color, quieter cards, and denser tables.
 - Starts on `장비 설정`.
 - Combines access account, target devices, and status collection in the settings screen.
 - Keeps two default target device rows and lets operators add more rows when extra backbone targets need the same check.
@@ -99,15 +100,15 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 The generated ZIP is written to `dist\` as:
 
 ```text
-backbone_state_tracker_v0.8.51_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.52_YYYYMMDD_windows_exe.zip
 ```
 
 After moving a ZIP into the internal environment, verify it with:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.51_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.51_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.51_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.51_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.52_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.52_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.52_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.52_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 Corporate mail systems may block ZIP files containing `.exe`, `.py`, or `.ps1`

@@ -44,23 +44,32 @@ DEVICES_EXAMPLE_PATH = CONFIG_DIR / "devices.example.yaml"
 
 
 PALETTE = {
-    "bg": "#F4F7FA",
+    "bg": "#EEF3F6",
     "surface": "#FFFFFF",
-    "surface_alt": "#F8FBFC",
-    "sidebar": "#FFFFFF",
-    "border": "#D9E3EA",
-    "text": "#1F2933",
-    "muted": "#5E6C7A",
+    "surface_alt": "#F7FAFB",
+    "surface_tint": "#EDF7F5",
+    "sidebar": "#18232B",
+    "sidebar_hover": "#24313A",
+    "sidebar_text": "#DDE7EE",
+    "sidebar_muted": "#94A3AD",
+    "border": "#CED9E2",
+    "border_strong": "#AAB7C2",
+    "text": "#17212B",
+    "muted": "#60717E",
     "accent": "#01A982",
     "accent_dark": "#007A63",
-    "accent_soft": "#E7F7F2",
+    "accent_ink": "#063B35",
+    "accent_soft": "#DDF5F0",
     "danger": "#B42318",
     "danger_soft": "#FDECEB",
     "warning": "#B54708",
     "warning_soft": "#FFF4E5",
-    "info": "#0F6CBD",
-    "info_soft": "#EAF3FF",
-    "neutral_soft": "#EEF2F6",
+    "info": "#2563A8",
+    "info_soft": "#E8F1FB",
+    "neutral": "#687687",
+    "neutral_soft": "#EEF2F5",
+    "log_bg": "#101820",
+    "log_text": "#DCE6ED",
 }
 
 SEVERITY_META = {
@@ -149,33 +158,108 @@ class BackboneStateTrackerApp(tk.Tk):
             pass
 
         base_font = ("Malgun Gothic", 10)
+        label_font = ("Malgun Gothic", 9)
+        control_font = ("Malgun Gothic", 10)
+        self.option_add("*Font", base_font)
         style.configure(".", font=base_font, background=PALETTE["bg"], foreground=PALETTE["text"])
         style.configure("App.TFrame", background=PALETTE["bg"])
         style.configure("Surface.TFrame", background=PALETTE["surface"])
-        style.configure("Muted.TLabel", background=PALETTE["surface"], foreground=PALETTE["muted"])
-        style.configure("Title.TLabel", background=PALETTE["bg"], foreground=PALETTE["text"], font=("Malgun Gothic", 18, "bold"))
-        style.configure("Subtle.TLabel", background=PALETTE["bg"], foreground=PALETTE["muted"], font=("Malgun Gothic", 10))
+        style.configure("Muted.TLabel", background=PALETTE["surface"], foreground=PALETTE["muted"], font=label_font)
+        style.configure("Title.TLabel", background=PALETTE["bg"], foreground=PALETTE["text"], font=("Malgun Gothic", 20, "bold"))
+        style.configure("Subtle.TLabel", background=PALETTE["bg"], foreground=PALETTE["muted"], font=label_font)
         style.configure("SectionTitle.TLabel", background=PALETTE["surface"], foreground=PALETTE["text"], font=("Malgun Gothic", 11, "bold"))
-        style.configure("Primary.TButton", padding=(14, 8), background=PALETTE["accent"], foreground="#FFFFFF", borderwidth=0)
-        style.map("Primary.TButton", background=[("active", PALETTE["accent_dark"]), ("pressed", PALETTE["accent_dark"])])
-        style.configure("Secondary.TButton", padding=(12, 8), background=PALETTE["surface_alt"], foreground=PALETTE["text"])
-        style.map("Secondary.TButton", background=[("active", PALETTE["accent_soft"])])
-        style.configure("TEntry", fieldbackground="#FFFFFF", bordercolor=PALETTE["border"], lightcolor=PALETTE["border"])
-        style.configure("TCombobox", fieldbackground="#FFFFFF", bordercolor=PALETTE["border"], lightcolor=PALETTE["border"])
+        style.configure(
+            "Primary.TButton",
+            padding=(15, 8),
+            background=PALETTE["accent"],
+            foreground="#FFFFFF",
+            borderwidth=0,
+            focusthickness=1,
+            focuscolor=PALETTE["accent_dark"],
+            font=("Malgun Gothic", 10, "bold"),
+        )
+        style.map(
+            "Primary.TButton",
+            background=[("disabled", PALETTE["border"]), ("active", PALETTE["accent_dark"]), ("pressed", PALETTE["accent_dark"])],
+            foreground=[("disabled", PALETTE["muted"]), ("active", "#FFFFFF")],
+        )
+        style.configure(
+            "Secondary.TButton",
+            padding=(13, 8),
+            background=PALETTE["surface_alt"],
+            foreground=PALETTE["text"],
+            borderwidth=1,
+            bordercolor=PALETTE["border"],
+            focusthickness=1,
+            focuscolor=PALETTE["accent"],
+            font=control_font,
+        )
+        style.map(
+            "Secondary.TButton",
+            background=[("disabled", PALETTE["neutral_soft"]), ("active", PALETTE["accent_soft"]), ("pressed", PALETTE["accent_soft"])],
+            foreground=[("disabled", PALETTE["muted"]), ("active", PALETTE["accent_ink"])],
+            bordercolor=[("active", PALETTE["accent"])],
+        )
+        style.configure(
+            "TEntry",
+            padding=(7, 5),
+            fieldbackground="#FFFFFF",
+            bordercolor=PALETTE["border"],
+            lightcolor=PALETTE["border"],
+            darkcolor=PALETTE["border"],
+            insertcolor=PALETTE["text"],
+        )
+        style.configure(
+            "TCombobox",
+            padding=(7, 5),
+            fieldbackground="#FFFFFF",
+            bordercolor=PALETTE["border"],
+            lightcolor=PALETTE["border"],
+            darkcolor=PALETTE["border"],
+            arrowcolor=PALETTE["muted"],
+        )
         style.configure("TRadiobutton", background=PALETTE["surface"], foreground=PALETTE["text"])
         style.map("TRadiobutton", background=[("active", PALETTE["surface"])])
         style.configure("TCheckbutton", background=PALETTE["surface"], foreground=PALETTE["text"])
+        style.configure(
+            "Treeview",
+            background=PALETTE["surface"],
+            fieldbackground=PALETTE["surface"],
+            foreground=PALETTE["text"],
+            bordercolor=PALETTE["border"],
+            rowheight=28,
+            font=("Malgun Gothic", 9),
+        )
+        style.configure(
+            "Treeview.Heading",
+            background="#E6EDF2",
+            foreground=PALETTE["text"],
+            relief="flat",
+            bordercolor=PALETTE["border"],
+            font=("Malgun Gothic", 9, "bold"),
+        )
+        style.map("Treeview", background=[("selected", PALETTE["accent_dark"])], foreground=[("selected", "#FFFFFF")])
+        style.configure("Vertical.TScrollbar", background=PALETTE["surface_alt"], troughcolor=PALETTE["bg"], arrowcolor=PALETTE["muted"])
 
     def _build_menu(self) -> None:
         menu_bar = tk.Menu(self)
 
-        file_menu = tk.Menu(menu_bar, tearoff=False)
+        menu_options = {
+            "tearoff": False,
+            "bg": PALETTE["surface"],
+            "fg": PALETTE["text"],
+            "activebackground": PALETTE["accent_soft"],
+            "activeforeground": PALETTE["accent_ink"],
+            "bd": 0,
+        }
+
+        file_menu = tk.Menu(menu_bar, **menu_options)
         file_menu.add_command(label="결과 폴더 열기", command=self.open_outputs)
         file_menu.add_separator()
         file_menu.add_command(label="종료", command=self.destroy)
         menu_bar.add_cascade(label="파일", menu=file_menu)
 
-        help_menu = tk.Menu(menu_bar, tearoff=False)
+        help_menu = tk.Menu(menu_bar, **menu_options)
         help_menu.add_command(label="사용자 가이드 열기", command=lambda: self.open_doc("USER_GUIDE.html"))
         help_menu.add_command(label="점검 명령어 가이드 열기", command=lambda: self.open_doc("COMMAND_GUIDE.html"))
         help_menu.add_command(label="버전 변경내역 열기", command=lambda: self.open_doc("VERSION_HISTORY.html"))
@@ -190,8 +274,8 @@ class BackboneStateTrackerApp(tk.Tk):
         sidebar = tk.Frame(
             self,
             bg=PALETTE["sidebar"],
-            width=232,
-            highlightbackground=PALETTE["border"],
+            width=244,
+            highlightbackground=PALETTE["sidebar"],
             highlightthickness=1,
         )
         sidebar.grid(row=0, column=0, sticky="nsw")
@@ -217,7 +301,7 @@ class BackboneStateTrackerApp(tk.Tk):
         parent.columnconfigure(0, weight=1)
 
         brand = tk.Frame(parent, bg=PALETTE["sidebar"])
-        brand.grid(row=0, column=0, sticky="ew", padx=18, pady=(18, 22))
+        brand.grid(row=0, column=0, sticky="ew", padx=18, pady=(18, 24))
         brand.columnconfigure(1, weight=1)
 
         logo = tk.Label(
@@ -234,7 +318,7 @@ class BackboneStateTrackerApp(tk.Tk):
             brand,
             text="백본 상태\n추적 콘솔",
             bg=PALETTE["sidebar"],
-            fg=PALETTE["text"],
+            fg="#FFFFFF",
             justify="left",
             font=("Malgun Gothic", 11, "bold"),
         ).grid(row=0, column=1, sticky="w")
@@ -255,9 +339,9 @@ class BackboneStateTrackerApp(tk.Tk):
                 padx=16,
                 pady=11,
                 bg=PALETTE["sidebar"],
-                activebackground=PALETTE["accent_soft"],
-                activeforeground=PALETTE["accent_dark"],
-                fg=PALETTE["text"],
+                activebackground=PALETTE["sidebar_hover"],
+                activeforeground="#FFFFFF",
+                fg=PALETTE["sidebar_text"],
                 font=("Malgun Gothic", 10, "bold"),
                 command=lambda page=key: self.show_page(page),
             )
@@ -269,7 +353,7 @@ class BackboneStateTrackerApp(tk.Tk):
             parent,
             text=f"v{APP_VERSION}\n읽기 전용 점검 명령만 실행",
             bg=PALETTE["sidebar"],
-            fg=PALETTE["muted"],
+            fg=PALETTE["sidebar_muted"],
             justify="left",
             font=("Malgun Gothic", 9),
         )
@@ -364,15 +448,19 @@ class BackboneStateTrackerApp(tk.Tk):
             highlightbackground=PALETTE["border"],
             highlightthickness=1,
         )
-        section.grid(row=row, column=column, columnspan=columnspan, sticky="nsew", padx=0, pady=(0, 14))
+        section.grid(row=row, column=column, columnspan=columnspan, sticky="nsew", padx=0, pady=(0, 16))
         section.columnconfigure(0, weight=1)
+        header = tk.Frame(section, bg=PALETTE["surface"])
+        header.grid(row=0, column=0, sticky="ew", padx=16, pady=(14, 8))
+        header.columnconfigure(1, weight=1)
+        tk.Frame(header, bg=PALETTE["accent"], width=4, height=18).grid(row=0, column=0, sticky="w", padx=(0, 8))
         tk.Label(
-            section,
+            header,
             text=title,
             bg=PALETTE["surface"],
             fg=PALETTE["text"],
             font=("Malgun Gothic", 11, "bold"),
-        ).grid(row=0, column=0, sticky="ew", padx=16, pady=(14, 8))
+        ).grid(row=0, column=1, sticky="w")
         return section
 
     def _metric_card(self, parent: tk.Frame, column: int, title: str, variable: tk.StringVar, accent: str, soft: str) -> None:
@@ -408,17 +496,17 @@ class BackboneStateTrackerApp(tk.Tk):
     ) -> None:
         chip = tk.Frame(
             parent,
-            bg=soft,
+            bg=PALETTE["surface"],
             highlightbackground=accent,
             highlightthickness=1,
-            padx=10,
-            pady=5,
+            padx=11,
+            pady=6,
             cursor="hand2",
         )
         chip.grid(row=0, column=column, sticky="w", padx=(0 if column == 0 else 8, 0))
-        title_label = tk.Label(chip, text=title, bg=soft, fg=accent, font=("Malgun Gothic", 9, "bold"), cursor="hand2")
+        title_label = tk.Label(chip, text=title, bg=PALETTE["surface"], fg=accent, font=("Malgun Gothic", 9, "bold"), cursor="hand2")
         title_label.pack(side="left")
-        value_label = tk.Label(chip, textvariable=variable, bg=soft, fg=accent, font=("Malgun Gothic", 10, "bold"), cursor="hand2")
+        value_label = tk.Label(chip, textvariable=variable, bg=PALETTE["surface"], fg=accent, font=("Malgun Gothic", 10, "bold"), cursor="hand2")
         value_label.pack(side="left", padx=(6, 0))
         for widget in (chip, title_label, value_label):
             widget.bind("<Button-1>", lambda _event, selected=severity: self.set_diff_severity_filter(selected))
@@ -642,7 +730,7 @@ class BackboneStateTrackerApp(tk.Tk):
             detail_body,
             height=8,
             wrap="word",
-            bg="#F8FBFC",
+            bg=PALETTE["surface_alt"],
             fg=PALETTE["text"],
             relief="flat",
             padx=12,
@@ -1021,9 +1109,9 @@ class BackboneStateTrackerApp(tk.Tk):
             log_frame,
             height=20,
             wrap="word",
-            bg="#0F1720",
-            fg="#E6EDF3",
-            insertbackground="#E6EDF3",
+            bg=PALETTE["log_bg"],
+            fg=PALETTE["log_text"],
+            insertbackground=PALETTE["log_text"],
             relief="flat",
             padx=12,
             pady=12,
@@ -1055,9 +1143,14 @@ class BackboneStateTrackerApp(tk.Tk):
     def _update_nav_state(self) -> None:
         for key, button in self.nav_buttons.items():
             if key == self.current_page:
-                button.configure(bg=PALETTE["accent_soft"], fg=PALETTE["accent_dark"])
+                button.configure(bg=PALETTE["accent"], fg="#FFFFFF", activebackground=PALETTE["accent_dark"], activeforeground="#FFFFFF")
             else:
-                button.configure(bg=PALETTE["sidebar"], fg=PALETTE["text"])
+                button.configure(
+                    bg=PALETTE["sidebar"],
+                    fg=PALETTE["sidebar_text"],
+                    activebackground=PALETTE["sidebar_hover"],
+                    activeforeground="#FFFFFF",
+                )
 
     def _load_initial_devices(self) -> None:
         path = DEVICES_PATH if DEVICES_PATH.exists() else DEVICES_EXAMPLE_PATH
