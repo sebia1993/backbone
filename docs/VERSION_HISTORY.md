@@ -1,22 +1,23 @@
 # Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.8.47
+문서 버전: v0.8.48
 작성일: 2026-06-15
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
 
-### v0.8.47 - 2026-06-15
+### v0.8.48 - 2026-06-15
 
-- 실제 공유 가능한 `config/*` 파일과 release package verifier의 설정 파일 필수 목록이 항상 일치하는지 확인하는 회귀 테스트를 추가했습니다.
-- 번들 명령 정의인 `config/commands.yaml`이 ZIP에서 누락되면 검증 실패로 처리하는 테스트를 추가했습니다.
-- 로컬 장비 접속 정보인 `config/devices.yaml`은 계속 ZIP 금지 대상으로 유지했습니다.
+- Windows EXE ZIP용 release package verifier 테스트 fixture를 추가했습니다.
+- `BackboneStateTracker.exe`가 ZIP에서 누락되면 검증 실패로 처리하는 테스트를 추가했습니다.
+- `RUN_FIRST.txt`가 ZIP에서 누락되면 검증 실패로 처리하는 테스트를 추가했습니다.
 - 수집, SSH, 비교, 리포트 런타임 동작은 변경하지 않았습니다.
 
 ## 2. 이전 주요 변경
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.8.47 | 2026-06-15 | 실제 공유 가능한 `config/*` 파일과 release package verifier의 설정 파일 필수 목록이 일치하는지 확인하는 테스트를 추가했습니다. |
 | v0.8.46 | 2026-06-15 | 실제 문서/이미지 파일 목록과 release package verifier의 문서 필수 목록이 일치하는지 확인하는 테스트를 추가했습니다. |
 | v0.8.45 | 2026-06-15 | Source ZIP 검증 기준과 실제 릴리스 도구 스크립트 목록이 일치하는지 확인하는 테스트를 추가했습니다. |
 | v0.8.44 | 2026-06-15 | Source ZIP 검증 기준을 강화해 전체 core 런타임 모듈과 `requirements.txt` 누락을 잡도록 개선했습니다. |
@@ -170,15 +171,15 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.47 산출물 이름
+## 3. v0.8.48 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.47_20260615_source.zip
-dist\backbone_state_tracker_v0.8.47_20260615_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.47_20260615_windows_exe.zip
-dist\backbone_state_tracker_v0.8.47_20260615_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.47_20260615_release_manifest.txt
-dist\backbone_state_tracker_v0.8.47_20260615_verify_release_package.ps1
+dist\backbone_state_tracker_v0.8.48_20260615_source.zip
+dist\backbone_state_tracker_v0.8.48_20260615_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.48_20260615_windows_exe.zip
+dist\backbone_state_tracker_v0.8.48_20260615_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.48_20260615_release_manifest.txt
+dist\backbone_state_tracker_v0.8.48_20260615_verify_release_package.ps1
 ```
 
 ## 4. 릴리스 검증 기준

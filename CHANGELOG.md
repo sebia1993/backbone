@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.48 - 2026-06-15
+
+- Added Windows EXE ZIP fixture coverage for the release package verifier.
+- Added regression tests so missing `BackboneStateTracker.exe` or `RUN_FIRST.txt` fails Windows EXE ZIP verification.
+- No collection, SSH, comparison, or report runtime behavior changed.
+
 ## v0.8.47 - 2026-06-15
 
 - Added regression coverage that keeps packaged shareable `config/*` files aligned with the real project config files while excluding local `config/devices.yaml`.
