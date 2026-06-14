@@ -138,6 +138,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.diff_severity_filter_var = tk.StringVar(value="전체")
         self.diff_search_var = tk.StringVar()
         self.diff_filter_status_var = tk.StringVar(value="필터: -")
+        self.diff_selection_var = tk.StringVar(value="선택된 변경 행이 없습니다.")
         self.preflight_status_var = tk.StringVar(value="설정 점검 전")
         self.status_chip_var = tk.StringVar(value="대기")
         self.metric_vars = {key: tk.StringVar(value="0") for key in SEVERITY_META}
@@ -703,7 +704,8 @@ class BackboneStateTrackerApp(tk.Tk):
         detail_body.rowconfigure(1, weight=0)
         detail_body.rowconfigure(2, weight=1)
         detail_body.rowconfigure(3, weight=0)
-        detail_body.rowconfigure(4, weight=1)
+        detail_body.rowconfigure(4, weight=0)
+        detail_body.rowconfigure(5, weight=1)
         detail_body.columnconfigure(0, weight=1)
 
         self.compare_metric_bar = tk.Frame(detail_body, bg=PALETTE["surface"])
@@ -784,6 +786,17 @@ class BackboneStateTrackerApp(tk.Tk):
         )
         self.copy_diff_detail_button.pack(side="left", padx=(8, 0))
 
+        self.diff_selection_panel = self._make_status_panel(
+            detail_body,
+            4,
+            "선택 변경 맥락",
+            textvariable=self.diff_selection_var,
+            accent=PALETTE["accent_dark"],
+            soft=PALETTE["panel_note"],
+            columnspan=2,
+            pady=(10, 0),
+        )
+
         self.diff_detail_text = tk.Text(
             detail_body,
             height=8,
@@ -795,7 +808,7 @@ class BackboneStateTrackerApp(tk.Tk):
             pady=10,
             font=("Malgun Gothic", 10),
         )
-        self.diff_detail_text.grid(row=4, column=0, columnspan=2, sticky="nsew", pady=(8, 0))
+        self.diff_detail_text.grid(row=5, column=0, columnspan=2, sticky="nsew", pady=(8, 0))
         self._set_diff_detail_actions_enabled(False)
         self._set_diff_detail_text("비교 완료 후 변경된 라인을 선택하면 변경 전/후 값이 여기에 표시됩니다.")
 
@@ -810,6 +823,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.diff_detail_rows = []
         self.selected_diff_detail = None
         self._set_diff_detail_actions_enabled(False)
+        self.diff_selection_var.set("선택된 변경 행이 없습니다.")
         summary = self.last_diff_summary
         if summary is None:
             self.diff_filter_status_var.set("필터: -")
@@ -949,6 +963,7 @@ class BackboneStateTrackerApp(tk.Tk):
             return
         self.selected_diff_detail = (item, line)
         self._set_diff_detail_actions_enabled(True)
+        self.diff_selection_var.set(self._format_selection_context(item, line))
         self._set_diff_detail_text(self._format_selected_diff_detail(item, line))
 
     def _set_diff_detail_actions_enabled(self, enabled: bool) -> None:
@@ -998,6 +1013,13 @@ class BackboneStateTrackerApp(tk.Tk):
         self.diff_detail_text.delete("1.0", "end")
         self.diff_detail_text.insert("1.0", text)
         self.diff_detail_text.configure(state="disabled")
+
+    @staticmethod
+    def _format_selection_context(item: DiffItem, line: DiffLine) -> str:
+        return (
+            f"{severity_to_korean(item.severity)} | {item.device_name} / {item.command_id} | "
+            f"{change_type_label(line.kind)} | 라인 {BackboneStateTrackerApp._format_line_location(line)}"
+        )
 
     @staticmethod
     def _format_selected_diff_detail(item: DiffItem, line: DiffLine) -> str:

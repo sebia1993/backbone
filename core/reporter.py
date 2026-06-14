@@ -41,6 +41,19 @@ CHANGE_TYPE_LABELS_KO = {
     "unchanged": "변경없음",
 }
 
+SEVERITY_COLORS = {
+    "Critical": "#b42318",
+    "Warning": "#b54708",
+    "Info": "#2563a8",
+    "Unchanged": "#007a63",
+}
+SEVERITY_SOFT_COLORS = {
+    "Critical": "#fdeceb",
+    "Warning": "#fff4e5",
+    "Info": "#e8f1fb",
+    "Unchanged": "#ddf5f0",
+}
+
 
 class ReportWriter:
     def write_reports(self, summary: DiffSummary) -> dict[str, Path]:
@@ -192,12 +205,6 @@ class ReportWriter:
         summary_cards_html = []
         unchanged_summary_cards_html = []
         details_html = []
-        colors = {
-            "Critical": "#b42318",
-            "Warning": "#b54708",
-            "Info": "#027a48",
-            "Unchanged": "#667085",
-        }
         for index, item in enumerate(summary.items, start=1):
             detail_id = f"diff-{index}"
             severity_label = severity_to_korean(item.severity)
@@ -208,7 +215,7 @@ class ReportWriter:
             card_html = (
                 f"<article class='summary-card' data-severity='{escape(item.severity)}' aria-labelledby='summary-{index}'{default_hidden_attr}>"
                 "<div class='summary-card-head'>"
-                f"<span class='badge' style='background:{colors.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
+                f"<span class='badge' style='background:{SEVERITY_COLORS.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
                 f"<strong id='summary-{index}'>{escape(item.device_name)} / {escape(item.command_id)}</strong>"
                 f"<a class='summary-link' data-target-severity='{escape(item.severity)}' href='#{detail_id}'>상세 보기</a>"
                 "</div>"
@@ -227,7 +234,7 @@ class ReportWriter:
             status_jump_buttons_html.append(
                 "<button class='jump-button' type='button' "
                 f"data-jump-target='{detail_id}' data-jump-severity='{escape(item.severity)}'{default_hidden_attr}>"
-                f"<span class='jump-severity' style='background:{colors.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
+                f"<span class='jump-severity' style='background:{SEVERITY_COLORS.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
                 f"<span class='jump-main'>{escape(item.device_name)} / {escape(item.command_id)}</span>"
                 f"<span class='jump-count'>{item.change_count}건</span>"
                 "</button>"
@@ -259,7 +266,7 @@ class ReportWriter:
                 "<details class='summary-list unchanged-summary' data-summary-severity='Unchanged' hidden aria-hidden='true'>"
                 "<summary>"
                 "<span class='collapsed-head'>"
-                "<span class='badge' style='background:#667085'>변경없음</span>"
+                f"<span class='badge' style='background:{SEVERITY_COLORS['Unchanged']}'>변경없음</span>"
                 f"<span>변경없음 {unchanged_count}건 - 필요 시 펼쳐서 확인</span>"
                 "</span>"
                 "</summary>"
@@ -289,6 +296,7 @@ class ReportWriter:
       --removed: #fdeceb;
       --changed: #fff4e5;
       --context: #f7fafb;
+{css_severity_vars()}
     }}
     * {{ box-sizing: border-box; }}
     [hidden] {{ display: none !important; }}
@@ -316,9 +324,21 @@ class ReportWriter:
       gap: 10px;
       margin: 18px 0;
     }}
+    .filter-state {{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--accent);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      margin: 0 0 14px;
+      padding: 11px 14px;
+      box-shadow: 0 1px 2px rgba(16, 24, 32, 0.04);
+    }}
     .count {{
       background: var(--panel);
       border: 1px solid var(--line);
+      border-left-width: 5px;
       border-radius: 8px;
       padding: 14px;
       cursor: pointer;
@@ -327,7 +347,13 @@ class ReportWriter:
       text-align: left;
       box-shadow: 0 1px 2px rgba(16, 24, 32, 0.04);
     }}
+    .count[data-filter="Critical"] {{ border-left-color: var(--critical); background: linear-gradient(90deg, var(--critical-soft), var(--panel) 42%); }}
+    .count[data-filter="Warning"] {{ border-left-color: var(--warning); background: linear-gradient(90deg, var(--warning-soft), var(--panel) 42%); }}
+    .count[data-filter="Info"] {{ border-left-color: var(--info); background: linear-gradient(90deg, var(--info-soft), var(--panel) 42%); }}
+    .count[data-filter="Unchanged"] {{ border-left-color: var(--unchanged); background: linear-gradient(90deg, var(--unchanged-soft), var(--panel) 42%); }}
+    .count-label {{ display: block; color: var(--muted); font-size: 12px; font-weight: 800; }}
     .count strong {{ display: block; font-size: 24px; margin-top: 4px; }}
+    .count-hint {{ display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }}
     .count:hover {{ border-color: var(--accent); }}
     .count.is-active {{ outline: 2px solid var(--accent); border-color: var(--accent); }}
     .jump-list {{
@@ -454,9 +480,24 @@ class ReportWriter:
     th, td {{ padding: 10px; border-bottom: 1px solid #eaeef2; text-align: left; font-size: 13px; vertical-align: top; }}
     th {{ background: #e6edf2; color: #17212b; }}
     .badge {{ color: #fff; border-radius: 999px; padding: 3px 8px; font-size: 12px; font-weight: 700; }}
-    .diff-block {{ padding: 14px; }}
+    .diff-block {{
+      padding: 14px;
+      border-top-width: 4px;
+    }}
+    .diff-block[data-severity="Critical"] {{ border-top-color: var(--critical); }}
+    .diff-block[data-severity="Warning"] {{ border-top-color: var(--warning); }}
+    .diff-block[data-severity="Info"] {{ border-top-color: var(--info); }}
+    .diff-block[data-severity="Unchanged"] {{ border-top-color: var(--unchanged); }}
     .diff-block.is-jump-target {{ outline: 3px solid rgba(1, 169, 130, 0.32); border-color: var(--accent); }}
-    .diff-block h2 {{ margin: 0 0 6px; font-size: 17px; }}
+    .detail-head {{
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      margin-bottom: 10px;
+    }}
+    .detail-title h2 {{ margin: 0 0 4px; font-size: 17px; overflow-wrap: anywhere; }}
+    .detail-meta {{ color: var(--muted); font-size: 13px; }}
     details.diff-block > summary {{
       cursor: pointer;
       list-style: none;
@@ -565,11 +606,12 @@ class ReportWriter:
       <h1>{escape(APP_NAME)} 스냅샷 비교 리포트</h1>
       <div class="meta">버전: v{escape(APP_VERSION)} | 기준: {escape(base_display_name)} | 비교: {escape(target_display_name)} | 생성: {escape(summary.generated_at)}</div>
     </header>
+    <section class="filter-state" data-filter-state>상태 카드를 선택하면 해당 등급의 바로가기, 요약, 상세만 표시합니다.</section>
     <section class="counts" aria-label="등급 필터">
-      <button class="count" type="button" data-filter="Critical">긴급<strong>{counts.get('Critical', 0)}</strong></button>
-      <button class="count" type="button" data-filter="Warning">주의<strong>{counts.get('Warning', 0)}</strong></button>
-      <button class="count" type="button" data-filter="Info">정보<strong>{counts.get('Info', 0)}</strong></button>
-      <button class="count" type="button" data-filter="Unchanged">변경없음<strong>{counts.get('Unchanged', 0)}</strong></button>
+      <button class="count" type="button" data-filter="Critical"><span class="count-label">긴급</span><strong>{counts.get('Critical', 0)}</strong><span class="count-hint">즉시 확인</span></button>
+      <button class="count" type="button" data-filter="Warning"><span class="count-label">주의</span><strong>{counts.get('Warning', 0)}</strong><span class="count-hint">영향 확인</span></button>
+      <button class="count" type="button" data-filter="Info"><span class="count-label">정보</span><strong>{counts.get('Info', 0)}</strong><span class="count-hint">기록 확인</span></button>
+      <button class="count" type="button" data-filter="Unchanged"><span class="count-label">변경없음</span><strong>{counts.get('Unchanged', 0)}</strong><span class="count-hint">필요 시 펼침</span></button>
     </section>
     {status_jump_html}
     <section class="summary-list" aria-label="비교 요약" data-summary-list hidden aria-hidden="true">
@@ -587,9 +629,11 @@ class ReportWriter:
     const jumpList = document.querySelector("[data-jump-list]");
     const summaryList = document.querySelector("[data-summary-list]");
     const unchangedSummary = document.querySelector("[data-summary-severity='Unchanged']");
+    const filterState = document.querySelector("[data-filter-state]");
     const summaryEmpty = document.querySelector("[data-summary-empty]");
     const jumpEmpty = document.querySelector("[data-jump-empty]");
     const mainSummaryCards = summaryCards.filter((card) => !card.closest("[data-summary-severity='Unchanged']"));
+    const filterLabels = {{"Critical": "긴급", "Warning": "주의", "Info": "정보", "Unchanged": "변경없음"}};
     let activeFilter = "";
     function severityVisible(severity) {{
       return activeFilter ? severity === activeFilter : false;
@@ -614,6 +658,11 @@ class ReportWriter:
       filterButtons.forEach((button) => {{
         button.classList.toggle("is-active", button.dataset.filter === activeFilter);
       }});
+      if (filterState) {{
+        filterState.textContent = activeFilter
+          ? `${{filterLabels[activeFilter] || activeFilter}} 상태만 표시 중입니다. 상태 카드를 다시 누르면 목록을 숨깁니다.`
+          : "상태 카드를 선택하면 해당 등급의 바로가기, 요약, 상세만 표시합니다.";
+      }}
       filterEntries.forEach((entry) => {{
         const visible = severityVisible(entry.dataset.severity);
         setElementHidden(entry, !visible);
@@ -707,6 +756,13 @@ def change_type_label(kind: str) -> str:
     return CHANGE_TYPE_LABELS_KO.get(kind, kind)
 
 
+def css_severity_vars() -> str:
+    names = ("Critical", "Warning", "Info", "Unchanged")
+    color_vars = [f"      --{name.lower()}: {SEVERITY_COLORS[name]};" for name in names]
+    soft_vars = [f"      --{name.lower()}-soft: {SEVERITY_SOFT_COLORS[name]};" for name in names]
+    return "\n".join(color_vars + soft_vars)
+
+
 def snapshot_display_name(snapshot_dir: Path) -> str:
     name = snapshot_dir.name
     try:
@@ -733,9 +789,9 @@ def render_diff_block(item: DiffItem, detail_id: str, severity_label: str, statu
             f"<details class='diff-block filter-entry' id='{detail_id}' data-severity='{escape(item.severity)}' tabindex='-1'{default_hidden_attr}>"
             "<summary>"
             "<span class='collapsed-head'>"
-            "<span class='badge' style='background:#667085'>변경없음</span>"
+            f"<span class='badge' style='background:{SEVERITY_COLORS['Unchanged']}'>변경없음</span>"
             f"<span>{escape(item.device_name)} / {escape(item.command_id)}</span>"
-            f"<span class='meta'>등급: {escape(severity_label)} | 상태: {escape(status_label)}</span>"
+            f"<span class='meta'>등급: {escape(severity_label)} | 상태: {escape(status_label)} | 분류: {escape(item.category)} | 변경 수: {item.change_count}</span>"
             "</span>"
             "</summary>"
             f"{body}"
@@ -743,9 +799,21 @@ def render_diff_block(item: DiffItem, detail_id: str, severity_label: str, statu
         )
     return (
         f"<section class='diff-block filter-entry' id='{detail_id}' data-severity='{escape(item.severity)}' tabindex='-1'{default_hidden_attr}>"
-        f"<h2>{escape(item.device_name)} / {escape(item.command_id)}</h2>"
+        f"{render_detail_head(item, severity_label, status_label)}"
         f"{body}"
         "</section>"
+    )
+
+
+def render_detail_head(item: DiffItem, severity_label: str, status_label: str) -> str:
+    return (
+        "<div class='detail-head'>"
+        f"<span class='badge' style='background:{SEVERITY_COLORS.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
+        "<div class='detail-title'>"
+        f"<h2>{escape(item.device_name)} / {escape(item.command_id)}</h2>"
+        f"<div class='detail-meta'>상태: {escape(status_label)} | 분류: {escape(item.category)} | 변경 수: {item.change_count}</div>"
+        "</div>"
+        "</div>"
     )
 
 

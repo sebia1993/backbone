@@ -1,12 +1,12 @@
 # Backbone State Tracker 사용자 가이드
 
-문서 버전: v0.8.53
+문서 버전: v0.8.54
 작성일: 2026-06-15
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
 ## 1. 핵심 흐름
 
-v0.8.52부터 프로그램 공통 테마는 HPE Aruba AirWave 계열 운영 콘솔을 참고한 차분한 색상과 조밀한 정보 배치를 사용합니다. v0.8.53에서는 장비 설정, 상태 수집, 비교 결과, 작업 로그 화면의 안내 패널과 선택 상태 표시를 더 명확하게 정리했습니다.
+v0.8.52부터 프로그램 공통 테마는 HPE Aruba AirWave 계열 운영 콘솔을 참고한 차분한 색상과 조밀한 정보 배치를 사용합니다. v0.8.53에서는 장비 설정, 상태 수집, 비교 결과, 작업 로그 화면의 안내 패널과 선택 상태 표시를 더 명확하게 정리했고, v0.8.54에서는 비교 결과와 HTML 리포트에서 선택한 상태와 상세 맥락을 더 쉽게 추적하도록 개선했습니다.
 
 1. `장비 설정`에서 접속 계정, 백본3/4 대상 장비, 상태 수집을 한 화면에서 처리합니다.
 2. 대상 장비는 기본 2개 행으로 시작하며, 추가 장비가 있으면 `장비 추가`로 행을 늘립니다.
@@ -42,6 +42,7 @@ v0.8.52부터 프로그램 공통 테마는 HPE Aruba AirWave 계열 운영 콘�
 - 선택한 등급 카드는 배경색과 테두리가 함께 바뀌어 현재 필터 상태를 바로 구분할 수 있습니다.
 - 목록은 장비, 명령, 판단, 변경 유형, 라인, 변경 내용을 함께 보여줍니다.
 - 변경 행을 선택하면 기준 값과 비교 값, 원본 파일 위치, 운영 메모를 확인할 수 있습니다.
+- v0.8.54부터 선택한 변경 행의 등급, 장비, 명령, 유형, 라인이 `선택 변경 맥락` 패널에 별도로 표시됩니다.
 - 장비가 접속되지 않으면 여러 명령 누락으로 흩어지지 않고 `device_connectivity` 한 줄로 표시됩니다.
 
 ## 4. 작업 로그
@@ -63,6 +64,8 @@ v0.8.52부터 프로그램 공통 테마는 HPE Aruba AirWave 계열 운영 콘�
 ## 6. HTML 리포트
 
 - HTML 리포트는 처음 열면 상단의 `긴급`, `주의`, `정보`, `변경없음` 등급 카드만 보여줍니다.
+- v0.8.54부터 등급 카드 아래의 상태 안내 바가 현재 필터가 적용되었는지 알려줍니다.
+- 등급 카드는 상태별 색상 톤을 가지며, 상세 블록 헤더에는 장비, 명령, 상태, 분류, 변경 수가 함께 표시됩니다.
 - 등급 카드를 클릭하면 선택한 상태의 바로가기 버튼, 요약 카드, 상세 블록만 표시합니다.
 - `상태별 바로가기`에서 장비/명령 버튼을 누르면 해당 명령별 상세 블록으로 바로 이동합니다.
 - 같은 등급 카드를 한 번 더 누르면 선택이 해제되고 바로가기, 요약, 상세 블록이 다시 숨겨집니다.
@@ -85,9 +88,9 @@ v0.8.52부터 프로그램 공통 테마는 HPE Aruba AirWave 계열 운영 콘�
 Windows EXE ZIP 예시:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.53_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.53_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.53_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.53_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.54_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.54_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.54_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.54_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 사내 메일이 `.exe`, `.py`, `.ps1` 포함 ZIP을 차단할 수 있습니다. 이 경우 승인된 내부 파일 반입 절차를 사용하세요.

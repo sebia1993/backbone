@@ -359,6 +359,44 @@ class GuiDiffFormattingTests(unittest.TestCase):
         finally:
             app.destroy()
 
+    def test_compare_detail_selection_context_updates_with_selected_row(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            app.show_page("compare")
+            item = DiffItem(
+                device_name="backbone4",
+                command_id="vrrp_status",
+                command="show vrrp",
+                category="routing",
+                severity="Warning",
+                status="changed",
+                summary="Operational state changed.",
+                changed_lines=[
+                    DiffLine(
+                        kind="changed",
+                        base_line_no=4,
+                        target_line_no=4,
+                        base_text="State: Backup Priority: 100",
+                        target_text="State: Master Priority: 110",
+                    )
+                ],
+                change_count=1,
+                change_preview="Backup -> Master",
+            )
+            app._update_diff_details(
+                DiffSummary(base_snapshot="base", target_snapshot="target", generated_at="2026-06-15T10:00:00", items=[item])
+            )
+
+            self.assertTrue(hasattr(app, "diff_selection_panel"))
+            self.assertEqual(app.diff_selection_var.get(), "선택된 변경 행이 없습니다.")
+            app.diff_tree.selection_set("0")
+            app._on_diff_detail_selected(tk.Event())
+
+            self.assertIn("주의 | backbone4 / vrrp_status | 변경 | 라인 4 → 4", app.diff_selection_var.get())
+        finally:
+            app.destroy()
+
     def test_metric_chip_filter_shows_unchanged_summary_rows(self) -> None:
         app = BackboneStateTrackerApp()
         app.withdraw()
