@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.51 - 2026-06-15
+
+- Added developer guide and release checklist MD/HTML documents to shared report ZIP bundles.
+- Added regression coverage for the full shared-report guide set and all GUI Help menu document targets.
+- No collection, SSH, comparison, or severity-classification behavior changed.
+
 ## v0.8.50 - 2026-06-15
 
 - Added documentation regression coverage that rejects common mojibake fragments and Unicode replacement characters in release guides.
