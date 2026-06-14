@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.40 - 2026-06-14
+
+- Added regression coverage that loads the real bundled `config/commands.yaml` and verifies every configured command passes preflight without errors or warnings.
+- Strengthened the read-only command safety guard so future command additions must remain within the approved display/show/session command set.
+- No collection, SSH, comparison, or report runtime behavior changed.
+
 ## v0.8.39 - 2026-06-14
 
 - Added regression coverage that checks the current app version is reflected in README, CHANGELOG, and every release guide MD/HTML document.

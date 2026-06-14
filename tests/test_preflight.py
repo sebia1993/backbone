@@ -47,6 +47,21 @@ class PreflightTests(unittest.TestCase):
 
         self.assertEqual(result.error_count, 0)
 
+    def test_bundled_commands_remain_read_only_without_warnings(self) -> None:
+        commands = load_commands(PROJECT_ROOT / "config" / "commands.yaml")
+
+        result = validate_preflight(
+            [
+                Device(name="backbone3", host="10.0.0.3"),
+                Device(name="backbone4", host="10.0.0.4"),
+            ],
+            commands,
+        )
+
+        self.assertEqual(result.error_count, 0, result.issues)
+        self.assertEqual(result.warning_count, 0, result.issues)
+        self.assertIn("통과", preflight_summary_text(result))
+
     def test_duplicate_device_names_are_errors(self) -> None:
         result = validate_preflight(
             [
