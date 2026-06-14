@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.52 - 2026-06-15
+
+- Applied a calmer AirWave-inspired common console theme to the Tkinter GUI, including the sidebar, buttons, form controls, section headers, Treeview tables, and log/detail panels.
+- Updated generated HTML comparison report CSS to use the same neutral surface, Aruba teal accent, compact cards, and readable table treatment.
+- No collection, SSH, comparison, or severity-classification behavior changed.
+
 ## v0.8.51 - 2026-06-15
 
 - Added developer guide and release checklist MD/HTML documents to shared report ZIP bundles.

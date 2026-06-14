@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.51
+문서 버전: v0.8.52
 작성일: 2026-06-15
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -66,7 +66,18 @@ GUI 변경이 있으면 실제 앱을 실행해 화면이 비어 있지 않은�
 - 샘플 검증 스냅샷은 `sample_` slug와 폴더명으로 구분하며, `find_latest_pre_work_snapshot()`의 실제 기준 후보에서 제외합니다.
 - GUI 상단 요약과 HTML 리포트 상단 메타에는 샘플 스냅샷을 `샘플:` 접두어로 표시합니다.
 
-## 6. 등급 분류 기준
+## 6. UI 디자인 기준
+
+v0.8.52의 1단계 UI 현대화는 HPE Aruba AirWave 계열 운영 콘솔을 참고하되, 특정 제품 화면을 복제하지 않고 색감과 정보 계층만 반영합니다.
+
+- 공통 팔레트는 `core/gui.py`의 `PALETTE`를 기준으로 관리합니다.
+- 주요 액션은 Aruba teal 계열 `accent`를 사용하고, 보조 액션은 흰색/연한 회색 표면으로 둡니다.
+- 좌측 내비게이션은 어두운 운영 콘솔 레일로 두고, 현재 화면만 teal 배경으로 강조합니다.
+- 섹션은 과한 장식 없이 얇은 테두리, 좌측 accent strip, 넉넉한 내부 여백을 사용합니다.
+- 비교 테이블과 HTML 리포트는 같은 neutral surface, status color, compact card 원칙을 사용합니다.
+- 다음 단계에서 화면을 추가할 때는 새 색상을 임의로 추가하기보다 `PALETTE`에 의미 있는 토큰을 먼저 추가합니다.
+
+## 7. 등급 분류 기준
 
 `core/diff_engine.py`의 `classify_change()`가 분류합니다.
 
@@ -77,13 +88,13 @@ GUI 변경이 있으면 실제 앱을 실행해 화면이 비어 있지 않은�
 
 건강 상태를 의미하는 `No alarm`, `No fault`, `Normal`, `None`은 알람 키워드 오탐을 줄이기 위해 분류용 haystack에서 제외합니다. 단, `cpu_usage`와 `memory_usage`는 출력 변경량이 아니라 비교 대상 스냅샷의 현재 임계치 기준만으로 `Critical`/`Warning`/`Info`를 정합니다. `power_status`의 비정상 State 판정은 별도 구조화 파서로 처리합니다.
 
-## 7. 문서와 스크린샷
+## 8. 문서와 스크린샷
 
 - 사용자 가이드는 `docs/USER_GUIDE.md`와 `docs/USER_GUIDE.html`을 함께 수정합니다.
 - 화면 캡처는 `docs/images/settings-collection.png`, `docs/images/compare-results.png`, `docs/images/work-log.png`를 사용합니다.
 - 새 문서 자산을 추가하면 `tools/verify_release_package.py`와 `tools/verify_release_package.ps1`의 필수 파일 목록도 갱신합니다.
 
-## 8. 릴리스 절차
+## 9. 릴리스 절차
 
 1. `core/version.py`의 `APP_VERSION`을 올립니다.
 2. `CHANGELOG.md`와 `docs/VERSION_HISTORY.md/html`을 갱신합니다.
@@ -94,7 +105,7 @@ GUI 변경이 있으면 실제 앱을 실행해 화면이 비어 있지 않은�
 7. Python/PowerShell 검증기로 소스 ZIP과 EXE ZIP을 모두 검증합니다.
 8. Git 커밋과 버전 태그를 남깁니다.
 
-## 9. 보안 주의
+## 10. 보안 주의
 
 - 암호, 토큰, 실제 장비 원본 출력, 고객 데이터는 Git과 배포 ZIP에 넣지 않습니다.
 - `config/devices.yaml`, `outputs/`, `raw/`, `dist/`, `build/`, `.venv/`, `venv/`, `.pytest_cache/`는 릴리스 ZIP에 포함하지 않습니다.

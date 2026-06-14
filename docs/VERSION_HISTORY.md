@@ -1,10 +1,17 @@
 # Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.8.51
+문서 버전: v0.8.52
 작성일: 2026-06-15
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
+
+### v0.8.52 - 2026-06-15
+
+- HPE Aruba AirWave 계열 운영 콘솔을 참고해 Tkinter GUI 공통 테마를 차분한 네트워크 관리 화면 톤으로 정리했습니다.
+- 좌측 내비게이션, 주요/보조 버튼, 입력 컨트롤, 섹션 헤더, 비교 테이블, 로그/상세 패널의 공통 색상과 여백을 조정했습니다.
+- HTML 비교 리포트 CSS도 앱과 같은 neutral surface, Aruba teal accent, compact card 스타일로 맞췄습니다.
+- 수집, SSH, 비교, 등급 분류 동작은 변경하지 않았습니다.
 
 ### v0.8.51 - 2026-06-15
 
@@ -16,6 +23,7 @@
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.8.51 | 2026-06-15 | 공유 리포트 ZIP에 초급 개발자 가이드와 릴리스 체크리스트 MD/HTML 문서를 포함했습니다. |
 | v0.8.50 | 2026-06-15 | 한국어 문서 인코딩 품질과 핵심 운영 용어 유지를 확인하는 테스트를 추가했습니다. |
 | v0.8.49 | 2026-06-15 | release package verifier가 로컬 산출물, 가상환경, 테스트 캐시 폴더를 거부하도록 보강했습니다. |
 | v0.8.48 | 2026-06-15 | Windows EXE ZIP에서 `BackboneStateTracker.exe`와 `RUN_FIRST.txt` 누락을 잡는 테스트를 추가했습니다. |
@@ -173,15 +181,15 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.51 산출물 이름
+## 3. v0.8.52 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.51_20260615_source.zip
-dist\backbone_state_tracker_v0.8.51_20260615_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.51_20260615_windows_exe.zip
-dist\backbone_state_tracker_v0.8.51_20260615_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.51_20260615_release_manifest.txt
-dist\backbone_state_tracker_v0.8.51_20260615_verify_release_package.ps1
+dist\backbone_state_tracker_v0.8.52_20260615_source.zip
+dist\backbone_state_tracker_v0.8.52_20260615_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.52_20260615_windows_exe.zip
+dist\backbone_state_tracker_v0.8.52_20260615_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.52_20260615_release_manifest.txt
+dist\backbone_state_tracker_v0.8.52_20260615_verify_release_package.ps1
 ```
 
 ## 4. 릴리스 검증 기준

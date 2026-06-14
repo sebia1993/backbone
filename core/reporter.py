@@ -275,15 +275,20 @@ class ReportWriter:
   <title>{escape(APP_NAME)} v{escape(APP_VERSION)} 스냅샷 비교 리포트</title>
   <style>
     :root {{
-      --bg: #f4f6f8;
+      --bg: #eef3f6;
       --panel: #ffffff;
-      --line: #d0d7de;
-      --text: #1f2328;
-      --muted: #59636e;
-      --added: #e7f7f2;
+      --panel-alt: #f7fafb;
+      --line: #ced9e2;
+      --line-strong: #aab7c2;
+      --text: #17212b;
+      --muted: #60717e;
+      --accent: #01a982;
+      --accent-dark: #007a63;
+      --accent-soft: #ddf5f0;
+      --added: #ddf5f0;
       --removed: #fdeceb;
       --changed: #fff4e5;
-      --context: #f7f9fb;
+      --context: #f7fafb;
     }}
     * {{ box-sizing: border-box; }}
     [hidden] {{ display: none !important; }}
@@ -292,9 +297,17 @@ class ReportWriter:
       font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
+      line-height: 1.45;
     }}
     .wrap {{ max-width: 1360px; margin: 0 auto; padding: 24px; }}
-    header {{ margin-bottom: 18px; }}
+    header {{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--accent);
+      border-radius: 8px;
+      margin-bottom: 18px;
+      padding: 18px 20px;
+    }}
     h1 {{ margin: 0 0 8px; font-size: 26px; }}
     .meta {{ color: var(--muted); font-size: 13px; }}
     .counts {{
@@ -312,15 +325,18 @@ class ReportWriter:
       color: var(--text);
       font: inherit;
       text-align: left;
+      box-shadow: 0 1px 2px rgba(16, 24, 32, 0.04);
     }}
     .count strong {{ display: block; font-size: 24px; margin-top: 4px; }}
-    .count.is-active {{ outline: 2px solid #01a982; border-color: #01a982; }}
+    .count:hover {{ border-color: var(--accent); }}
+    .count.is-active {{ outline: 2px solid var(--accent); border-color: var(--accent); }}
     .jump-list {{
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 14px;
       margin: 0 0 16px;
+      box-shadow: 0 1px 2px rgba(16, 24, 32, 0.04);
     }}
     .jump-head {{
       display: flex;
@@ -350,7 +366,7 @@ class ReportWriter:
       padding: 6px 10px;
       text-align: left;
     }}
-    .jump-button:hover {{ border-color: #01a982; box-shadow: 0 0 0 2px rgba(1, 169, 130, 0.12); }}
+    .jump-button:hover {{ border-color: var(--accent); box-shadow: 0 0 0 2px rgba(1, 169, 130, 0.12); }}
     .jump-severity {{
       color: #fff;
       border-radius: 999px;
@@ -367,6 +383,7 @@ class ReportWriter:
       border-radius: 8px;
       overflow: hidden;
       margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(16, 24, 32, 0.04);
     }}
     .summary-list {{ padding: 12px; }}
     .unchanged-summary {{ padding: 0; }}
@@ -407,8 +424,8 @@ class ReportWriter:
       margin-bottom: 8px;
     }}
     .summary-item, .summary-field {{
-      background: #f8fbfc;
-      border: 1px solid #eaeef2;
+      background: var(--panel-alt);
+      border: 1px solid #e5ebf0;
       border-radius: 6px;
       padding: 8px 10px;
     }}
@@ -435,10 +452,10 @@ class ReportWriter:
     }}
     table {{ width: 100%; border-collapse: collapse; }}
     th, td {{ padding: 10px; border-bottom: 1px solid #eaeef2; text-align: left; font-size: 13px; vertical-align: top; }}
-    th {{ background: #eef3f8; }}
+    th {{ background: #e6edf2; color: #17212b; }}
     .badge {{ color: #fff; border-radius: 999px; padding: 3px 8px; font-size: 12px; font-weight: 700; }}
     .diff-block {{ padding: 14px; }}
-    .diff-block.is-jump-target {{ outline: 3px solid rgba(1, 169, 130, 0.32); border-color: #01a982; }}
+    .diff-block.is-jump-target {{ outline: 3px solid rgba(1, 169, 130, 0.32); border-color: var(--accent); }}
     .diff-block h2 {{ margin: 0 0 6px; font-size: 17px; }}
     details.diff-block > summary {{
       cursor: pointer;
@@ -455,7 +472,7 @@ class ReportWriter:
     .change-table-wrap {{
       overflow-x: auto;
       margin: 12px 0;
-      border: 1px solid #eaeef2;
+      border: 1px solid #e5ebf0;
       border-radius: 6px;
     }}
     .change-table {{ width: max-content; min-width: 100%; border-collapse: collapse; margin: 0; }}
@@ -507,8 +524,8 @@ class ReportWriter:
     }}
     .value-after {{
       background: var(--added);
-      border-color: #a8dfd2;
-      color: #007a63;
+      border-color: #9bd8cb;
+      color: var(--accent-dark);
     }}
     .value-context {{
       color: var(--muted);
@@ -522,8 +539,8 @@ class ReportWriter:
     .line-context {{ background: var(--context); color: var(--muted); }}
     .raw-diff summary {{ cursor: pointer; color: #0969da; font-weight: 700; margin: 10px 0; }}
     pre {{
-      background: #0d1117;
-      color: #e6edf3;
+      background: #101820;
+      color: #dce6ed;
       border-radius: 6px;
       padding: 12px;
       overflow: auto;

@@ -6,7 +6,7 @@ import tkinter as tk
 import unittest
 from unittest.mock import MagicMock, patch
 
-from backbone_state_tracker.core.gui import BackboneStateTrackerApp
+from backbone_state_tracker.core.gui import BackboneStateTrackerApp, PALETTE
 from backbone_state_tracker.core.models import CommandResult, Device, DiffItem, DiffLine, DiffSummary
 from backbone_state_tracker.core.snapshot import SnapshotStore
 
@@ -55,6 +55,23 @@ class GuiDiffFormattingTests(unittest.TestCase):
             self.assertEqual(list(app.nav_buttons), ["settings", "compare", "logs"])
             self.assertIn("settings", app.nav_buttons)
             self.assertFalse(hasattr(app, "wizard_next_button"))
+        finally:
+            app.destroy()
+
+    def test_airwave_common_theme_tokens_and_nav_state(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            self.assertEqual(PALETTE["accent"], "#01A982")
+            self.assertEqual(PALETTE["sidebar"], "#18232B")
+            self.assertEqual(PALETTE["log_bg"], "#101820")
+            self.assertEqual(app.nav_buttons["settings"].cget("bg"), PALETTE["accent"])
+
+            app.show_page("compare")
+
+            self.assertEqual(app.nav_buttons["compare"].cget("bg"), PALETTE["accent"])
+            self.assertEqual(app.nav_buttons["settings"].cget("bg"), PALETTE["sidebar"])
+            self.assertEqual(app.nav_buttons["settings"].cget("fg"), PALETTE["sidebar_text"])
         finally:
             app.destroy()
 
