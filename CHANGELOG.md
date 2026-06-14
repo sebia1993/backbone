@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.56 - 2026-06-15
+
+- Added an explicit UI modernization analysis summary covering the old-looking causes, workflow structure, and AirWave-inspired design response.
+- Updated the operator/developer/release documents and screenshots for v0.8.56 packages.
+- Added documentation coverage so the UI modernization analysis cannot be accidentally removed.
+- Kept collection, SSH, comparison, report data, and severity-classification behavior unchanged.
+
 ## v0.8.55 - 2026-06-15
 
 - Finalized the UI modernization handoff with updated operator guide screenshots and release checklist visual verification steps.
