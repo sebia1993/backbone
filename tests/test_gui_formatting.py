@@ -352,11 +352,29 @@ class GuiDiffFormattingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             docs_dir = Path(tmp) / "docs"
             docs_dir.mkdir()
-            guide = docs_dir / "USER_GUIDE.html"
-            guide.write_text("<html>guide</html>", encoding="utf-8")
+            expected_docs = {
+                "USER_GUIDE.html",
+                "COMMAND_GUIDE.html",
+                "VERSION_HISTORY.html",
+            }
+            for doc_name in expected_docs:
+                (docs_dir / doc_name).write_text("<html>guide</html>", encoding="utf-8")
 
             with patch("backbone_state_tracker.core.gui.DOCS_DIR", docs_dir):
-                self.assertEqual(BackboneStateTrackerApp.find_doc_path("USER_GUIDE.html"), guide)
+                for doc_name in expected_docs:
+                    self.assertEqual(BackboneStateTrackerApp.find_doc_path(doc_name), docs_dir / doc_name)
+
+    def test_help_menu_documents_exist_in_project_docs(self) -> None:
+        expected_docs = (
+            "USER_GUIDE.html",
+            "COMMAND_GUIDE.html",
+            "VERSION_HISTORY.html",
+        )
+
+        for doc_name in expected_docs:
+            doc_path = BackboneStateTrackerApp.find_doc_path(doc_name)
+            self.assertIsNotNone(doc_path, doc_name)
+            self.assertTrue(doc_path.is_file(), doc_name)
 
     def test_line_preview_and_location_show_inline_change(self) -> None:
         line = DiffLine(
