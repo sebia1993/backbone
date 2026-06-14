@@ -125,6 +125,7 @@ class ReportWriterTests(unittest.TestCase):
             self.assertNotIn("<th>첫 변경 내용</th>", html)
             self.assertIn("변경 내용", html)
             self.assertIn("change-inline", html)
+            self.assertIn("cell-label", html)
             self.assertIn("1 → 1", html)
             self.assertIn("GE1/0/1 UP</span><span class='diff-arrow'>→</span><span class='value-after'>GE1/0/1 DOWN", html)
             self.assertNotIn("<th>변경 전</th>", html)
@@ -144,6 +145,61 @@ class ReportWriterTests(unittest.TestCase):
             self.assertIn("base_text", rows[0])
             self.assertTrue(any("GE1/0/1 UP" in row for row in rows[1:]))
             self.assertTrue(any("GE1/0/1 DOWN" in row for row in rows[1:]))
+
+    def test_html_change_table_cells_are_self_labeled(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            report_path = Path(tmp) / "report.html"
+            summary = DiffSummary(
+                base_snapshot="base",
+                target_snapshot="target",
+                generated_at="2026-06-14T10:00:00",
+                items=[
+                    DiffItem(
+                        device_name="backbone3",
+                        command_id="interface_brief",
+                        command="display interface brief",
+                        category="interface",
+                        severity="Critical",
+                        status="changed",
+                        summary="Critical state keyword detected in changed output.",
+                        changed_lines=[
+                            DiffLine(
+                                kind="changed",
+                                base_line_no=10,
+                                target_line_no=10,
+                                base_text="GE1/0/1 UP",
+                                target_text="GE1/0/1 DOWN",
+                            ),
+                            DiffLine(kind="added", target_line_no=11, target_text="GE1/0/2 DOWN"),
+                            DiffLine(kind="removed", base_line_no=12, base_text="GE1/0/3 UP"),
+                        ],
+                        change_count=3,
+                        change_preview="GE1/0/1 UP -> GE1/0/1 DOWN",
+                    ),
+                ],
+            )
+
+            ReportWriter._write_html(report_path, summary)
+
+            html = report_path.read_text(encoding="utf-8")
+            self.assertIn(
+                "<td data-label='유형'><span class='cell-label'>유형</span><span class='change-kind'>변경</span></td>",
+                html,
+            )
+            self.assertIn(
+                "<td class='line-no' data-label='라인'><span class='cell-label'>라인</span><span class='line-value'>10 → 10</span></td>",
+                html,
+            )
+            self.assertIn(
+                "<td class='change-inline' data-label='변경 내용'><span class='cell-label'>변경 내용</span>"
+                "<span class='value-before'>GE1/0/1 UP</span><span class='diff-arrow'>→</span>"
+                "<span class='value-after'>GE1/0/1 DOWN</span></td>",
+                html,
+            )
+            self.assertIn("<span class='line-value'>- → 11</span>", html)
+            self.assertIn("<span class='diff-prefix'>추가:</span><span class='value-after'>GE1/0/2 DOWN</span>", html)
+            self.assertIn("<span class='line-value'>12 → -</span>", html)
+            self.assertIn("<span class='diff-prefix'>삭제:</span><span class='value-before'>GE1/0/3 UP</span>", html)
 
     def test_html_collapses_unchanged_detail_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

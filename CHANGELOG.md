@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.41 - 2026-06-14
+
+- Improved generated HTML comparison report change-detail rows with visible cell labels for type, line, and change content.
+- Added regression coverage for changed, added, and removed HTML detail rows so each row remains understandable even when viewed in isolation.
+- No collection, SSH, or comparison severity logic changed.
+
 ## v0.8.40 - 2026-06-14
 
 - Added regression coverage that loads the real bundled `config/commands.yaml` and verifies every configured command passes preflight without errors or warnings.
