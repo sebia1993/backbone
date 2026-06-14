@@ -1,18 +1,18 @@
 # Backbone State Tracker 릴리스 반입 체크리스트
 
-문서 버전: v0.8.54
+문서 버전: v0.8.55
 작성일: 2026-06-15
 대상: 사외 개발 ZIP을 사내 환경으로 반입해 검증하는 운영자와 인수자
 
 ## 1. 수령 파일
 
 ```text
-backbone_state_tracker_v0.8.54_YYYYMMDD_source.zip
-backbone_state_tracker_v0.8.54_YYYYMMDD_source.zip.sha256.txt
-backbone_state_tracker_v0.8.54_YYYYMMDD_windows_exe.zip
-backbone_state_tracker_v0.8.54_YYYYMMDD_windows_exe.zip.sha256.txt
-backbone_state_tracker_v0.8.54_YYYYMMDD_release_manifest.txt
-backbone_state_tracker_v0.8.54_YYYYMMDD_verify_release_package.ps1
+backbone_state_tracker_v0.8.55_YYYYMMDD_source.zip
+backbone_state_tracker_v0.8.55_YYYYMMDD_source.zip.sha256.txt
+backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip.sha256.txt
+backbone_state_tracker_v0.8.55_YYYYMMDD_release_manifest.txt
+backbone_state_tracker_v0.8.55_YYYYMMDD_verify_release_package.ps1
 ```
 
 ## 2. ZIP 내부 필수 확인
@@ -53,9 +53,9 @@ backbone_state_tracker_v0.8.54_YYYYMMDD_verify_release_package.ps1
 ## 4. 해시와 manifest 검증
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.54_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.54_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.54_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.54_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.55_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 검증기는 다음을 확인합니다.
@@ -84,6 +84,15 @@ powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.54_YYYYMM
 - 좌측 메뉴가 `장비 설정`, `비교 결과`, `작업 로그` 순서인지 확인합니다.
 - `샘플 검증 생성`으로 실제 장비 접속 없이 리포트 생성이 되는지 확인합니다.
 
-## 6. 메일 업로드 차단 시
+## 6. UI 마감 확인
+
+- 좌측 내비게이션이 어두운 운영 콘솔 레일이고 현재 메뉴가 teal 계열 배경으로 강조되는지 확인합니다.
+- `장비 설정` 화면에서 접속 계정, 대상 장비, 상태 수집 흐름이 위에서 아래로 자연스럽게 이어지는지 확인합니다.
+- `비교 결과` 화면에서 `긴급`, `주의`, `정보`, `변경없음` 등급 카드가 상태별 색상과 선택 배경으로 구분되는지 확인합니다.
+- 변경 상세 행을 선택했을 때 `선택 변경 맥락` 패널이 등급, 장비, 명령, 유형, 라인을 표시하는지 확인합니다.
+- `작업 로그` 화면이 어두운 고정폭 로그 표면으로 표시되고 시간/오류/리포트 경로를 읽기 쉬운지 확인합니다.
+- 사용자 가이드의 `docs/images/settings-collection.png`, `docs/images/compare-results.png`, `docs/images/work-log.png`가 현재 v0.8.55 화면과 일치하는지 확인합니다.
+
+## 7. 메일 업로드 차단 시
 
 일부 메일 시스템은 `.exe`, `.py`, `.ps1`을 포함한 ZIP을 차단할 수 있습니다. 이 경우 ZIP을 메일에 첨부하지 말고 승인된 사내 파일 반입 절차를 사용합니다.

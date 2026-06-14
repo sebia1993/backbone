@@ -88,6 +88,39 @@ class DocumentationPortabilityTests(unittest.TestCase):
             self.assertIn(f"images/{image_name}", user_md)
             self.assertIn(f"images/{image_name}", user_html)
 
+    def test_ui_modernization_closeout_guidance_is_documented(self) -> None:
+        developer_md = (PROJECT_DIR / "docs" / "DEVELOPER_GUIDE_BEGINNER.md").read_text(encoding="utf-8")
+        developer_html = (PROJECT_DIR / "docs" / "DEVELOPER_GUIDE_BEGINNER.html").read_text(encoding="utf-8")
+        release_md = (PROJECT_DIR / "docs" / "RELEASE_CHECKLIST.md").read_text(encoding="utf-8")
+        release_html = (PROJECT_DIR / "docs" / "RELEASE_CHECKLIST.html").read_text(encoding="utf-8")
+        user_md = (PROJECT_DIR / "docs" / "USER_GUIDE.md").read_text(encoding="utf-8")
+        version_md = (PROJECT_DIR / "docs" / "VERSION_HISTORY.md").read_text(encoding="utf-8")
+
+        for text in (developer_md, developer_html):
+            for fragment in (
+                "디자인 토큰 빠른 참조",
+                "컴포넌트 사용 기준",
+                "PALETTE",
+                "SEVERITY_META",
+                "SEVERITY_COLORS",
+                "SEVERITY_SOFT_COLORS",
+                "_make_status_panel",
+            ):
+                self.assertIn(fragment, text)
+
+        for text in (release_md, release_html):
+            for fragment in (
+                "UI 마감 확인",
+                "어두운 운영 콘솔 레일",
+                "teal 계열 배경",
+                "선택 변경 맥락",
+                "작업 로그",
+            ):
+                self.assertIn(fragment, text)
+
+        self.assertIn("샘플 데이터로 캡처", user_md)
+        self.assertIn("UI 현대화 마감 단계", version_md)
+
     def test_command_guide_md_and_html_match_bundled_command_ids(self) -> None:
         expected_ids = [command.id for command in load_commands(PROJECT_DIR / "config" / "commands.yaml")]
         command_md = (PROJECT_DIR / "docs" / "COMMAND_GUIDE.md").read_text(encoding="utf-8")
