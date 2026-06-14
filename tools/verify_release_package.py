@@ -55,9 +55,17 @@ SOURCE_REQUIRED = COMMON_REQUIRED | {
     "backbone_state_tracker/tools/write_release_manifest.py",
     "backbone_state_tracker/tools/verify_release_package.py",
     "backbone_state_tracker/tools/verify_release_package.ps1",
+    "backbone_state_tracker/tests/test_diff_engine.py",
     "backbone_state_tracker/tests/test_documentation.py",
+    "backbone_state_tracker/tests/test_gui_formatting.py",
+    "backbone_state_tracker/tests/test_mock_validation.py",
+    "backbone_state_tracker/tests/test_preflight.py",
+    "backbone_state_tracker/tests/test_redaction.py",
     "backbone_state_tracker/tests/test_release_manifest.py",
     "backbone_state_tracker/tests/test_release_package_verifier.py",
+    "backbone_state_tracker/tests/test_reporter.py",
+    "backbone_state_tracker/tests/test_snapshot.py",
+    "backbone_state_tracker/tests/test_workflow.py",
 }
 
 WINDOWS_EXE_REQUIRED = COMMON_REQUIRED | {

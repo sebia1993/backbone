@@ -62,9 +62,17 @@ def _source_entries() -> dict[str, str]:
             "backbone_state_tracker/tools/write_release_manifest.py": "manifest tool",
             "backbone_state_tracker/tools/verify_release_package.py": "verifier",
             "backbone_state_tracker/tools/verify_release_package.ps1": "powershell verifier",
+            "backbone_state_tracker/tests/test_diff_engine.py": "diff engine tests",
             "backbone_state_tracker/tests/test_documentation.py": "documentation tests",
+            "backbone_state_tracker/tests/test_gui_formatting.py": "gui formatting tests",
+            "backbone_state_tracker/tests/test_mock_validation.py": "mock validation tests",
+            "backbone_state_tracker/tests/test_preflight.py": "preflight tests",
+            "backbone_state_tracker/tests/test_redaction.py": "redaction tests",
             "backbone_state_tracker/tests/test_release_manifest.py": "manifest tests",
             "backbone_state_tracker/tests/test_release_package_verifier.py": "verifier tests",
+            "backbone_state_tracker/tests/test_reporter.py": "reporter tests",
+            "backbone_state_tracker/tests/test_snapshot.py": "snapshot tests",
+            "backbone_state_tracker/tests/test_workflow.py": "workflow tests",
         }
     )
     return entries
@@ -221,6 +229,20 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             self.assertTrue(
                 any("backbone_state_tracker/docs/RELEASE_CHECKLIST.md" in error for error in result.errors)
             )
+
+    def test_missing_runtime_regression_test_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.15_20260612_source.zip"
+            entries = _source_entries()
+            del entries["backbone_state_tracker/tests/test_reporter.py"]
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.15", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("backbone_state_tracker/tests/test_reporter.py" in error for error in result.errors))
 
     def test_sidecar_version_mismatch_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
