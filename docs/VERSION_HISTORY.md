@@ -1,21 +1,22 @@
 # Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.8.43
+문서 버전: v0.8.44
 작성일: 2026-06-15
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
 
-### v0.8.43 - 2026-06-15
+### v0.8.44 - 2026-06-15
 
-- 실제 `tests/test_*.py` 파일 목록과 Python/PowerShell release package verifier의 source ZIP 필수 테스트 목록이 항상 일치하는지 확인하는 회귀 테스트를 추가했습니다.
-- 향후 테스트 파일이 추가될 때 release package verifier 필수 목록이 누락되지 않도록 방지합니다.
+- Source ZIP 검증 기준을 강화해 현재 프로젝트의 전체 `core/*.py` 런타임 모듈, 패키지 초기화 파일, `requirements.txt`가 누락되면 검증 실패로 처리합니다.
+- Python/PowerShell release package verifier와 테스트 fixture의 core 모듈 목록이 실제 `core/*.py` 파일 목록과 일치하는지 확인하는 회귀 테스트를 추가했습니다.
 - 수집, SSH, 비교, 리포트 런타임 동작은 변경하지 않았습니다.
 
 ## 2. 이전 주요 변경
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.8.43 | 2026-06-15 | 실제 테스트 파일 목록과 release package verifier의 source ZIP 필수 테스트 목록이 일치하는지 확인하는 테스트를 추가했습니다. |
 | v0.8.42 | 2026-06-14 | Source ZIP 검증 기준을 강화해 전체 회귀 테스트 파일 누락을 잡도록 개선했습니다. |
 | v0.8.41 | 2026-06-14 | HTML 비교 리포트 변경 상세 행에 `유형`, `라인`, `변경 내용` 라벨을 표시하도록 개선했습니다. |
 | v0.8.40 | 2026-06-14 | 실제 번들 명령 전체가 preflight에서 오류/주의 없이 통과하는지 확인하는 테스트를 추가했습니다. |
@@ -165,15 +166,15 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.43 산출물 이름
+## 3. v0.8.44 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.43_20260615_source.zip
-dist\backbone_state_tracker_v0.8.43_20260615_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.43_20260615_windows_exe.zip
-dist\backbone_state_tracker_v0.8.43_20260615_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.43_20260615_release_manifest.txt
-dist\backbone_state_tracker_v0.8.43_20260615_verify_release_package.ps1
+dist\backbone_state_tracker_v0.8.44_20260615_source.zip
+dist\backbone_state_tracker_v0.8.44_20260615_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.44_20260615_windows_exe.zip
+dist\backbone_state_tracker_v0.8.44_20260615_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.44_20260615_release_manifest.txt
+dist\backbone_state_tracker_v0.8.44_20260615_verify_release_package.ps1
 ```
 
 ## 4. 릴리스 검증 기준
@@ -183,4 +184,5 @@ dist\backbone_state_tracker_v0.8.43_20260615_verify_release_package.ps1
 - `config/devices.yaml`, `outputs/`, `raw/`, `dist/`, `build/`, `.git`, `__pycache__`는 포함하지 않습니다.
 - MD/HTML 문서와 `docs/images/` 화면 캡처가 포함되어야 합니다.
 - Source ZIP에는 현재 `tests/*.py` 회귀 테스트 파일 전체가 포함되어야 합니다.
+- Source ZIP에는 현재 `core/*.py` 런타임 모듈 전체와 `requirements.txt`가 포함되어야 합니다.
 - 소스 ZIP과 Windows EXE ZIP 모두 Python/PowerShell 검증기를 통과해야 합니다.

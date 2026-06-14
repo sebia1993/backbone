@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.44 - 2026-06-15
+
+- Strengthened source ZIP verification so every current `core/*.py` runtime module, package initializer, and `requirements.txt` must be included.
+- Added regression coverage that keeps the verifier's required core module lists aligned with the real `core/*.py` files.
+- Added missing-package tests for runtime core modules and dependency requirements.
+- No collection, SSH, comparison, or report runtime behavior changed.
+
 ## v0.8.43 - 2026-06-15
 
 - Added regression coverage that compares the real `tests/test_*.py` files with the source ZIP verifier's Python, PowerShell, and test-fixture required lists.
