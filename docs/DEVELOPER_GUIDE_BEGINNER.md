@@ -1,7 +1,7 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.33
-작성일: 2026-06-12  
+문서 버전: v0.8.35
+작성일: 2026-06-14
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
 ## 1. 프로젝트 목적
@@ -14,6 +14,7 @@
 - `core/gui.py`: Tkinter GUI, 화면 전환, 수집/비교 버튼 동작을 관리합니다.
 - `core/collector.py`: Netmiko 기반 SSH 읽기 전용 명령 수집입니다.
 - `core/connectivity.py`: 장비 접속 가능/불가능 결과를 `device_connectivity`로 생성합니다.
+- `config/commands.yaml`: 수집 대상 읽기 전용 명령을 관리하며, v0.8.35부터 `vrrp_status` / `show vrrp`가 포함됩니다.
 - `core/diff_engine.py`: 스냅샷 비교, 변경 라인 추출, 긴급/주의/정보/변경없음 분류를 처리합니다.
 - `core/reporter.py`: HTML, XLSX, JSON 리포트 생성입니다.
 - `core/report_bundle.py`: 공유 ZIP 생성과 `docs/images` 포함 처리를 담당합니다.

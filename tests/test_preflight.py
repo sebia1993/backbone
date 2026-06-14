@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
+from backbone_state_tracker.core.config import load_commands
 from backbone_state_tracker.core.models import CommandSpec, Device
 from backbone_state_tracker.core.preflight import preflight_summary_text, validate_preflight
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 class PreflightTests(unittest.TestCase):
@@ -22,6 +27,25 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(result.error_count, 0)
         self.assertEqual(result.warning_count, 0)
         self.assertIn("통과", preflight_summary_text(result))
+
+    def test_bundled_commands_include_safe_show_vrrp(self) -> None:
+        commands = load_commands(PROJECT_ROOT / "config" / "commands.yaml")
+        vrrp = next(command for command in commands if command.id == "vrrp_status")
+
+        self.assertEqual(vrrp.command, "show vrrp")
+        self.assertEqual(vrrp.category, "routing")
+        self.assertTrue(vrrp.allow_failure)
+        self.assertEqual(vrrp.timeout, 45)
+
+        result = validate_preflight(
+            [
+                Device(name="backbone3", host="10.0.0.3"),
+                Device(name="backbone4", host="10.0.0.4"),
+            ],
+            [vrrp],
+        )
+
+        self.assertEqual(result.error_count, 0)
 
     def test_duplicate_device_names_are_errors(self) -> None:
         result = validate_preflight(

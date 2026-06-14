@@ -107,6 +107,69 @@ class DiffEngineTests(unittest.TestCase):
         changed = [item for item in summary.items if item.status == "changed"]
         self.assertEqual(changed[0].severity, "Warning")
 
+    def test_vrrp_status_unchanged_output_is_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = "VRID 1 State Master Priority 110 VIP 10.0.0.1"
+            base = self._snapshot(root, "base", output, command_id="vrrp_status", category="routing")
+            target = self._snapshot(root, "target", output, command_id="vrrp_status", category="routing")
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "vrrp_status")
+        self.assertEqual(item.status, "unchanged")
+        self.assertEqual(item.severity, "Unchanged")
+
+    def test_vrrp_status_role_or_priority_change_is_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(
+                root,
+                "base",
+                "VRID 1 State Master Priority 110 VIP 10.0.0.1",
+                command_id="vrrp_status",
+                category="routing",
+            )
+            target = self._snapshot(
+                root,
+                "target",
+                "VRID 1 State Backup Priority 100 VIP 10.0.0.1",
+                command_id="vrrp_status",
+                category="routing",
+            )
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "vrrp_status")
+        self.assertEqual(item.status, "changed")
+        self.assertEqual(item.severity, "Warning")
+        self.assertEqual(item.summary, "Operational state changed.")
+
+    def test_vrrp_status_down_state_is_critical(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(
+                root,
+                "base",
+                "VRID 1 State Master Priority 110 VIP 10.0.0.1",
+                command_id="vrrp_status",
+                category="routing",
+            )
+            target = self._snapshot(
+                root,
+                "target",
+                "VRID 1 State down Priority 0 VIP 10.0.0.1",
+                command_id="vrrp_status",
+                category="routing",
+            )
+
+            summary = DiffEngine().compare(base, target)
+
+        item = self._diff_item(summary, "vrrp_status")
+        self.assertEqual(item.status, "changed")
+        self.assertEqual(item.severity, "Critical")
+        self.assertEqual(item.summary, "Critical state keyword detected in changed output.")
+
     def test_cpu_usage_critical_even_when_output_is_unchanged(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

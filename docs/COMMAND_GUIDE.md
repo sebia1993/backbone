@@ -1,7 +1,7 @@
 # Backbone State Tracker 점검 명령어 가이드
 
-문서 버전: v0.8.33
-작성일: 2026-06-12  
+문서 버전: v0.8.35
+작성일: 2026-06-14
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
 ## 1. 기본 원칙
@@ -30,6 +30,7 @@
 | `stp_brief` | `display stp brief` | STP 역할/상태 확인 | root, blocked, forwarding 변화를 확인합니다. |
 | `ospf_peer` | `display ospf peer` | OSPF neighbor 확인 | Full 이탈, Init, ExStart, Loading은 긴급입니다. |
 | `ospf_routes` | `display ip routing-table protocol ospf` | OSPF 경로 확인 | 주요 경로 삭제와 next-hop 변화를 봅니다. |
+| `vrrp_status` | `show vrrp` | VRRP 상태 확인 | Master/Backup, priority, VIP, state 변화를 봅니다. Down/fail 계열은 긴급입니다. |
 | `cpu_usage` | `display cpu-usage` | CPU 상태 확인 | 5초/1분/5분 값 중 70% 이상은 긴급, 50~69%는 주의, 모두 50% 미만은 정보입니다. |
 | `memory_usage` | `display memory` | 메모리 상태 확인 | FreeRatio 30% 이하는 긴급, 31~40%는 주의, 40% 초과는 정보입니다. |
 | `recent_log` | `display logbuffer` | 최근 시스템 로그 확인 | link down, neighbor down, alarm, error, failure 로그를 우선 확인합니다. |
