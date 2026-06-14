@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 릴리스 반입 체크리스트 v0.8.55</title>
+  <title>Backbone State Tracker 릴리스 반입 체크리스트 v0.8.56</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -12,15 +12,15 @@
 </head>
 <body>
   <h1>Backbone State Tracker 릴리스 반입 체크리스트</h1>
-  <p>문서 버전: v0.8.55<br>작성일: 2026-06-15<br>대상: 사외 개발 ZIP을 사내 환경으로 반입해 검증하는 운영자와 인수자</p>
+  <p>문서 버전: v0.8.56<br>작성일: 2026-06-15<br>대상: 사외 개발 ZIP을 사내 환경으로 반입해 검증하는 운영자와 인수자</p>
 
   <h2>1. 수령 파일</h2>
-  <pre><code>backbone_state_tracker_v0.8.55_YYYYMMDD_source.zip
-backbone_state_tracker_v0.8.55_YYYYMMDD_source.zip.sha256.txt
-backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip
-backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip.sha256.txt
-backbone_state_tracker_v0.8.55_YYYYMMDD_release_manifest.txt
-backbone_state_tracker_v0.8.55_YYYYMMDD_verify_release_package.ps1</code></pre>
+  <pre><code>backbone_state_tracker_v0.8.56_YYYYMMDD_source.zip
+backbone_state_tracker_v0.8.56_YYYYMMDD_source.zip.sha256.txt
+backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip.sha256.txt
+backbone_state_tracker_v0.8.56_YYYYMMDD_release_manifest.txt
+backbone_state_tracker_v0.8.56_YYYYMMDD_verify_release_package.ps1</code></pre>
 
   <h2>2. ZIP 내부 필수 확인</h2>
   <ul>
@@ -45,9 +45,9 @@ backbone_state_tracker_v0.8.55_YYYYMMDD_verify_release_package.ps1</code></pre>
   </ul>
 
   <h2>4. 해시와 manifest 검증</h2>
-  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.55_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
+  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.56_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
 
   <h2>5. 실행 확인</h2>
   <ul>
@@ -64,7 +64,7 @@ powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.55_YYYYMM
     <li><code>비교 결과</code> 화면에서 <code>긴급</code>, <code>주의</code>, <code>정보</code>, <code>변경없음</code> 등급 카드가 상태별 색상과 선택 배경으로 구분되는지 확인합니다.</li>
     <li>변경 상세 행을 선택했을 때 <code>선택 변경 맥락</code> 패널이 등급, 장비, 명령, 유형, 라인을 표시하는지 확인합니다.</li>
     <li><code>작업 로그</code> 화면이 어두운 고정폭 로그 표면으로 표시되고 시간/오류/리포트 경로를 읽기 쉬운지 확인합니다.</li>
-    <li>사용자 가이드의 <code>docs/images/settings-collection.png</code>, <code>docs/images/compare-results.png</code>, <code>docs/images/work-log.png</code>가 현재 v0.8.55 화면과 일치하는지 확인합니다.</li>
+    <li>사용자 가이드의 <code>docs/images/settings-collection.png</code>, <code>docs/images/compare-results.png</code>, <code>docs/images/work-log.png</code>가 현재 v0.8.56 화면과 일치하는지 확인합니다.</li>
   </ul>
 
   <h2>7. 메일 업로드 차단 시</h2>

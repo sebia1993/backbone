@@ -100,6 +100,10 @@ class DocumentationPortabilityTests(unittest.TestCase):
             for fragment in (
                 "디자인 토큰 빠른 참조",
                 "컴포넌트 사용 기준",
+                "현대화 전 문제 원인",
+                "설계 대응 요약",
+                "버튼 우선순위",
+                "메뉴 배치",
                 "PALETTE",
                 "SEVERITY_META",
                 "SEVERITY_COLORS",
@@ -120,6 +124,7 @@ class DocumentationPortabilityTests(unittest.TestCase):
 
         self.assertIn("샘플 데이터로 캡처", user_md)
         self.assertIn("UI 현대화 마감 단계", version_md)
+        self.assertIn("UI 현대화 분석 보강", version_md)
 
     def test_command_guide_md_and_html_match_bundled_command_ids(self) -> None:
         expected_ids = [command.id for command in load_commands(PROJECT_DIR / "config" / "commands.yaml")]

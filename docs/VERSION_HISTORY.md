@@ -1,10 +1,17 @@
 # Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.8.55
+문서 버전: v0.8.56
 작성일: 2026-06-15
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
+
+### v0.8.56 - 2026-06-15
+
+- UI 현대화 분석 보강으로 현대화 전 문제 원인과 설계 대응 요약을 초급 개발자 가이드에 추가했습니다.
+- 색상, 여백/테두리, 버튼 우선순위, 테이블/비교 결과, 로그, 메뉴 배치 관점에서 기존 UI가 구식으로 보이던 이유를 문서화했습니다.
+- v0.8.52~v0.8.55에서 적용한 AirWave 계열 운영 콘솔 방향, 장비 설정 중심 흐름, 상태 색상 토큰, 비교 결과 맥락 패널, 작업 로그 표면의 설계 대응을 정리했습니다.
+- 수집, SSH, 비교 데이터, 리포트 데이터, 등급 분류 동작은 변경하지 않았습니다.
 
 ### v0.8.55 - 2026-06-15
 
@@ -44,6 +51,7 @@
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.8.55 | 2026-06-15 | 사용자 가이드 화면 캡처, 디자인 토큰 문서, 릴리스 반입 체크리스트를 마감했습니다. |
 | v0.8.54 | 2026-06-15 | GUI 선택 변경 맥락 패널과 HTML 리포트 필터 상태/상세 헤더를 개선했습니다. |
 | v0.8.53 | 2026-06-15 | 주요 업무 화면에 공통 상태 패널, 대상 요약 chip, 로그 가독성 개선을 적용했습니다. |
 | v0.8.52 | 2026-06-15 | HPE Aruba AirWave 계열 운영 콘솔을 참고한 공통 GUI 테마를 적용했습니다. |
@@ -205,15 +213,15 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.55 산출물 이름
+## 3. v0.8.56 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.55_20260615_source.zip
-dist\backbone_state_tracker_v0.8.55_20260615_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.55_20260615_windows_exe.zip
-dist\backbone_state_tracker_v0.8.55_20260615_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.55_20260615_release_manifest.txt
-dist\backbone_state_tracker_v0.8.55_20260615_verify_release_package.ps1
+dist\backbone_state_tracker_v0.8.56_20260615_source.zip
+dist\backbone_state_tracker_v0.8.56_20260615_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.56_20260615_windows_exe.zip
+dist\backbone_state_tracker_v0.8.56_20260615_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.56_20260615_release_manifest.txt
+dist\backbone_state_tracker_v0.8.56_20260615_verify_release_package.ps1
 ```
 
 ## 4. 릴리스 검증 기준

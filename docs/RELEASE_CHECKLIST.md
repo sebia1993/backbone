@@ -1,18 +1,18 @@
 # Backbone State Tracker 릴리스 반입 체크리스트
 
-문서 버전: v0.8.55
+문서 버전: v0.8.56
 작성일: 2026-06-15
 대상: 사외 개발 ZIP을 사내 환경으로 반입해 검증하는 운영자와 인수자
 
 ## 1. 수령 파일
 
 ```text
-backbone_state_tracker_v0.8.55_YYYYMMDD_source.zip
-backbone_state_tracker_v0.8.55_YYYYMMDD_source.zip.sha256.txt
-backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip
-backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip.sha256.txt
-backbone_state_tracker_v0.8.55_YYYYMMDD_release_manifest.txt
-backbone_state_tracker_v0.8.55_YYYYMMDD_verify_release_package.ps1
+backbone_state_tracker_v0.8.56_YYYYMMDD_source.zip
+backbone_state_tracker_v0.8.56_YYYYMMDD_source.zip.sha256.txt
+backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip.sha256.txt
+backbone_state_tracker_v0.8.56_YYYYMMDD_release_manifest.txt
+backbone_state_tracker_v0.8.56_YYYYMMDD_verify_release_package.ps1
 ```
 
 ## 2. ZIP 내부 필수 확인
@@ -53,9 +53,9 @@ backbone_state_tracker_v0.8.55_YYYYMMDD_verify_release_package.ps1
 ## 4. 해시와 manifest 검증
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.55_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.55_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.56_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 검증기는 다음을 확인합니다.
@@ -91,7 +91,7 @@ powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.55_YYYYMM
 - `비교 결과` 화면에서 `긴급`, `주의`, `정보`, `변경없음` 등급 카드가 상태별 색상과 선택 배경으로 구분되는지 확인합니다.
 - 변경 상세 행을 선택했을 때 `선택 변경 맥락` 패널이 등급, 장비, 명령, 유형, 라인을 표시하는지 확인합니다.
 - `작업 로그` 화면이 어두운 고정폭 로그 표면으로 표시되고 시간/오류/리포트 경로를 읽기 쉬운지 확인합니다.
-- 사용자 가이드의 `docs/images/settings-collection.png`, `docs/images/compare-results.png`, `docs/images/work-log.png`가 현재 v0.8.55 화면과 일치하는지 확인합니다.
+- 사용자 가이드의 `docs/images/settings-collection.png`, `docs/images/compare-results.png`, `docs/images/work-log.png`가 현재 v0.8.56 화면과 일치하는지 확인합니다.
 
 ## 7. 메일 업로드 차단 시
 
