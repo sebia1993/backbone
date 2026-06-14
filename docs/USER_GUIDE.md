@@ -1,6 +1,6 @@
 # Backbone State Tracker 사용자 가이드
 
-문서 버전: v0.8.37
+문서 버전: v0.8.38
 작성일: 2026-06-14
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
@@ -79,9 +79,9 @@
 Windows EXE ZIP 예시:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.37_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.37_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.37_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.37_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.38_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.38_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.38_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.38_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 사내 메일이 `.exe`, `.py`, `.ps1` 포함 ZIP을 차단할 수 있습니다. 이 경우 승인된 내부 파일 반입 절차를 사용하세요.
