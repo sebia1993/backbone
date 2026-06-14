@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.50 - 2026-06-15
+
+- Added documentation regression coverage that rejects common mojibake fragments and Unicode replacement characters in release guides.
+- Added checks that Korean user/developer guides keep the core workflow terms `장비 설정`, `비교 결과`, `작업 로그`, `긴급`, `주의`, `정보`, and `변경없음`.
+- No collection, SSH, comparison, or report runtime behavior changed.
+
 ## v0.8.49 - 2026-06-15
 
 - Strengthened Python and PowerShell release package verification to reject `.venv`, `venv`, and `.pytest_cache` entries.
