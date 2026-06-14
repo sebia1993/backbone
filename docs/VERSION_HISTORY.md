@@ -1,21 +1,22 @@
 # Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.8.39
+문서 버전: v0.8.40
 작성일: 2026-06-14
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
 
-### v0.8.39 - 2026-06-14
+### v0.8.40 - 2026-06-14
 
-- README, CHANGELOG, 사용자/명령어/개발자/버전/릴리스 체크리스트 문서의 현재 버전 표기가 앱 버전과 맞는지 자동 검증하는 테스트를 추가했습니다.
-- 사용자 가이드와 반입 체크리스트의 ZIP 파일명 예시가 현재 버전과 어긋나지 않도록 회귀 테스트를 보강했습니다.
+- 실제 번들 `config/commands.yaml` 전체를 로드해 모든 명령이 preflight에서 오류/주의 없이 통과하는지 확인하는 테스트를 추가했습니다.
+- 향후 명령 추가 시 변경성 명령이나 읽기 전용 여부가 모호한 명령이 들어가면 테스트가 실패하도록 안전장치를 보강했습니다.
 - 수집, SSH, 비교, HTML 리포트 런타임 동작은 변경하지 않았습니다.
 
 ## 2. 이전 주요 변경
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.8.39 | 2026-06-14 | README, CHANGELOG, 각 MD/HTML 릴리스 문서의 현재 버전 정합성 테스트를 추가했습니다. |
 | v0.8.38 | 2026-06-14 | HTML 비교 리포트 필터 영역을 HTML 파서로 구조 검증하도록 테스트를 보강했습니다. |
 | v0.8.37 | 2026-06-14 | HTML 비교 리포트에서 `변경없음` 상태 카드 선택 시에도 요약 묶음이 자동으로 펼쳐지지 않도록 수정했습니다. |
 | v0.8.36 | 2026-06-14 | COMMAND_GUIDE HTML이 설정 파일과 MD의 전체 명령 목록을 모두 포함하도록 보정했습니다. |
@@ -161,15 +162,15 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.39 산출물 이름
+## 3. v0.8.40 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.39_20260614_source.zip
-dist\backbone_state_tracker_v0.8.39_20260614_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.39_20260614_windows_exe.zip
-dist\backbone_state_tracker_v0.8.39_20260614_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.39_20260614_release_manifest.txt
-dist\backbone_state_tracker_v0.8.39_20260614_verify_release_package.ps1
+dist\backbone_state_tracker_v0.8.40_20260614_source.zip
+dist\backbone_state_tracker_v0.8.40_20260614_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.40_20260614_windows_exe.zip
+dist\backbone_state_tracker_v0.8.40_20260614_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.40_20260614_release_manifest.txt
+dist\backbone_state_tracker_v0.8.40_20260614_verify_release_package.ps1
 ```
 
 ## 4. 릴리스 검증 기준
