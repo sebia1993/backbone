@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.42 - 2026-06-14
+
+- Strengthened source ZIP verification so every current regression test file must be included in the release package.
+- Kept the Python and PowerShell release package verifiers aligned for internal transfer checks.
+- Added regression coverage for missing runtime test files in source release ZIPs.
+- No collection, SSH, comparison, or report runtime behavior changed.
+
 ## v0.8.41 - 2026-06-14
 
 - Improved generated HTML comparison report change-detail rows with visible cell labels for type, line, and change content.
