@@ -473,13 +473,26 @@ class ReportWriter:
       font-weight: 700;
       color: #1f2328;
     }}
+    .cell-label {{
+      display: inline-block;
+      margin-right: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }}
     .line-no {{
       color: var(--muted);
       font-variant-numeric: tabular-nums;
     }}
+    .line-value {{
+      color: var(--text);
+    }}
     .change-inline {{
       font-family: Consolas, "SFMono-Regular", monospace;
       line-height: 1.7;
+    }}
+    .change-inline .cell-label {{
+      font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif;
     }}
     .value-before, .value-after, .value-context {{
       display: inline-block;
@@ -727,9 +740,12 @@ def render_change_table(item: DiffItem) -> str:
     for line in item.changed_lines:
         rows.append(
             f"<tr class='{line_css_class(line)}'>"
-            f"<td><span class='change-kind'>{escape(change_type_label(line.kind))}</span></td>"
-            f"<td class='line-no'>{escape(format_inline_line_no(line))}</td>"
-            f"<td class='change-inline'>{render_inline_change(line)}</td>"
+            "<td data-label='유형'><span class='cell-label'>유형</span>"
+            f"<span class='change-kind'>{escape(change_type_label(line.kind))}</span></td>"
+            "<td class='line-no' data-label='라인'><span class='cell-label'>라인</span>"
+            f"<span class='line-value'>{escape(format_inline_line_no(line))}</span></td>"
+            "<td class='change-inline' data-label='변경 내용'><span class='cell-label'>변경 내용</span>"
+            f"{render_inline_change(line)}</td>"
             "</tr>"
         )
     return (
