@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.53</title>
+  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.54</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -15,7 +15,7 @@
 </head>
 <body>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p>문서 버전: v0.8.53<br>작성일: 2026-06-15<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
+  <p>문서 버전: v0.8.54<br>작성일: 2026-06-15<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
 
   <h2>1. 프로젝트 목적</h2>
   <p>백본 3/4호기의 작업 전후 상태를 읽기 전용 명령으로 수집하고, 스냅샷 간 변경점을 GUI와 HTML/XLSX/JSON 리포트로 확인하는 Windows 운영 도구입니다.</p>
@@ -50,13 +50,15 @@ python app.py --smoke-check</code></pre>
     <li>사용자는 단계명만 입력하며, 비우면 <code>점검시간_YYYYMMDD_HHMM</code>으로 저장됩니다.</li>
     <li>수집/비교/샘플 검증 중에는 <code>_track_busy_sensitive()</code>에 등록된 실행 버튼을 비활성화합니다. 실행 흐름에 영향을 주는 버튼을 새로 만들면 같은 목록에 등록합니다.</li>
     <li>첫 수집은 기준 스냅샷, 이후 수집은 자동 비교 대상으로 처리됩니다.</li>
+    <li>v0.8.54부터 GUI 비교 결과에는 <code>선택 변경 맥락</code> 패널이 있으며, 선택 행의 등급/장비/명령/유형/라인을 항상 표시합니다.</li>
     <li>HTML 리포트는 처음에는 등급 카드만 보이고, 사용자가 <code>긴급</code>/<code>주의</code>/<code>정보</code>/<code>변경없음</code> 중 하나를 선택해야 해당 상태의 바로가기 버튼, 요약 카드, 상세 블록이 표시됩니다. 숨김 상태는 <code>[hidden]</code> CSS와 <code>aria-hidden</code> 동기화로 보강합니다.</li>
+    <li>v0.8.54부터 HTML 리포트는 <code>data-filter-state</code> 안내 바, 상태별 톤이 있는 count card, 상세 블록 <code>detail-head</code>를 사용합니다.</li>
     <li>샘플 검증 스냅샷은 실제 작업 전 기준 후보에서 제외합니다.</li>
     <li>GUI 상단 요약과 HTML 리포트 상단 메타에는 샘플 스냅샷을 <code>샘플:</code> 접두어로 표시합니다.</li>
   </ul>
 
   <h2>5. UI 디자인 기준</h2>
-  <p>v0.8.52의 1단계 UI 현대화는 HPE Aruba AirWave 계열 운영 콘솔을 참고하되, 특정 제품 화면을 복제하지 않고 색감과 정보 계층만 반영합니다. v0.8.53은 같은 구조 안에서 주요 업무 화면의 안내 패널, 대상 요약, 선택 상태, 로그 가독성을 보강한 2단계 개선입니다.</p>
+  <p>v0.8.52의 1단계 UI 현대화는 HPE Aruba AirWave 계열 운영 콘솔을 참고하되, 특정 제품 화면을 복제하지 않고 색감과 정보 계층만 반영합니다. v0.8.53은 같은 구조 안에서 주요 업무 화면의 안내 패널, 대상 요약, 선택 상태, 로그 가독성을 보강한 2단계 개선입니다. v0.8.54는 비교 결과와 HTML 리포트에서 필터 상태와 상세 맥락을 추적하기 쉽게 만든 3단계 개선입니다.</p>
   <ul>
     <li>공통 팔레트는 <code>core/gui.py</code>의 <code>PALETTE</code>를 기준으로 관리합니다.</li>
     <li>주요 액션은 Aruba teal 계열 <code>accent</code>를 사용하고, 보조 액션은 흰색/연한 회색 표면으로 둡니다.</li>
@@ -66,6 +68,8 @@ python app.py --smoke-check</code></pre>
     <li>등급 필터 카드는 선택 시 테두리만 바꾸지 말고 <code>SEVERITY_META</code>의 soft 배경까지 함께 적용해 현재 필터를 즉시 구분할 수 있게 합니다.</li>
     <li>장비 수, 실행 이력처럼 반복 확인하는 정보는 평문 라벨보다 compact chip 또는 어두운 로그 표면을 사용합니다.</li>
     <li>비교 테이블과 HTML 리포트는 같은 neutral surface, status color, compact card 원칙을 사용합니다.</li>
+    <li>비교 상세처럼 사용자가 행을 선택해 추적하는 화면에는 선택 대상의 등급, 장비, 명령, 라인 위치를 별도 패널이나 헤더로 반복 표시합니다.</li>
+    <li>HTML 리포트의 인터랙션 상태는 DOM <code>hidden</code>과 <code>aria-hidden</code>을 함께 갱신해 화면 표시와 구조 테스트가 일치해야 합니다.</li>
     <li>새 색상이 필요하면 임의 색상보다 <code>PALETTE</code>에 의미 있는 토큰을 먼저 추가합니다.</li>
   </ul>
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.54 - 2026-06-15
+
+- Added a GUI comparison selection-context panel so the selected severity, device, command, change type, and line remain visible while reviewing before/after values.
+- Updated generated HTML comparison reports with an active filter-state bar, severity-tinted count cards, and richer detail headers.
+- Kept status-card filtering, selected-status shortcuts, unchanged default collapse behavior, and hidden/aria-hidden synchronization intact.
+- Added GUI and reporter regression coverage for the new comparison context and report header/filter structure.
+- No collection, SSH, comparison, report data, or severity-classification behavior changed.
+
 ## v0.8.53 - 2026-06-15
 
 - Improved the main workflow screens with shared status panels for account/device setup, collection guidance, preflight status, comparison status, and execution history.
