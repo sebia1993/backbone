@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.44
+문서 버전: v0.8.45
 작성일: 2026-06-15
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
