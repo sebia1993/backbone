@@ -16,6 +16,8 @@ from backbone_state_tracker.tools.write_release_manifest import (
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
+CORE_ENTRY_PREFIX = "backbone_state_tracker/core/"
+CORE_ENTRY_PATTERN = re.compile(r'"(backbone_state_tracker/core/[^"]+\.py)"')
 TEST_ENTRY_PREFIX = "backbone_state_tracker/tests/"
 TEST_ENTRY_PATTERN = re.compile(r'"(backbone_state_tracker/tests/test_[^"]+\.py)"')
 
@@ -61,8 +63,25 @@ def _source_entries() -> dict[str, str]:
     entries = _common_entries()
     entries.update(
         {
+            "backbone_state_tracker/__init__.py": "package init",
             "backbone_state_tracker/app.py": "app",
+            "backbone_state_tracker/requirements.txt": "requirements",
+            "backbone_state_tracker/core/__init__.py": "core init",
+            "backbone_state_tracker/core/collector.py": "collector",
+            "backbone_state_tracker/core/config.py": "config",
+            "backbone_state_tracker/core/connectivity.py": "connectivity",
+            "backbone_state_tracker/core/diff_engine.py": "diff engine",
+            "backbone_state_tracker/core/gui.py": "gui",
+            "backbone_state_tracker/core/mock_validation.py": "mock validation",
+            "backbone_state_tracker/core/models.py": "models",
+            "backbone_state_tracker/core/paths.py": "paths",
+            "backbone_state_tracker/core/preflight.py": "preflight",
+            "backbone_state_tracker/core/redaction.py": "redaction",
+            "backbone_state_tracker/core/report_bundle.py": "report bundle",
+            "backbone_state_tracker/core/reporter.py": "reporter",
+            "backbone_state_tracker/core/snapshot.py": "snapshot",
             "backbone_state_tracker/core/version.py": "version",
+            "backbone_state_tracker/core/workflow.py": "workflow",
             "backbone_state_tracker/tools/build_release.ps1": "source build",
             "backbone_state_tracker/tools/build_windows_exe.ps1": "exe build",
             "backbone_state_tracker/tools/write_release_manifest.py": "manifest tool",
@@ -84,11 +103,23 @@ def _source_entries() -> dict[str, str]:
     return entries
 
 
+def _core_entries(entries: set[str] | dict[str, str]) -> set[str]:
+    return {entry for entry in entries if entry.startswith(CORE_ENTRY_PREFIX)}
+
+
 def _test_entries(entries: set[str] | dict[str, str]) -> set[str]:
     return {entry for entry in entries if entry.startswith(TEST_ENTRY_PREFIX)}
 
 
 class ReleasePackageVerifierTests(unittest.TestCase):
+    def test_source_required_core_entries_match_current_core_files(self) -> None:
+        expected = {f"{CORE_ENTRY_PREFIX}{path.name}" for path in sorted((PROJECT_DIR / "core").glob("*.py"))}
+        powershell_text = (PROJECT_DIR / "tools" / "verify_release_package.ps1").read_text(encoding="utf-8")
+
+        self.assertEqual(expected, _core_entries(SOURCE_REQUIRED))
+        self.assertEqual(expected, _core_entries(_source_entries()))
+        self.assertEqual(expected, set(CORE_ENTRY_PATTERN.findall(powershell_text)))
+
     def test_source_required_test_entries_match_current_test_files(self) -> None:
         expected = {f"{TEST_ENTRY_PREFIX}{path.name}" for path in sorted((PROJECT_DIR / "tests").glob("test_*.py"))}
         powershell_text = (PROJECT_DIR / "tools" / "verify_release_package.ps1").read_text(encoding="utf-8")
@@ -261,6 +292,34 @@ class ReleasePackageVerifierTests(unittest.TestCase):
 
             self.assertFalse(result.ok)
             self.assertTrue(any("backbone_state_tracker/tests/test_reporter.py" in error for error in result.errors))
+
+    def test_missing_runtime_core_module_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.16_20260612_source.zip"
+            entries = _source_entries()
+            del entries["backbone_state_tracker/core/gui.py"]
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.16", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("backbone_state_tracker/core/gui.py" in error for error in result.errors))
+
+    def test_missing_requirements_file_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.17_20260612_source.zip"
+            entries = _source_entries()
+            del entries["backbone_state_tracker/requirements.txt"]
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.17", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("backbone_state_tracker/requirements.txt" in error for error in result.errors))
 
     def test_sidecar_version_mismatch_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
