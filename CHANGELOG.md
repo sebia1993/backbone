@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.46 - 2026-06-15
+
+- Added regression coverage that keeps release package documentation entries aligned with the real `docs/*.md`, `docs/*.html`, and `docs/images/*` files.
+- Added missing-package coverage for user-guide screenshots so release ZIPs cannot omit visual guide assets.
+- No collection, SSH, comparison, or report runtime behavior changed.
+
 ## v0.8.45 - 2026-06-15
 
 - Added regression coverage that keeps the source ZIP verifier's required release tool script list aligned with the real `tools/*.py` and `tools/*.ps1` files.
