@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.38 - 2026-06-14
+
+- Added parser-based regression coverage for generated HTML report filter regions.
+- Verified status cards, status shortcut buttons, summary sections, unchanged summaries, and detail blocks expose structured `data-*`, `hidden`, and `aria-hidden` attributes.
+- No collection, SSH, or report runtime behavior changed.
+
 ## v0.8.37 - 2026-06-14
 
 - Kept the generated HTML report's `Unchanged` summary group collapsed after selecting the `변경없음` status card.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from html.parser import HTMLParser
 import json
 import tempfile
 import unittest
@@ -10,6 +11,33 @@ from backbone_state_tracker.core.diff_engine import DiffEngine
 from backbone_state_tracker.core.models import CommandResult, Device, DiffItem, DiffLine, DiffSummary
 from backbone_state_tracker.core.reporter import ReportWriter
 from backbone_state_tracker.core.snapshot import SnapshotStore
+
+
+class StartTagCollector(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.tags: list[tuple[str, dict[str, str | None]]] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.tags.append((tag, dict(attrs)))
+
+    def first(self, tag: str, **expected: str | None) -> dict[str, str | None]:
+        for candidate_tag, attrs in self.tags:
+            if candidate_tag != tag:
+                continue
+            if all(name in attrs and attrs.get(name) == value for name, value in expected.items()):
+                return attrs
+        expected_text = ", ".join(f"{key}={value!r}" for key, value in expected.items())
+        raise AssertionError(f"missing <{tag}> with {expected_text}")
+
+    def matching(self, tag: str, **expected: str | None) -> list[dict[str, str | None]]:
+        matches: list[dict[str, str | None]] = []
+        for candidate_tag, attrs in self.tags:
+            if candidate_tag != tag:
+                continue
+            if all(name in attrs and attrs.get(name) == value for name, value in expected.items()):
+                matches.append(attrs)
+        return matches
 
 
 class ReportWriterTests(unittest.TestCase):
@@ -229,6 +257,101 @@ class ReportWriterTests(unittest.TestCase):
             self.assertIn("const mainSummaryCards = summaryCards.filter", html)
             self.assertIn('activeFilter === nextFilter ? "" : nextFilter', html)
             self.assertIn("setFilter(\"\");", html)
+
+    def test_html_filter_regions_have_structured_hidden_attributes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            report_path = Path(tmp) / "report.html"
+            summary = DiffSummary(
+                base_snapshot="base",
+                target_snapshot="target",
+                generated_at="2026-06-14T10:00:00",
+                items=[
+                    DiffItem(
+                        device_name="backbone3",
+                        command_id="critical_check",
+                        command="display interface brief",
+                        category="interface",
+                        severity="Critical",
+                        status="changed",
+                        summary="Critical state keyword detected in changed output.",
+                        changed_lines=[DiffLine(kind="changed", base_line_no=1, target_line_no=1, base_text="UP", target_text="DOWN")],
+                        change_count=1,
+                        change_preview="UP -> DOWN",
+                    ),
+                    DiffItem(
+                        device_name="backbone4",
+                        command_id="warning_check",
+                        command="display logbuffer",
+                        category="log",
+                        severity="Warning",
+                        status="changed",
+                        summary="Warning keyword detected in changed output.",
+                        changed_lines=[DiffLine(kind="added", target_line_no=1, target_text="warning")],
+                        change_count=1,
+                        change_preview="warning",
+                    ),
+                    DiffItem(
+                        device_name="backbone4",
+                        command_id="info_check",
+                        command="display device",
+                        category="hardware",
+                        severity="Info",
+                        status="changed",
+                        summary="Output changed.",
+                        changed_lines=[DiffLine(kind="added", target_line_no=1, target_text="reachable")],
+                        change_count=1,
+                        change_preview="reachable",
+                    ),
+                    DiffItem(
+                        device_name="backbone4",
+                        command_id="unchanged_check",
+                        command="display ospf peer",
+                        category="routing",
+                        severity="Unchanged",
+                        status="unchanged",
+                        summary="No meaningful change detected.",
+                    ),
+                ],
+            )
+
+            ReportWriter._write_html(report_path, summary)
+
+            parser = StartTagCollector()
+            parser.feed(report_path.read_text(encoding="utf-8"))
+
+        jump_list = parser.first("section", **{"data-jump-list": None})
+        self.assertEqual(jump_list.get("aria-label"), "상태별 바로가기")
+        self.assertIn("hidden", jump_list)
+        self.assertEqual(jump_list.get("aria-hidden"), "true")
+
+        summary_list = parser.first("section", **{"data-summary-list": None})
+        self.assertEqual(summary_list.get("aria-label"), "비교 요약")
+        self.assertIn("hidden", summary_list)
+        self.assertEqual(summary_list.get("aria-hidden"), "true")
+
+        unchanged_summary = parser.first("details", **{"data-summary-severity": "Unchanged"})
+        self.assertIn("summary-list", unchanged_summary.get("class", ""))
+        self.assertIn("unchanged-summary", unchanged_summary.get("class", ""))
+        self.assertIn("hidden", unchanged_summary)
+        self.assertEqual(unchanged_summary.get("aria-hidden"), "true")
+        self.assertNotIn("open", unchanged_summary)
+
+        filter_buttons = {attrs.get("data-filter") for attrs in parser.matching("button") if "data-filter" in attrs}
+        self.assertEqual({"Critical", "Warning", "Info", "Unchanged"}, filter_buttons)
+
+        jump_buttons = parser.matching("button")
+        jump_severities = {attrs.get("data-jump-severity") for attrs in jump_buttons if "data-jump-severity" in attrs}
+        self.assertEqual({"Critical", "Warning", "Info", "Unchanged"}, jump_severities)
+        for attrs in jump_buttons:
+            if "data-jump-severity" in attrs:
+                self.assertIn("hidden", attrs)
+                self.assertEqual(attrs.get("aria-hidden"), "true")
+
+        detail_blocks = [attrs for tag, attrs in parser.tags if tag in {"section", "details"} and attrs.get("data-severity")]
+        self.assertEqual(["Critical", "Warning", "Info", "Unchanged"], [attrs.get("data-severity") for attrs in detail_blocks])
+        for attrs in detail_blocks:
+            self.assertIn("hidden", attrs)
+            self.assertEqual(attrs.get("aria-hidden"), "true")
 
     def test_html_meta_labels_sample_snapshots(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
