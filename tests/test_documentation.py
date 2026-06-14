@@ -12,10 +12,13 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 
 class DocumentationPortabilityTests(unittest.TestCase):
-    def test_guides_do_not_embed_developer_workspace_paths(self) -> None:
-        paths = [PROJECT_DIR / "README.md"]
+    def _documentation_paths(self) -> list[Path]:
+        paths = [PROJECT_DIR / "README.md", PROJECT_DIR / "CHANGELOG.md"]
         paths.extend(sorted((PROJECT_DIR / "docs").glob("*.md")))
         paths.extend(sorted((PROJECT_DIR / "docs").glob("*.html")))
+        return paths
+
+    def test_guides_do_not_embed_developer_workspace_paths(self) -> None:
         forbidden_fragments = [
             r"D:\Codex Project",
             r"D:\Project\Network",
@@ -23,13 +26,51 @@ class DocumentationPortabilityTests(unittest.TestCase):
         ]
 
         offenders: list[str] = []
-        for path in paths:
+        for path in self._documentation_paths():
             text = path.read_text(encoding="utf-8")
             for fragment in forbidden_fragments:
                 if fragment in text:
                     offenders.append(f"{path.relative_to(PROJECT_DIR)} contains {fragment}")
 
         self.assertEqual([], offenders)
+
+    def test_guides_do_not_contain_mojibake_or_replacement_characters(self) -> None:
+        forbidden_fragments = ["�", "臾", "踰", "媛", "珥", "由", "諛", "蹂"]
+
+        offenders: list[str] = []
+        for path in self._documentation_paths():
+            text = path.read_text(encoding="utf-8")
+            for fragment in forbidden_fragments:
+                if fragment in text:
+                    offenders.append(f"{path.relative_to(PROJECT_DIR)} contains {fragment}")
+
+        self.assertEqual([], offenders)
+
+    def test_user_facing_guides_keep_required_korean_workflow_terms(self) -> None:
+        required_terms = [
+            "장비 설정",
+            "비교 결과",
+            "작업 로그",
+            "긴급",
+            "주의",
+            "정보",
+            "변경없음",
+        ]
+        guide_paths = [
+            PROJECT_DIR / "docs" / "USER_GUIDE.md",
+            PROJECT_DIR / "docs" / "USER_GUIDE.html",
+            PROJECT_DIR / "docs" / "DEVELOPER_GUIDE_BEGINNER.md",
+            PROJECT_DIR / "docs" / "DEVELOPER_GUIDE_BEGINNER.html",
+        ]
+
+        missing: list[str] = []
+        for path in guide_paths:
+            text = path.read_text(encoding="utf-8")
+            for term in required_terms:
+                if term not in text:
+                    missing.append(f"{path.relative_to(PROJECT_DIR)} missing {term}")
+
+        self.assertEqual([], missing)
 
     def test_user_guide_images_exist_and_are_referenced(self) -> None:
         image_names = [
