@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.53 - 2026-06-15
+
+- Improved the main workflow screens with shared status panels for account/device setup, collection guidance, preflight status, comparison status, and execution history.
+- Updated device summary and severity filter chips so repeated operational state is easier to scan and selected severity filters use a filled visual state.
+- Switched the work log surface to a more readable operational log treatment with fixed-width text selection styling.
+- Added GUI regression coverage for the new workflow panels and selected severity-card visual state.
+- No collection, SSH, comparison, report generation, or severity-classification behavior changed.
+
 ## v0.8.52 - 2026-06-15
 
 - Applied a calmer AirWave-inspired common console theme to the Tkinter GUI, including the sidebar, buttons, form controls, section headers, Treeview tables, and log/detail panels.
