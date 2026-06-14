@@ -23,6 +23,8 @@ from backbone_state_tracker.tools.write_release_manifest import (
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 CORE_ENTRY_PREFIX = "backbone_state_tracker/core/"
 CORE_ENTRY_PATTERN = re.compile(r'"(backbone_state_tracker/core/[^"]+\.py)"')
+CONFIG_ENTRY_PREFIX = "backbone_state_tracker/config/"
+CONFIG_ENTRY_PATTERN = re.compile(r'"(backbone_state_tracker/config/[^"]+)"')
 DOC_ENTRY_PREFIX = "backbone_state_tracker/docs/"
 DOC_ENTRY_PATTERN = re.compile(r'"(backbone_state_tracker/docs/[^"]+)"')
 TEST_ENTRY_PREFIX = "backbone_state_tracker/tests/"
@@ -116,6 +118,10 @@ def _core_entries(entries: set[str] | dict[str, str]) -> set[str]:
     return {entry for entry in entries if entry.startswith(CORE_ENTRY_PREFIX)}
 
 
+def _config_entries(entries: set[str] | dict[str, str]) -> set[str]:
+    return {entry for entry in entries if entry.startswith(CONFIG_ENTRY_PREFIX)}
+
+
 def _doc_entries(entries: set[str] | dict[str, str]) -> set[str]:
     return {entry for entry in entries if entry.startswith(DOC_ENTRY_PREFIX)}
 
@@ -129,6 +135,22 @@ def _tool_entries(entries: set[str] | dict[str, str]) -> set[str]:
 
 
 class ReleasePackageVerifierTests(unittest.TestCase):
+    def test_common_required_config_entries_match_current_shareable_config_files(self) -> None:
+        excluded = {"devices.yaml"}
+        expected = {
+            f"{CONFIG_ENTRY_PREFIX}{path.name}"
+            for path in sorted(PROJECT_DIR.joinpath("config").glob("*"))
+            if path.is_file() and path.name not in excluded
+        }
+        powershell_text = (PROJECT_DIR / "tools" / "verify_release_package.ps1").read_text(encoding="utf-8")
+
+        self.assertEqual(expected, _config_entries(COMMON_REQUIRED))
+        self.assertEqual(expected, _config_entries(SOURCE_REQUIRED))
+        self.assertEqual(expected, _config_entries(WINDOWS_EXE_REQUIRED))
+        self.assertEqual(expected, _config_entries(_common_entries()))
+        self.assertEqual(expected, _config_entries(_source_entries()))
+        self.assertEqual(expected, set(CONFIG_ENTRY_PATTERN.findall(powershell_text)))
+
     def test_common_required_doc_entries_match_current_docs(self) -> None:
         expected = {
             f"{DOC_ENTRY_PREFIX}{path.name}"
@@ -343,6 +365,20 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             self.assertTrue(
                 any("backbone_state_tracker/docs/images/settings-collection.png" in error for error in result.errors)
             )
+
+    def test_missing_bundled_command_config_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.20_20260612_source.zip"
+            entries = _source_entries()
+            del entries["backbone_state_tracker/config/commands.yaml"]
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.20", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("backbone_state_tracker/config/commands.yaml" in error for error in result.errors))
 
     def test_missing_runtime_regression_test_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

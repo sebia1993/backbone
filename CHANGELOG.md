@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.47 - 2026-06-15
+
+- Added regression coverage that keeps packaged shareable `config/*` files aligned with the real project config files while excluding local `config/devices.yaml`.
+- Added missing-package coverage for `config/commands.yaml` so release ZIPs cannot omit the bundled read-only command set.
+- No collection, SSH, comparison, or report runtime behavior changed.
+
 ## v0.8.46 - 2026-06-15
 
 - Added regression coverage that keeps release package documentation entries aligned with the real `docs/*.md`, `docs/*.html`, and `docs/images/*` files.
