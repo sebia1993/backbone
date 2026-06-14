@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.45 - 2026-06-15
+
+- Added regression coverage that keeps the source ZIP verifier's required release tool script list aligned with the real `tools/*.py` and `tools/*.ps1` files.
+- Added missing-package coverage for release build scripts so source ZIPs cannot omit the scripts needed for internal rebuild and verification.
+- No collection, SSH, comparison, or report runtime behavior changed.
+
 ## v0.8.44 - 2026-06-15
 
 - Strengthened source ZIP verification so every current `core/*.py` runtime module, package initializer, and `requirements.txt` must be included.

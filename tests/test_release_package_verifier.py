@@ -20,6 +20,8 @@ CORE_ENTRY_PREFIX = "backbone_state_tracker/core/"
 CORE_ENTRY_PATTERN = re.compile(r'"(backbone_state_tracker/core/[^"]+\.py)"')
 TEST_ENTRY_PREFIX = "backbone_state_tracker/tests/"
 TEST_ENTRY_PATTERN = re.compile(r'"(backbone_state_tracker/tests/test_[^"]+\.py)"')
+TOOL_ENTRY_PREFIX = "backbone_state_tracker/tools/"
+TOOL_ENTRY_PATTERN = re.compile(r'"(backbone_state_tracker/tools/[^"]+\.(?:py|ps1))"')
 
 
 def _write_zip(path: Path, entries: dict[str, str | bytes]) -> None:
@@ -111,6 +113,10 @@ def _test_entries(entries: set[str] | dict[str, str]) -> set[str]:
     return {entry for entry in entries if entry.startswith(TEST_ENTRY_PREFIX)}
 
 
+def _tool_entries(entries: set[str] | dict[str, str]) -> set[str]:
+    return {entry for entry in entries if entry.startswith(TOOL_ENTRY_PREFIX)}
+
+
 class ReleasePackageVerifierTests(unittest.TestCase):
     def test_source_required_core_entries_match_current_core_files(self) -> None:
         expected = {f"{CORE_ENTRY_PREFIX}{path.name}" for path in sorted((PROJECT_DIR / "core").glob("*.py"))}
@@ -127,6 +133,18 @@ class ReleasePackageVerifierTests(unittest.TestCase):
         self.assertEqual(expected, _test_entries(SOURCE_REQUIRED))
         self.assertEqual(expected, _test_entries(_source_entries()))
         self.assertEqual(expected, set(TEST_ENTRY_PATTERN.findall(powershell_text)))
+
+    def test_source_required_tool_entries_match_current_tool_files(self) -> None:
+        expected = {
+            f"{TOOL_ENTRY_PREFIX}{path.name}"
+            for path in sorted((PROJECT_DIR / "tools").glob("*"))
+            if path.suffix in {".py", ".ps1"}
+        }
+        powershell_text = (PROJECT_DIR / "tools" / "verify_release_package.ps1").read_text(encoding="utf-8")
+
+        self.assertEqual(expected, _tool_entries(SOURCE_REQUIRED))
+        self.assertEqual(expected, _tool_entries(_source_entries()))
+        self.assertEqual(expected, set(TOOL_ENTRY_PATTERN.findall(powershell_text)))
 
     def test_valid_source_package_passes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -320,6 +338,20 @@ class ReleasePackageVerifierTests(unittest.TestCase):
 
             self.assertFalse(result.ok)
             self.assertTrue(any("backbone_state_tracker/requirements.txt" in error for error in result.errors))
+
+    def test_missing_release_tool_script_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.18_20260612_source.zip"
+            entries = _source_entries()
+            del entries["backbone_state_tracker/tools/build_release.ps1"]
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.18", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("backbone_state_tracker/tools/build_release.ps1" in error for error in result.errors))
 
     def test_sidecar_version_mismatch_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

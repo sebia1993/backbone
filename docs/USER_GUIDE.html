@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 사용자 가이드 v0.8.44</title>
+  <title>Backbone State Tracker 사용자 가이드 v0.8.45</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -16,7 +16,7 @@
 </head>
 <body>
   <h1>Backbone State Tracker 사용자 가이드</h1>
-  <p>문서 버전: v0.8.44<br>작성일: 2026-06-15<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
+  <p>문서 버전: v0.8.45<br>작성일: 2026-06-15<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
   <h2>1. 핵심 흐름</h2>
   <ol>
@@ -85,8 +85,8 @@
 
   <h2>7. 배포 ZIP 확인</h2>
   <p>샘플 검증 스냅샷은 실제 작업 전 기준으로 사용되지 않습니다. 샘플만 있는 상태에서 첫 실제 수집을 시작하면 <code>작업 전</code> 기준으로 저장됩니다. 샘플 스냅샷이 프로그램 상단 <code>기준</code>/<code>비교 대상</code> 또는 HTML 리포트 상단 <code>기준</code>/<code>비교</code>에 표시될 때는 <code>샘플:</code> 접두어가 붙습니다.</p>
-  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.44_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.44_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.44_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.44_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
+  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.45_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.45_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.45_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.45_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
 </body>
 </html>
