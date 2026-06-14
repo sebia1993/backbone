@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.54</title>
+  <title>Backbone State Tracker 초급 개발자 가이드 v0.8.55</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -15,7 +15,7 @@
 </head>
 <body>
   <h1>Backbone State Tracker 초급 개발자 가이드</h1>
-  <p>문서 버전: v0.8.54<br>작성일: 2026-06-15<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
+  <p>문서 버전: v0.8.55<br>작성일: 2026-06-15<br>대상: Python과 Windows 배포를 처음 유지보수하는 개발자</p>
 
   <h2>1. 프로젝트 목적</h2>
   <p>백본 3/4호기의 작업 전후 상태를 읽기 전용 명령으로 수집하고, 스냅샷 간 변경점을 GUI와 HTML/XLSX/JSON 리포트로 확인하는 Windows 운영 도구입니다.</p>
@@ -58,7 +58,7 @@ python app.py --smoke-check</code></pre>
   </ul>
 
   <h2>5. UI 디자인 기준</h2>
-  <p>v0.8.52의 1단계 UI 현대화는 HPE Aruba AirWave 계열 운영 콘솔을 참고하되, 특정 제품 화면을 복제하지 않고 색감과 정보 계층만 반영합니다. v0.8.53은 같은 구조 안에서 주요 업무 화면의 안내 패널, 대상 요약, 선택 상태, 로그 가독성을 보강한 2단계 개선입니다. v0.8.54는 비교 결과와 HTML 리포트에서 필터 상태와 상세 맥락을 추적하기 쉽게 만든 3단계 개선입니다.</p>
+  <p>v0.8.52의 1단계 UI 현대화는 HPE Aruba AirWave 계열 운영 콘솔을 참고하되, 특정 제품 화면을 복제하지 않고 색감과 정보 계층만 반영합니다. v0.8.53은 같은 구조 안에서 주요 업무 화면의 안내 패널, 대상 요약, 선택 상태, 로그 가독성을 보강한 2단계 개선입니다. v0.8.54는 비교 결과와 HTML 리포트에서 필터 상태와 상세 맥락을 추적하기 쉽게 만든 3단계 개선입니다. v0.8.55는 이 기준을 문서, 화면 캡처, 릴리스 반입 체크리스트, ZIP 검증 흐름까지 맞춘 마감 단계입니다.</p>
   <ul>
     <li>공통 팔레트는 <code>core/gui.py</code>의 <code>PALETTE</code>를 기준으로 관리합니다.</li>
     <li>주요 액션은 Aruba teal 계열 <code>accent</code>를 사용하고, 보조 액션은 흰색/연한 회색 표면으로 둡니다.</li>
@@ -71,6 +71,26 @@ python app.py --smoke-check</code></pre>
     <li>비교 상세처럼 사용자가 행을 선택해 추적하는 화면에는 선택 대상의 등급, 장비, 명령, 라인 위치를 별도 패널이나 헤더로 반복 표시합니다.</li>
     <li>HTML 리포트의 인터랙션 상태는 DOM <code>hidden</code>과 <code>aria-hidden</code>을 함께 갱신해 화면 표시와 구조 테스트가 일치해야 합니다.</li>
     <li>새 색상이 필요하면 임의 색상보다 <code>PALETTE</code>에 의미 있는 토큰을 먼저 추가합니다.</li>
+  </ul>
+
+  <h3>디자인 토큰 빠른 참조</h3>
+  <table>
+    <tr><th>기준</th><th>코드 위치</th><th>사용 목적</th></tr>
+    <tr><td><code>PALETTE["sidebar"]</code>, <code>PALETTE["sidebar_text"]</code></td><td><code>core/gui.py</code></td><td>좌측 운영 콘솔 레일과 메뉴 기본 상태</td></tr>
+    <tr><td><code>PALETTE["accent"]</code>, <code>PALETTE["accent_dark"]</code>, <code>PALETTE["accent_soft"]</code></td><td><code>core/gui.py</code></td><td>주요 버튼, 현재 메뉴, 선택 필터, 상태 패널 stripe</td></tr>
+    <tr><td><code>PALETTE["surface"]</code>, <code>PALETTE["surface_alt"]</code>, <code>PALETTE["panel_note"]</code></td><td><code>core/gui.py</code></td><td>카드형 섹션, 입력 배경, 보조 안내 패널</td></tr>
+    <tr><td><code>PALETTE["danger"]</code>, <code>PALETTE["warning"]</code>, <code>PALETTE["info"]</code></td><td><code>core/gui.py</code></td><td><code>긴급</code>, <code>주의</code>, <code>정보</code> 상태 색상</td></tr>
+    <tr><td><code>SEVERITY_META</code></td><td><code>core/gui.py</code></td><td>GUI 등급 카드의 라벨, 강조색, soft 배경</td></tr>
+    <tr><td><code>SEVERITY_COLORS</code>, <code>SEVERITY_SOFT_COLORS</code></td><td><code>core/reporter.py</code></td><td>HTML 리포트 badge, count card, 상세 블록 상태 색상</td></tr>
+  </table>
+
+  <h3>컴포넌트 사용 기준</h3>
+  <ul>
+    <li>새 업무 영역은 <code>_make_section()</code>으로 만들고, 안내/상태/실행 이력처럼 짧은 문맥은 <code>_make_status_panel()</code>을 사용합니다.</li>
+    <li>장비 수, 현재 선택, 실행 상태처럼 반복 확인하는 값은 chip이나 status panel로 표현하고 긴 설명문으로 늘리지 않습니다.</li>
+    <li>위험 등급을 표현할 때는 <code>SEVERITY_META</code> 또는 <code>SEVERITY_COLORS</code>를 거치고, 임의의 빨강/노랑/파랑 hex 값을 직접 쓰지 않습니다.</li>
+    <li>HTML 리포트 버튼/상세 블록은 GUI와 같은 <code>Critical</code>, <code>Warning</code>, <code>Info</code>, <code>Unchanged</code> 키를 기준으로 필터링해야 합니다.</li>
+    <li>문서 스크린샷은 샘플 데이터와 TEST-NET 주소만 사용하고, 실제 계정, 실제 장비 IP, 원본 출력은 포함하지 않습니다.</li>
   </ul>
 
   <h2>6. 등급 분류 기준</h2>

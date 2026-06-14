@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.54
+문서 버전: v0.8.55
 작성일: 2026-06-15
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -70,7 +70,7 @@ GUI 변경이 있으면 실제 앱을 실행해 화면이 비어 있지 않은�
 
 ## 6. UI 디자인 기준
 
-v0.8.52의 1단계 UI 현대화는 HPE Aruba AirWave 계열 운영 콘솔을 참고하되, 특정 제품 화면을 복제하지 않고 색감과 정보 계층만 반영합니다. v0.8.53은 같은 구조 안에서 주요 업무 화면의 안내 패널, 대상 요약, 선택 상태, 로그 가독성을 보강한 2단계 개선입니다. v0.8.54는 비교 결과와 HTML 리포트에서 필터 상태와 상세 맥락을 추적하기 쉽게 만든 3단계 개선입니다.
+v0.8.52의 1단계 UI 현대화는 HPE Aruba AirWave 계열 운영 콘솔을 참고하되, 특정 제품 화면을 복제하지 않고 색감과 정보 계층만 반영합니다. v0.8.53은 같은 구조 안에서 주요 업무 화면의 안내 패널, 대상 요약, 선택 상태, 로그 가독성을 보강한 2단계 개선입니다. v0.8.54는 비교 결과와 HTML 리포트에서 필터 상태와 상세 맥락을 추적하기 쉽게 만든 3단계 개선입니다. v0.8.55는 이 기준을 문서, 화면 캡처, 릴리스 반입 체크리스트, ZIP 검증 흐름까지 맞춘 마감 단계입니다.
 
 - 공통 팔레트는 `core/gui.py`의 `PALETTE`를 기준으로 관리합니다.
 - 주요 액션은 Aruba teal 계열 `accent`를 사용하고, 보조 액션은 흰색/연한 회색 표면으로 둡니다.
@@ -83,6 +83,25 @@ v0.8.52의 1단계 UI 현대화는 HPE Aruba AirWave 계열 운영 콘솔을 참
 - 비교 상세처럼 사용자가 행을 선택해 추적하는 화면에는 선택 대상의 등급, 장비, 명령, 라인 위치를 별도 패널이나 헤더로 반복 표시합니다.
 - HTML 리포트의 인터랙션 상태는 DOM `hidden`과 `aria-hidden`을 함께 갱신해 화면 표시와 구조 테스트가 일치해야 합니다.
 - 다음 단계에서 화면을 추가할 때는 새 색상을 임의로 추가하기보다 `PALETTE`에 의미 있는 토큰을 먼저 추가합니다.
+
+### 디자인 토큰 빠른 참조
+
+| 기준 | 코드 위치 | 사용 목적 |
+| --- | --- | --- |
+| `PALETTE["sidebar"]`, `PALETTE["sidebar_text"]` | `core/gui.py` | 좌측 운영 콘솔 레일과 메뉴 기본 상태 |
+| `PALETTE["accent"]`, `PALETTE["accent_dark"]`, `PALETTE["accent_soft"]` | `core/gui.py` | 주요 버튼, 현재 메뉴, 선택 필터, 상태 패널 stripe |
+| `PALETTE["surface"]`, `PALETTE["surface_alt"]`, `PALETTE["panel_note"]` | `core/gui.py` | 카드형 섹션, 입력 배경, 보조 안내 패널 |
+| `PALETTE["danger"]`, `PALETTE["warning"]`, `PALETTE["info"]` | `core/gui.py` | `긴급`, `주의`, `정보` 상태 색상 |
+| `SEVERITY_META` | `core/gui.py` | GUI 등급 카드의 라벨, 강조색, soft 배경 |
+| `SEVERITY_COLORS`, `SEVERITY_SOFT_COLORS` | `core/reporter.py` | HTML 리포트 badge, count card, 상세 블록 상태 색상 |
+
+### 컴포넌트 사용 기준
+
+- 새 업무 영역은 `_make_section()`으로 만들고, 안내/상태/실행 이력처럼 짧은 문맥은 `_make_status_panel()`을 사용합니다.
+- 장비 수, 현재 선택, 실행 상태처럼 반복 확인하는 값은 chip이나 status panel로 표현하고 긴 설명문으로 늘리지 않습니다.
+- 위험 등급을 표현할 때는 `SEVERITY_META` 또는 `SEVERITY_COLORS`를 거치고, 임의의 빨강/노랑/파랑 hex 값을 직접 쓰지 않습니다.
+- HTML 리포트 버튼/상세 블록은 GUI와 같은 `Critical`, `Warning`, `Info`, `Unchanged` 키를 기준으로 필터링해야 합니다.
+- 문서 스크린샷은 샘플 데이터와 TEST-NET 주소만 사용하고, 실제 계정, 실제 장비 IP, 원본 출력은 포함하지 않습니다.
 
 ## 7. 등급 분류 기준
 

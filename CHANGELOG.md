@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.8.55 - 2026-06-15
+
+- Finalized the UI modernization handoff with updated operator guide screenshots and release checklist visual verification steps.
+- Expanded the beginner developer guide with design-token and component-usage notes for the AirWave-inspired Tkinter and HTML report styling.
+- Updated README, command guide, user guide, developer guide, version history, and release checklist MD/HTML documents for v0.8.55 packages.
+- Kept collection, SSH, comparison, report data, and severity-classification behavior unchanged.
+
 ## v0.8.54 - 2026-06-15
 
 - Added a GUI comparison selection-context panel so the selected severity, device, command, change type, and line remain visible while reviewing before/after values.
