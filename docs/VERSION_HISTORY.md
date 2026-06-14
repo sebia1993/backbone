@@ -1,22 +1,24 @@
 # Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.8.33
-작성일: 2026-06-12  
+문서 버전: v0.8.35
+작성일: 2026-06-14
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
 
-### v0.8.33 - 2026-06-12
+### v0.8.35 - 2026-06-14
 
-- `cpu_usage`와 `memory_usage`는 스냅샷 간 수치 변화량이 아니라 비교 대상 스냅샷의 현재 임계치 기준만으로 등급을 정하도록 변경했습니다.
-- CPU 50% 미만과 memory FreeRatio 40% 초과는 출력이 동일해도 `정보`로 표시합니다.
-- CPU/Memory 출력이 바뀌었지만 기준값에 걸리지 않는 정상 범위 변화가 `주의`로 승격되지 않게 했습니다.
-- 정상 범위 CPU/Memory와 파싱 실패 출력 변경에 대한 diff-engine 회귀 테스트를 추가했습니다.
+- VRRP 상태 수집을 위해 `vrrp_status` 명령을 추가했습니다.
+- 실제 장비 명령은 `show vrrp`이며, VRRP Master/Backup, priority, VIP, state 변화를 비교할 수 있습니다.
+- VRRP 비교 결과는 기존 `routing` 분류 규칙을 사용합니다. 일반 변화는 `주의`, down/fail 계열은 `긴급`입니다.
+- 설정 로드, preflight 안전성, VRRP 비교 등급에 대한 회귀 테스트를 추가했습니다.
 
 ## 2. 이전 주요 변경
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.8.34 | 2026-06-12 | 정상 CPU/Memory 동일 출력 처리 변경을 시도했으나 운영 기준에 맞지 않아 원복했습니다. |
+| v0.8.33 | 2026-06-12 | CPU/Memory 수치 변화가 기준값에 걸리지 않으면 주의로 승격되지 않도록 조정했습니다. |
 | v0.8.32 | 2026-06-12 | HTML 리포트 상태 필터에서 숨김 표시가 CSS에 덮이지 않도록 보강했습니다. |
 | v0.8.31 | 2026-06-12 | HTML 비교 리포트에서 상태 카드 선택 전 상세를 숨기고 선택한 상태만 표시하도록 변경했습니다. |
 | v0.8.30 | 2026-06-12 | CPU 5초/1분/5분 사용률 구조화 임계치 판정을 추가했습니다. |
@@ -43,6 +45,13 @@
 | v0.8.9 | 2026-06-12 | ZIP 파일명, sidecar, manifest의 버전/날짜 일치 검증을 추가했습니다. |
 | v0.8.8 | 2026-06-12 | 릴리스 반입 체크리스트를 필수 문서로 추가했습니다. |
 | v0.8.7 이하 | 2026-06-11 이전 | 스냅샷 비교, redaction, 공유 ZIP, 샘플 검증, GUI 상세 비교 기능을 단계적으로 추가했습니다. |
+
+### v0.8.33 - 2026-06-12
+
+- `cpu_usage`와 `memory_usage`는 스냅샷 간 수치 변화량이 아니라 비교 대상 스냅샷의 현재 임계치 기준만으로 등급을 정하도록 변경했습니다.
+- CPU 50% 미만과 memory FreeRatio 40% 초과는 출력이 동일해도 `정보`로 표시합니다.
+- CPU/Memory 출력이 바뀌었지만 기준값에 걸리지 않는 정상 범위 변화가 `주의`로 승격되지 않게 했습니다.
+- 정상 범위 CPU/Memory와 파싱 실패 출력 변경에 대한 diff-engine 회귀 테스트를 추가했습니다.
 
 ### v0.8.32 - 2026-06-12
 
@@ -149,15 +158,15 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.33 산출물 이름
+## 3. v0.8.35 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.33_20260612_source.zip
-dist\backbone_state_tracker_v0.8.33_20260612_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.33_20260612_windows_exe.zip
-dist\backbone_state_tracker_v0.8.33_20260612_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.33_20260612_release_manifest.txt
-dist\backbone_state_tracker_v0.8.33_20260612_verify_release_package.ps1
+dist\backbone_state_tracker_v0.8.35_20260614_source.zip
+dist\backbone_state_tracker_v0.8.35_20260614_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.35_20260614_windows_exe.zip
+dist\backbone_state_tracker_v0.8.35_20260614_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.35_20260614_release_manifest.txt
+dist\backbone_state_tracker_v0.8.35_20260614_verify_release_package.ps1
 ```
 
 ## 4. 릴리스 검증 기준

@@ -98,6 +98,13 @@ commands:
     allow_failure: true
     timeout: 60
 
+  - id: vrrp_status
+    command: show vrrp
+    description: VRRP virtual router state and master/backup role.
+    category: routing
+    allow_failure: true
+    timeout: 45
+
   - id: cpu_usage
     command: display cpu-usage
     description: CPU utilization.
@@ -115,4 +122,3 @@ commands:
     description: Recent system log entries for link, OSPF, power, fan, and module events.
     category: log
     timeout: 90
-

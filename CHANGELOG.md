@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.35 - 2026-06-14
+
+- Added `vrrp_status` with the read-only `show vrrp` command to collect VRRP master/backup and virtual router state.
+- Documented the VRRP command in the command guide and release/version history.
+- Added regression coverage for VRRP config loading, preflight safety, and routing comparison severity.
+
 ## v0.8.33 - 2026-06-12
 
 - Changed `cpu_usage` and `memory_usage` classification so numeric snapshot differences do not create resource warnings by themselves.
