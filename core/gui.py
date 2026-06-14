@@ -68,6 +68,7 @@ PALETTE = {
     "info_soft": "#E8F1FB",
     "neutral": "#687687",
     "neutral_soft": "#EEF2F5",
+    "panel_note": "#F4F8FA",
     "log_bg": "#101820",
     "log_text": "#DCE6ED",
 }
@@ -114,6 +115,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.workflow_busy = False
         self.busy_sensitive_widgets: list[tk.Widget] = []
         self.metric_chips: dict[str, tk.Frame] = {}
+        self.metric_chip_parts: dict[str, list[tk.Widget]] = {}
 
         self._ensure_runtime_config_files()
 
@@ -463,6 +465,46 @@ class BackboneStateTrackerApp(tk.Tk):
         ).grid(row=0, column=1, sticky="w")
         return section
 
+    def _make_status_panel(
+        self,
+        parent: tk.Frame,
+        row: int,
+        title: str,
+        *,
+        text: str | None = None,
+        textvariable: tk.StringVar | None = None,
+        accent: str | None = None,
+        soft: str | None = None,
+        column: int = 0,
+        columnspan: int = 1,
+        pady: tuple[int, int] = (0, 0),
+    ) -> tk.Frame:
+        accent_color = accent or PALETTE["accent"]
+        bg_color = soft or PALETTE["panel_note"]
+        panel = tk.Frame(parent, bg=bg_color, highlightbackground=PALETTE["border"], highlightthickness=1)
+        panel.grid(row=row, column=column, columnspan=columnspan, sticky="ew", pady=pady)
+        panel.columnconfigure(1, weight=1)
+        tk.Frame(panel, bg=accent_color, width=4).grid(row=0, column=0, rowspan=2, sticky="nsw")
+        tk.Label(
+            panel,
+            text=title,
+            bg=bg_color,
+            fg=accent_color,
+            font=("Malgun Gothic", 9, "bold"),
+        ).grid(row=0, column=1, sticky="w", padx=12, pady=(8, 0))
+        body = tk.Label(
+            panel,
+            text=text,
+            textvariable=textvariable,
+            bg=bg_color,
+            fg=PALETTE["text"],
+            justify="left",
+            wraplength=940,
+            font=("Malgun Gothic", 9),
+        )
+        body.grid(row=1, column=1, sticky="ew", padx=12, pady=(2, 8))
+        return panel
+
     def _metric_card(self, parent: tk.Frame, column: int, title: str, variable: tk.StringVar, accent: str, soft: str) -> None:
         card = tk.Frame(
             parent,
@@ -511,6 +553,7 @@ class BackboneStateTrackerApp(tk.Tk):
         for widget in (chip, title_label, value_label):
             widget.bind("<Button-1>", lambda _event, selected=severity: self.set_diff_severity_filter(selected))
         self.metric_chips[severity] = chip
+        self.metric_chip_parts[severity] = [chip, title_label, value_label]
 
     def _track_busy_sensitive(self, widget: tk.Widget) -> None:
         self.busy_sensitive_widgets.append(widget)
@@ -571,18 +614,24 @@ class BackboneStateTrackerApp(tk.Tk):
         collect_button = ttk.Button(form, text="상태 수집 시작", style="Primary.TButton", command=self.collect_snapshot)
         collect_button.grid(row=0, column=3, sticky="e")
         self._track_busy_sensitive(collect_button)
-        tk.Label(
+        self.collection_flow_panel = self._make_status_panel(
             form,
+            1,
+            "수집 흐름",
             text="단계명을 입력하지 않으면 점검시간_YYYYMMDD_HHMM 형식으로 저장됩니다. 첫 수집은 기준 스냅샷으로, 이후 수집은 최신 기준과 자동 비교됩니다.",
-            bg=PALETTE["surface"],
-            fg=PALETTE["muted"],
-            font=("Malgun Gothic", 9),
-        ).grid(row=1, column=0, columnspan=4, sticky="w", pady=(10, 0))
-        tk.Label(form, textvariable=self.preflight_status_var, bg=PALETTE["surface"], fg=PALETTE["muted"]).grid(
-            row=2,
-            column=0,
+            accent=PALETTE["accent_dark"],
+            soft=PALETTE["accent_soft"],
             columnspan=4,
-            sticky="w",
+            pady=(12, 0),
+        )
+        self.collection_status_panel = self._make_status_panel(
+            form,
+            2,
+            "설정 점검 상태",
+            textvariable=self.preflight_status_var,
+            accent=PALETTE["info"],
+            soft=PALETTE["info_soft"],
+            columnspan=4,
             pady=(10, 0),
         )
 
@@ -635,7 +684,16 @@ class BackboneStateTrackerApp(tk.Tk):
         ttk.Button(actions, text="최근 리포트", style="Secondary.TButton", command=self.open_last_report).pack(side="left", padx=(8, 0))
         ttk.Button(actions, text="공유 ZIP", style="Secondary.TButton", command=self.open_last_share_bundle).pack(side="left", padx=(8, 0))
         ttk.Button(actions, text="결과 폴더", style="Secondary.TButton", command=self.open_outputs).pack(side="left", padx=(8, 0))
-        tk.Label(actions, textvariable=self.compare_status_var, bg=PALETTE["surface"], fg=PALETTE["muted"]).pack(side="left", padx=(16, 0))
+        self.compare_status_panel = self._make_status_panel(
+            form,
+            2,
+            "비교 상태",
+            textvariable=self.compare_status_var,
+            accent=PALETTE["info"],
+            soft=PALETTE["info_soft"],
+            columnspan=5,
+            pady=(12, 0),
+        )
 
         detail = self._make_section(page, "최근 변경 상세", 1)
         detail.rowconfigure(1, weight=1)
@@ -827,11 +885,13 @@ class BackboneStateTrackerApp(tk.Tk):
     def set_diff_severity_filter(self, severity: str) -> None:
         self.diff_severity_filter_var.set(SEVERITY_FILTER_LABELS.get(severity, "전체"))
         self._render_diff_details()
+        self._update_metric_chip_state()
 
     def reset_diff_filters(self) -> None:
         self.diff_severity_filter_var.set("전체")
         self.diff_search_var.set("")
         self._render_diff_details()
+        self._update_metric_chip_state()
 
     def _selected_diff_severity_filter(self) -> str:
         return SEVERITY_FILTERS.get(self.diff_severity_filter_var.get(), "")
@@ -839,10 +899,19 @@ class BackboneStateTrackerApp(tk.Tk):
     def _update_metric_chip_state(self) -> None:
         selected = self._selected_diff_severity_filter()
         for severity, chip in self.metric_chips.items():
-            _label, accent, _soft = SEVERITY_META[severity]
+            _label, accent, soft = SEVERITY_META[severity]
             border = accent if severity == selected else PALETTE["border"]
             thickness = 2 if severity == selected else 1
-            chip.configure(highlightbackground=border, highlightthickness=thickness)
+            bg = soft if severity == selected else PALETTE["surface"]
+            fg = accent if severity == selected else PALETTE["muted"]
+            chip.configure(bg=bg, highlightbackground=border, highlightthickness=thickness)
+            for part in self.metric_chip_parts.get(severity, []):
+                try:
+                    part.configure(bg=bg)
+                    if part is not chip:
+                        part.configure(fg=fg)
+                except tk.TclError:
+                    continue
 
     @staticmethod
     def _diff_row_matches_filter(item: DiffItem, line: DiffLine, severity_filter: str, query: str) -> bool:
@@ -1005,6 +1074,16 @@ class BackboneStateTrackerApp(tk.Tk):
         ttk.Entry(access_body, textvariable=self.password_var, show="*").grid(row=0, column=3, sticky="ew", padx=(8, 16))
         tk.Label(access_body, text="제한시간(초)", bg=PALETTE["surface"], fg=PALETTE["muted"]).grid(row=0, column=4, sticky="w")
         ttk.Entry(access_body, textvariable=self.timeout_var, width=8).grid(row=0, column=5, sticky="w", padx=(8, 0))
+        self.access_flow_panel = self._make_status_panel(
+            access_body,
+            1,
+            "운영 입력 순서",
+            text="접속 계정과 대상 장비를 먼저 확인한 뒤 설정 점검을 실행하고, 이상이 없으면 상태 수집을 시작합니다.",
+            accent=PALETTE["accent_dark"],
+            soft=PALETTE["accent_soft"],
+            columnspan=6,
+            pady=(12, 0),
+        )
 
         devices = self._make_section(page, "대상 장비", 1)
         body = tk.Frame(devices, bg=PALETTE["surface"], padx=16, pady=16)
@@ -1029,13 +1108,25 @@ class BackboneStateTrackerApp(tk.Tk):
         load_button.pack(side="left", padx=(8, 0))
         save_button = ttk.Button(actions, text="장비 목록 저장", style="Primary.TButton", command=self.save_devices_to_default)
         save_button.pack(side="left", padx=(8, 0))
-        tk.Label(
+        summary_chip = tk.Frame(
             actions,
+            bg=PALETTE["panel_note"],
+            highlightbackground=PALETTE["border"],
+            highlightthickness=1,
+            padx=12,
+            pady=7,
+        )
+        summary_chip.pack(side="right")
+        tk.Label(summary_chip, text="대상 요약", bg=PALETTE["panel_note"], fg=PALETTE["muted"], font=("Malgun Gothic", 8, "bold")).pack(
+            side="left", padx=(0, 8)
+        )
+        tk.Label(
+            summary_chip,
             textvariable=self.device_summary_var,
-            bg=PALETTE["surface"],
-            fg=PALETTE["muted"],
-            font=("Malgun Gothic", 9),
-        ).pack(side="right")
+            bg=PALETTE["panel_note"],
+            fg=PALETTE["text"],
+            font=("Malgun Gothic", 9, "bold"),
+        ).pack(side="left")
         for button in (add_button, load_button, save_button):
             self._track_busy_sensitive(button)
         self._place_device_actions()
@@ -1102,8 +1193,18 @@ class BackboneStateTrackerApp(tk.Tk):
         section.rowconfigure(1, weight=1)
         log_frame = tk.Frame(section, bg=PALETTE["surface"], padx=16, pady=16)
         log_frame.grid(row=1, column=0, sticky="nsew")
-        log_frame.rowconfigure(0, weight=1)
+        log_frame.rowconfigure(1, weight=1)
         log_frame.columnconfigure(0, weight=1)
+        self.log_flow_panel = self._make_status_panel(
+            log_frame,
+            0,
+            "실행 이력",
+            text="수집 시작, 설정 오류, 비교 완료, 리포트 생성 위치를 시간 순서로 남깁니다. 민감 정보는 로그 저장 전 마스킹합니다.",
+            accent=PALETTE["accent_dark"],
+            soft=PALETTE["panel_note"],
+            columnspan=2,
+            pady=(0, 12),
+        )
 
         self.log_text = tk.Text(
             log_frame,
@@ -1115,11 +1216,13 @@ class BackboneStateTrackerApp(tk.Tk):
             relief="flat",
             padx=12,
             pady=12,
-            font=("Malgun Gothic", 10),
+            selectbackground=PALETTE["accent_dark"],
+            selectforeground="#FFFFFF",
+            font=("Consolas", 10),
         )
-        self.log_text.grid(row=0, column=0, sticky="nsew")
+        self.log_text.grid(row=1, column=0, sticky="nsew")
         scroll = ttk.Scrollbar(log_frame, command=self.log_text.yview)
-        scroll.grid(row=0, column=1, sticky="ns")
+        scroll.grid(row=1, column=1, sticky="ns")
         self.log_text.configure(yscrollcommand=scroll.set)
         self.log("준비 완료. 장비 정보와 접속 계정을 확인한 뒤 작업 단계별 상태를 수집하세요.")
 

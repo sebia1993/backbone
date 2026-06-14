@@ -325,6 +325,40 @@ class GuiDiffFormattingTests(unittest.TestCase):
         finally:
             app.destroy()
 
+    def test_workflow_pages_use_operational_status_panels(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            settings_texts = self._widget_texts(app.pages["settings"])
+            log_texts = self._widget_texts(app.pages["logs"])
+
+            self.assertIn("운영 입력 순서", settings_texts)
+            self.assertIn("대상 요약", settings_texts)
+            self.assertIn("수집 흐름", settings_texts)
+            self.assertIn("설정 점검 상태", settings_texts)
+            self.assertIn("실행 이력", log_texts)
+            self.assertTrue(hasattr(app, "collection_flow_panel"))
+            self.assertTrue(hasattr(app, "collection_status_panel"))
+            self.assertTrue(hasattr(app, "compare_status_panel"))
+            self.assertTrue(hasattr(app, "log_flow_panel"))
+            self.assertEqual(app.collection_flow_panel.cget("bg"), PALETTE["accent_soft"])
+            self.assertIn("Consolas", str(app.log_text.cget("font")))
+        finally:
+            app.destroy()
+
+    def test_metric_chip_selection_uses_filled_state(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            app.set_diff_severity_filter("Critical")
+
+            self.assertEqual(app.metric_chips["Critical"].cget("bg"), PALETTE["danger_soft"])
+            self.assertEqual(app.metric_chips["Critical"].cget("highlightbackground"), PALETTE["danger"])
+            self.assertEqual(int(app.metric_chips["Critical"].cget("highlightthickness")), 2)
+            self.assertEqual(app.metric_chips["Warning"].cget("bg"), PALETTE["surface"])
+        finally:
+            app.destroy()
+
     def test_metric_chip_filter_shows_unchanged_summary_rows(self) -> None:
         app = BackboneStateTrackerApp()
         app.withdraw()
