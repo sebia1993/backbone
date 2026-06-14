@@ -608,7 +608,9 @@ class ReportWriter:
       }}
       if (unchangedSummary) {{
         setElementHidden(unchangedSummary, !severityVisible("Unchanged"));
-        unchangedSummary.open = activeFilter === "Unchanged";
+        if (activeFilter !== "Unchanged") {{
+          unchangedSummary.open = false;
+        }}
       }}
     }}
     function applyFilter(nextFilter) {{
