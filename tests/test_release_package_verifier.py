@@ -114,6 +114,17 @@ def _source_entries() -> dict[str, str]:
     return entries
 
 
+def _windows_exe_entries() -> dict[str, str | bytes]:
+    entries: dict[str, str | bytes] = _common_entries()
+    entries.update(
+        {
+            "backbone_state_tracker/BackboneStateTracker.exe": b"fake executable payload",
+            "backbone_state_tracker/RUN_FIRST.txt": "run first instructions",
+        }
+    )
+    return entries
+
+
 def _core_entries(entries: set[str] | dict[str, str]) -> set[str]:
     return {entry for entry in entries if entry.startswith(CORE_ENTRY_PREFIX)}
 
@@ -217,6 +228,25 @@ class ReleasePackageVerifierTests(unittest.TestCase):
 
             self.assertTrue(result.ok, result.errors)
             self.assertEqual(result.package_type, "source")
+
+    def test_valid_windows_exe_package_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.1_20260611_windows_exe.zip"
+            _write_zip(package, _windows_exe_entries())
+            write_package_checksum(package, "0.8.1", generated_at="2026-06-11T10:00:00+09:00")
+            write_release_manifest(
+                "backbone_state_tracker",
+                "0.8.1",
+                "20260611",
+                dist,
+                generated_at="2026-06-11T10:01:00+09:00",
+            )
+
+            result = verify_release_package(package, require_manifest=True)
+
+            self.assertTrue(result.ok, result.errors)
+            self.assertEqual(result.package_type, "windows_exe")
 
     def test_hash_mismatch_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -379,6 +409,36 @@ class ReleasePackageVerifierTests(unittest.TestCase):
 
             self.assertFalse(result.ok)
             self.assertTrue(any("backbone_state_tracker/config/commands.yaml" in error for error in result.errors))
+
+    def test_missing_windows_executable_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.21_20260612_windows_exe.zip"
+            entries = _windows_exe_entries()
+            del entries["backbone_state_tracker/BackboneStateTracker.exe"]
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.21", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(
+                any("backbone_state_tracker/BackboneStateTracker.exe" in error for error in result.errors)
+            )
+
+    def test_missing_run_first_file_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.22_20260612_windows_exe.zip"
+            entries = _windows_exe_entries()
+            del entries["backbone_state_tracker/RUN_FIRST.txt"]
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.22", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("backbone_state_tracker/RUN_FIRST.txt" in error for error in result.errors))
 
     def test_missing_runtime_regression_test_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

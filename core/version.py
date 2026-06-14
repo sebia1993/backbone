@@ -2,6 +2,6 @@ from __future__ import annotations
 
 
 APP_NAME = "Backbone State Tracker"
-APP_VERSION = "0.8.47"
+APP_VERSION = "0.8.48"
 APP_RELEASE_DATE = "2026-06-15"
 
