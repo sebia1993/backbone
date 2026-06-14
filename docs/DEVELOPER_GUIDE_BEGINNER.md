@@ -1,6 +1,6 @@
 # Backbone State Tracker 초급 개발자 가이드
 
-문서 버전: v0.8.48
+문서 버전: v0.8.49
 작성일: 2026-06-15
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
@@ -97,5 +97,5 @@ GUI 변경이 있으면 실제 앱을 실행해 화면이 비어 있지 않은�
 ## 9. 보안 주의
 
 - 암호, 토큰, 실제 장비 원본 출력, 고객 데이터는 Git과 배포 ZIP에 넣지 않습니다.
-- `config/devices.yaml`, `outputs/`, `raw/`, `dist/`, `build/`는 릴리스 ZIP에 포함하지 않습니다.
+- `config/devices.yaml`, `outputs/`, `raw/`, `dist/`, `build/`, `.venv/`, `venv/`, `.pytest_cache/`는 릴리스 ZIP에 포함하지 않습니다.
 - 실제 장비 변경 명령은 추가하지 않습니다.

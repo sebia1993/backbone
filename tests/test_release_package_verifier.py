@@ -9,6 +9,7 @@ from zipfile import ZipFile
 
 from backbone_state_tracker.tools.verify_release_package import (
     COMMON_REQUIRED,
+    FORBIDDEN_PATTERNS,
     SOURCE_REQUIRED,
     WINDOWS_EXE_REQUIRED,
     verify_release_package,
@@ -275,6 +276,70 @@ class ReleasePackageVerifierTests(unittest.TestCase):
 
             self.assertFalse(result.ok)
             self.assertTrue(any("Forbidden ZIP entry" in error for error in result.errors))
+
+    def test_forbidden_patterns_match_release_exclusion_policy(self) -> None:
+        expected = {
+            r"/\.git/",
+            r"/outputs/",
+            r"/dist/",
+            r"/build/",
+            r"/raw/",
+            r"/\.venv/",
+            r"/venv/",
+            r"/\.pytest_cache/",
+            r"/config/devices\.yaml$",
+            r"__pycache__",
+            r"\.pyc$",
+            r"\.spec$",
+        }
+        powershell_text = (PROJECT_DIR / "tools" / "verify_release_package.ps1").read_text(encoding="utf-8")
+
+        self.assertEqual(expected, {pattern.pattern for pattern in FORBIDDEN_PATTERNS})
+        for pattern in expected:
+            self.assertIn(pattern, powershell_text)
+
+    def test_forbidden_runtime_output_and_build_folders_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.23_20260612_source.zip"
+            entries = _source_entries()
+            forbidden_entries = [
+                "backbone_state_tracker/outputs/snapshots/pre/check.json",
+                "backbone_state_tracker/raw/backbone3/device_status.txt",
+                "backbone_state_tracker/dist/old_release.zip",
+                "backbone_state_tracker/build/temp.txt",
+            ]
+            for entry in forbidden_entries:
+                entries[entry] = "local runtime artifact"
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.23", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            for entry in forbidden_entries:
+                self.assertTrue(any(f"Forbidden ZIP entry found: {entry}" in error for error in result.errors))
+
+    def test_forbidden_virtual_environment_and_test_cache_folders_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.8.24_20260612_source.zip"
+            entries = _source_entries()
+            forbidden_entries = [
+                "backbone_state_tracker/.venv/pyvenv.cfg",
+                "backbone_state_tracker/venv/pyvenv.cfg",
+                "backbone_state_tracker/.pytest_cache/CACHEDIR.TAG",
+            ]
+            for entry in forbidden_entries:
+                entries[entry] = "local cache"
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.24", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            for entry in forbidden_entries:
+                self.assertTrue(any(f"Forbidden ZIP entry found: {entry}" in error for error in result.errors))
 
     def test_unexpected_top_level_zip_entry_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

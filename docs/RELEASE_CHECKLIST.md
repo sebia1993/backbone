@@ -1,18 +1,18 @@
 # Backbone State Tracker 릴리스 반입 체크리스트
 
-문서 버전: v0.8.48
+문서 버전: v0.8.49
 작성일: 2026-06-15
 대상: 사외 개발 ZIP을 사내 환경으로 반입해 검증하는 운영자와 인수자
 
 ## 1. 수령 파일
 
 ```text
-backbone_state_tracker_v0.8.48_YYYYMMDD_source.zip
-backbone_state_tracker_v0.8.48_YYYYMMDD_source.zip.sha256.txt
-backbone_state_tracker_v0.8.48_YYYYMMDD_windows_exe.zip
-backbone_state_tracker_v0.8.48_YYYYMMDD_windows_exe.zip.sha256.txt
-backbone_state_tracker_v0.8.48_YYYYMMDD_release_manifest.txt
-backbone_state_tracker_v0.8.48_YYYYMMDD_verify_release_package.ps1
+backbone_state_tracker_v0.8.49_YYYYMMDD_source.zip
+backbone_state_tracker_v0.8.49_YYYYMMDD_source.zip.sha256.txt
+backbone_state_tracker_v0.8.49_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.49_YYYYMMDD_windows_exe.zip.sha256.txt
+backbone_state_tracker_v0.8.49_YYYYMMDD_release_manifest.txt
+backbone_state_tracker_v0.8.49_YYYYMMDD_verify_release_package.ps1
 ```
 
 ## 2. ZIP 내부 필수 확인
@@ -42,6 +42,9 @@ backbone_state_tracker_v0.8.48_YYYYMMDD_verify_release_package.ps1
 - `raw/`
 - `dist/`
 - `build/`
+- `.venv/`
+- `venv/`
+- `.pytest_cache/`
 - `config/devices.yaml`
 - `__pycache__/`
 - `.pyc`
@@ -50,9 +53,9 @@ backbone_state_tracker_v0.8.48_YYYYMMDD_verify_release_package.ps1
 ## 4. 해시와 manifest 검증
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.48_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.48_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.48_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.48_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.49_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.49_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.49_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.49_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 검증기는 다음을 확인합니다.
@@ -67,6 +70,7 @@ powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.48_YYYYMM
 - Source ZIP의 전체 런타임 core 모듈과 dependency 파일 포함 여부
 - Source ZIP의 릴리스 빌드/검증 도구 스크립트 포함 여부
 - Windows EXE ZIP의 `BackboneStateTracker.exe`와 `RUN_FIRST.txt` 포함 여부
+- `outputs/`, `raw/`, `dist/`, `build/`, `.venv/`, `venv/`, `.pytest_cache/` 같은 로컬 산출물/환경 폴더 포함 여부
 - 금지 경로 포함 여부
 - ZIP 내부 중복 엔트리 여부
 - manifest 중복 Package 레코드 여부

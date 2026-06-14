@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.49 - 2026-06-15
+
+- Strengthened Python and PowerShell release package verification to reject `.venv`, `venv`, and `.pytest_cache` entries.
+- Added regression coverage for forbidden runtime output, raw output, build, dist, virtual environment, and test cache folders in release ZIPs.
+- No collection, SSH, comparison, or report runtime behavior changed.
+
 ## v0.8.48 - 2026-06-15
 
 - Added Windows EXE ZIP fixture coverage for the release package verifier.
