@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 점검 명령어 가이드 v0.8.35</title>
+  <title>Backbone State Tracker 점검 명령어 가이드 v0.8.36</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -14,7 +14,7 @@
 </head>
 <body>
   <h1>Backbone State Tracker 점검 명령어 가이드</h1>
-  <p>문서 버전: v0.8.35<br>작성일: 2026-06-14<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
+  <p>문서 버전: v0.8.36<br>작성일: 2026-06-14<br>대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자</p>
 
   <h2>1. 기본 원칙</h2>
   <ul>
@@ -28,15 +28,20 @@
   <table>
     <tr><th>ID</th><th>명령어</th><th>의미</th><th>핵심 확인</th></tr>
     <tr><td><code>disable_paging</code></td><td><code>screen-length disable</code></td><td>페이지 넘김 해제</td><td>출력이 중간에 끊기지 않도록 합니다.</td></tr>
+    <tr><td><code>system_clock</code></td><td><code>display clock</code></td><td>장비 시간 확인</td><td>시간 자체는 비교 노이즈로 제외됩니다.</td></tr>
     <tr><td><code>system_version</code></td><td><code>display version</code></td><td>OS, 부팅 이미지, uptime 확인</td><td>예기치 않은 재부팅 또는 이미지 변화를 봅니다.</td></tr>
     <tr><td><code>device_status</code></td><td><code>display device</code></td><td>섀시/슬롯/모듈 상태</td><td>Fault, Abnormal, Offline, Missing 변화는 긴급입니다.</td></tr>
     <tr><td><code>power_status</code></td><td><code>display power</code></td><td>전원 상태</td><td>State가 Normal이 아니면 긴급입니다.</td></tr>
     <tr><td><code>fan_status</code></td><td><code>display fan</code></td><td>팬 상태</td><td>fan failure, stopped, abnormal 변화를 봅니다.</td></tr>
+    <tr><td><code>environment_status</code></td><td><code>display environment</code></td><td>온도/센서 확인</td><td>temperature alarm, over threshold 변화를 봅니다.</td></tr>
     <tr><td><code>alarm_status</code></td><td><code>display alarm</code></td><td>현재 알람</td><td>major alarm은 긴급, minor alarm은 주의입니다.</td></tr>
     <tr><td><code>interface_brief</code></td><td><code>display interface brief</code></td><td>인터페이스 up/down 요약</td><td>작업 계획과 무관한 Down은 긴급입니다.</td></tr>
     <tr><td><code>link_aggregation_summary</code></td><td><code>display link-aggregation summary</code></td><td>LACP selected 수</td><td>selected 수 감소, unselected, not selected는 긴급입니다.</td></tr>
+    <tr><td><code>link_aggregation_verbose</code></td><td><code>display link-aggregation verbose</code></td><td>LACP 멤버 상세</td><td>특정 멤버만 빠지는지 확인합니다.</td></tr>
+    <tr><td><code>vlan_summary</code></td><td><code>display vlan</code></td><td>VLAN/포트 멤버십 확인</td><td>VLAN 누락 또는 예상 밖 멤버십 변화를 봅니다.</td></tr>
     <tr><td><code>stp_brief</code></td><td><code>display stp brief</code></td><td>STP 역할/상태</td><td>root, blocked, forwarding 변화를 확인합니다.</td></tr>
     <tr><td><code>ospf_peer</code></td><td><code>display ospf peer</code></td><td>OSPF neighbor</td><td>Full 이탈, Init, ExStart, Loading은 긴급입니다.</td></tr>
+    <tr><td><code>ospf_routes</code></td><td><code>display ip routing-table protocol ospf</code></td><td>OSPF 경로 확인</td><td>주요 경로 삭제와 next-hop 변화를 봅니다.</td></tr>
     <tr><td><code>vrrp_status</code></td><td><code>show vrrp</code></td><td>VRRP 상태</td><td>Master/Backup, priority, VIP, state 변화를 봅니다. Down/fail 계열은 긴급입니다.</td></tr>
     <tr><td><code>cpu_usage</code></td><td><code>display cpu-usage</code></td><td>CPU 상태</td><td>5초/1분/5분 값 중 70% 이상은 긴급, 50~69%는 주의, 모두 50% 미만은 정보입니다.</td></tr>
     <tr><td><code>memory_usage</code></td><td><code>display memory</code></td><td>메모리 상태</td><td>FreeRatio 30% 이하는 긴급, 31~40%는 주의, 40% 초과는 정보입니다.</td></tr>
