@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 버전별 변경내역 v0.8.38</title>
+  <title>Backbone State Tracker 버전별 변경내역 v0.8.39</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2, h3 { color: #102a43; }
@@ -15,19 +15,20 @@
 </head>
 <body>
   <h1>Backbone State Tracker 버전별 변경내역</h1>
-  <p>문서 버전: v0.8.38<br>작성일: 2026-06-14<br>대상: 운영자, 인수자, 초급 유지보수 담당자</p>
+  <p>문서 버전: v0.8.39<br>작성일: 2026-06-14<br>대상: 운영자, 인수자, 초급 유지보수 담당자</p>
 
   <h2>1. 최신 버전</h2>
-  <h3>v0.8.38 - 2026-06-14</h3>
+  <h3>v0.8.39 - 2026-06-14</h3>
   <ul>
-    <li>생성된 HTML 비교 리포트의 필터 영역을 문자열 포함 검사뿐 아니라 HTML 파서로 구조 검증하도록 테스트를 보강했습니다.</li>
-    <li>상태 카드, 상태별 바로가기, 비교 요약, 변경없음 요약, 명령별 상세 블록의 <code>data-*</code>, <code>hidden</code>, <code>aria-hidden</code> 속성을 확인합니다.</li>
-    <li>HTML 리포트 런타임 동작, 수집, SSH, 비교 등급 판단 로직은 변경하지 않았습니다.</li>
+    <li>README, CHANGELOG, 사용자/명령어/개발자/버전/릴리스 체크리스트 문서의 현재 버전 표기가 앱 버전과 맞는지 자동 검증하는 테스트를 추가했습니다.</li>
+    <li>사용자 가이드와 반입 체크리스트의 ZIP 파일명 예시가 현재 버전과 어긋나지 않도록 회귀 테스트를 보강했습니다.</li>
+    <li>수집, SSH, 비교, HTML 리포트 런타임 동작은 변경하지 않았습니다.</li>
   </ul>
 
   <h2>2. 이전 주요 변경</h2>
   <table>
     <tr><th>버전</th><th>날짜</th><th>주요 내용</th></tr>
+    <tr><td>v0.8.38</td><td>2026-06-14</td><td>HTML 비교 리포트 필터 영역을 HTML 파서로 구조 검증하도록 테스트를 보강했습니다.</td></tr>
     <tr><td>v0.8.37</td><td>2026-06-14</td><td>HTML 비교 리포트에서 <code>변경없음</code> 상태 카드 선택 시에도 요약 묶음이 자동으로 펼쳐지지 않도록 수정했습니다.</td></tr>
     <tr><td>v0.8.36</td><td>2026-06-14</td><td>COMMAND_GUIDE HTML이 설정 파일과 MD의 전체 명령 목록을 모두 포함하도록 보정했습니다.</td></tr>
     <tr><td>v0.8.35</td><td>2026-06-14</td><td><code>vrrp_status</code> / <code>show vrrp</code> 명령을 추가하고 VRRP 라우팅 상태 비교 테스트를 보강했습니다.</td></tr>
@@ -168,12 +169,12 @@
     <li>HTML 등급 필터 동작을 검증하는 회귀 테스트를 추가했습니다.</li>
   </ul>
 
-  <h2>3. v0.8.38 산출물 이름</h2>
-  <pre><code>dist\backbone_state_tracker_v0.8.38_20260614_source.zip
-dist\backbone_state_tracker_v0.8.38_20260614_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.38_20260614_windows_exe.zip
-dist\backbone_state_tracker_v0.8.38_20260614_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.38_20260614_release_manifest.txt
-dist\backbone_state_tracker_v0.8.38_20260614_verify_release_package.ps1</code></pre>
+  <h2>3. v0.8.39 산출물 이름</h2>
+  <pre><code>dist\backbone_state_tracker_v0.8.39_20260614_source.zip
+dist\backbone_state_tracker_v0.8.39_20260614_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.39_20260614_windows_exe.zip
+dist\backbone_state_tracker_v0.8.39_20260614_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.39_20260614_release_manifest.txt
+dist\backbone_state_tracker_v0.8.39_20260614_verify_release_package.ps1</code></pre>
 </body>
 </html>

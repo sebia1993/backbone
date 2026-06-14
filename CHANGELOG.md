@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.39 - 2026-06-14
+
+- Added regression coverage that checks the current app version is reflected in README, CHANGELOG, and every release guide MD/HTML document.
+- Verified release artifact examples in the operator and release checklist documents stay aligned with the current version.
+- No collection, SSH, comparison, or report runtime behavior changed.
+
 ## v0.8.38 - 2026-06-14
 
 - Added parser-based regression coverage for generated HTML report filter regions.
