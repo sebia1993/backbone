@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.43 - 2026-06-15
+
+- Added regression coverage that compares the real `tests/test_*.py` files with the source ZIP verifier's Python, PowerShell, and test-fixture required lists.
+- Guarded future test additions from being missed by release package verification.
+- No collection, SSH, comparison, or report runtime behavior changed.
+
 ## v0.8.42 - 2026-06-14
 
 - Strengthened source ZIP verification so every current regression test file must be included in the release package.

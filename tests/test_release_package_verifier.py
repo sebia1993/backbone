@@ -1,17 +1,23 @@
 from __future__ import annotations
 
+import re
 import tempfile
 import unittest
 import warnings
 from pathlib import Path
 from zipfile import ZipFile
 
-from backbone_state_tracker.tools.verify_release_package import verify_release_package
+from backbone_state_tracker.tools.verify_release_package import SOURCE_REQUIRED, verify_release_package
 from backbone_state_tracker.tools.write_release_manifest import (
     file_sha256,
     write_package_checksum,
     write_release_manifest,
 )
+
+
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+TEST_ENTRY_PREFIX = "backbone_state_tracker/tests/"
+TEST_ENTRY_PATTERN = re.compile(r'"(backbone_state_tracker/tests/test_[^"]+\.py)"')
 
 
 def _write_zip(path: Path, entries: dict[str, str | bytes]) -> None:
@@ -78,7 +84,19 @@ def _source_entries() -> dict[str, str]:
     return entries
 
 
+def _test_entries(entries: set[str] | dict[str, str]) -> set[str]:
+    return {entry for entry in entries if entry.startswith(TEST_ENTRY_PREFIX)}
+
+
 class ReleasePackageVerifierTests(unittest.TestCase):
+    def test_source_required_test_entries_match_current_test_files(self) -> None:
+        expected = {f"{TEST_ENTRY_PREFIX}{path.name}" for path in sorted((PROJECT_DIR / "tests").glob("test_*.py"))}
+        powershell_text = (PROJECT_DIR / "tools" / "verify_release_package.ps1").read_text(encoding="utf-8")
+
+        self.assertEqual(expected, _test_entries(SOURCE_REQUIRED))
+        self.assertEqual(expected, _test_entries(_source_entries()))
+        self.assertEqual(expected, set(TEST_ENTRY_PATTERN.findall(powershell_text)))
+
     def test_valid_source_package_passes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             dist = Path(tmp)

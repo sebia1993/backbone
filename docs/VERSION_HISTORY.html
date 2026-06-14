@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 버전별 변경내역 v0.8.42</title>
+  <title>Backbone State Tracker 버전별 변경내역 v0.8.43</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2, h3 { color: #102a43; }
@@ -15,19 +15,20 @@
 </head>
 <body>
   <h1>Backbone State Tracker 버전별 변경내역</h1>
-  <p>문서 버전: v0.8.42<br>작성일: 2026-06-14<br>대상: 운영자, 인수자, 초급 유지보수 담당자</p>
+  <p>문서 버전: v0.8.43<br>작성일: 2026-06-15<br>대상: 운영자, 인수자, 초급 유지보수 담당자</p>
 
   <h2>1. 최신 버전</h2>
-  <h3>v0.8.42 - 2026-06-14</h3>
+  <h3>v0.8.43 - 2026-06-15</h3>
   <ul>
-    <li>Source ZIP 검증 기준을 강화해 현재 프로젝트의 전체 회귀 테스트 파일이 누락되면 검증 실패로 처리합니다.</li>
-    <li>Python 검증기와 PowerShell 검증기의 필수 테스트 파일 목록을 동일하게 맞췄습니다.</li>
+    <li>실제 <code>tests/test_*.py</code> 파일 목록과 Python/PowerShell release package verifier의 source ZIP 필수 테스트 목록이 항상 일치하는지 확인하는 회귀 테스트를 추가했습니다.</li>
+    <li>향후 테스트 파일이 추가될 때 release package verifier 필수 목록이 누락되지 않도록 방지합니다.</li>
     <li>수집, SSH, 비교, 리포트 런타임 동작은 변경하지 않았습니다.</li>
   </ul>
 
   <h2>2. 이전 주요 변경</h2>
   <table>
     <tr><th>버전</th><th>날짜</th><th>주요 내용</th></tr>
+    <tr><td>v0.8.42</td><td>2026-06-14</td><td>Source ZIP 검증 기준을 강화해 전체 회귀 테스트 파일 누락을 잡도록 개선했습니다.</td></tr>
     <tr><td>v0.8.41</td><td>2026-06-14</td><td>HTML 비교 리포트 변경 상세 행에 <code>유형</code>, <code>라인</code>, <code>변경 내용</code> 라벨을 표시하도록 개선했습니다.</td></tr>
     <tr><td>v0.8.40</td><td>2026-06-14</td><td>실제 번들 명령 전체가 preflight에서 오류/주의 없이 통과하는지 확인하는 테스트를 추가했습니다.</td></tr>
     <tr><td>v0.8.39</td><td>2026-06-14</td><td>README, CHANGELOG, 각 MD/HTML 릴리스 문서의 현재 버전 정합성 테스트를 추가했습니다.</td></tr>
@@ -172,12 +173,12 @@
     <li>HTML 등급 필터 동작을 검증하는 회귀 테스트를 추가했습니다.</li>
   </ul>
 
-  <h2>3. v0.8.42 산출물 이름</h2>
-  <pre><code>dist\backbone_state_tracker_v0.8.42_20260614_source.zip
-dist\backbone_state_tracker_v0.8.42_20260614_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.42_20260614_windows_exe.zip
-dist\backbone_state_tracker_v0.8.42_20260614_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.42_20260614_release_manifest.txt
-dist\backbone_state_tracker_v0.8.42_20260614_verify_release_package.ps1</code></pre>
+  <h2>3. v0.8.43 산출물 이름</h2>
+  <pre><code>dist\backbone_state_tracker_v0.8.43_20260615_source.zip
+dist\backbone_state_tracker_v0.8.43_20260615_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.43_20260615_windows_exe.zip
+dist\backbone_state_tracker_v0.8.43_20260615_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.43_20260615_release_manifest.txt
+dist\backbone_state_tracker_v0.8.43_20260615_verify_release_package.ps1</code></pre>
 </body>
 </html>
