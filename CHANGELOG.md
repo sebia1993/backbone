@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.36 - 2026-06-14
+
+- Synchronized `docs/COMMAND_GUIDE.html` with the full command list in `config/commands.yaml` and `docs/COMMAND_GUIDE.md`.
+- Added documentation regression coverage so the command guide MD/HTML command IDs stay aligned with the bundled command config.
+- No collection, SSH, or diff-classification behavior changed.
+
 ## v0.8.35 - 2026-06-14
 
 - Added `vrrp_status` with the read-only `show vrrp` command to collect VRRP master/backup and virtual router state.

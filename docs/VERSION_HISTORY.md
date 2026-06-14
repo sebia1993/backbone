@@ -1,22 +1,23 @@
 # Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.8.35
+문서 버전: v0.8.36
 작성일: 2026-06-14
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
 
-### v0.8.35 - 2026-06-14
+### v0.8.36 - 2026-06-14
 
-- VRRP 상태 수집을 위해 `vrrp_status` 명령을 추가했습니다.
-- 실제 장비 명령은 `show vrrp`이며, VRRP Master/Backup, priority, VIP, state 변화를 비교할 수 있습니다.
-- VRRP 비교 결과는 기존 `routing` 분류 규칙을 사용합니다. 일반 변화는 `주의`, down/fail 계열은 `긴급`입니다.
-- 설정 로드, preflight 안전성, VRRP 비교 등급에 대한 회귀 테스트를 추가했습니다.
+- `docs/COMMAND_GUIDE.html`이 `config/commands.yaml`과 `docs/COMMAND_GUIDE.md`의 전체 명령 목록을 모두 포함하도록 보정했습니다.
+- HTML 가이드에 누락되어 있던 `system_clock`, `environment_status`, `link_aggregation_verbose`, `vlan_summary`, `ospf_routes` 설명을 추가했습니다.
+- 설정 파일, COMMAND_GUIDE MD, COMMAND_GUIDE HTML의 명령 ID 순서가 어긋나면 실패하는 문서 회귀 테스트를 추가했습니다.
+- 수집, SSH, 비교 등급 판단 로직은 변경하지 않았습니다.
 
 ## 2. 이전 주요 변경
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.8.35 | 2026-06-14 | `vrrp_status` / `show vrrp` 명령을 추가하고 VRRP 라우팅 상태 비교 테스트를 보강했습니다. |
 | v0.8.34 | 2026-06-12 | 정상 CPU/Memory 동일 출력 처리 변경을 시도했으나 운영 기준에 맞지 않아 원복했습니다. |
 | v0.8.33 | 2026-06-12 | CPU/Memory 수치 변화가 기준값에 걸리지 않으면 주의로 승격되지 않도록 조정했습니다. |
 | v0.8.32 | 2026-06-12 | HTML 리포트 상태 필터에서 숨김 표시가 CSS에 덮이지 않도록 보강했습니다. |
@@ -158,15 +159,15 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.35 산출물 이름
+## 3. v0.8.36 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.35_20260614_source.zip
-dist\backbone_state_tracker_v0.8.35_20260614_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.35_20260614_windows_exe.zip
-dist\backbone_state_tracker_v0.8.35_20260614_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.35_20260614_release_manifest.txt
-dist\backbone_state_tracker_v0.8.35_20260614_verify_release_package.ps1
+dist\backbone_state_tracker_v0.8.36_20260614_source.zip
+dist\backbone_state_tracker_v0.8.36_20260614_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.36_20260614_windows_exe.zip
+dist\backbone_state_tracker_v0.8.36_20260614_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.36_20260614_release_manifest.txt
+dist\backbone_state_tracker_v0.8.36_20260614_verify_release_package.ps1
 ```
 
 ## 4. 릴리스 검증 기준
