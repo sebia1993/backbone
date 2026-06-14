@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.37 - 2026-06-14
+
+- Kept the generated HTML report's `Unchanged` summary group collapsed after selecting the `변경없음` status card.
+- Preserved manual expand behavior and `상세 보기` navigation for unchanged detail blocks.
+- Updated reporter regression coverage for the collapsed unchanged-summary behavior.
+
 ## v0.8.36 - 2026-06-14
 
 - Synchronized `docs/COMMAND_GUIDE.html` with the full command list in `config/commands.yaml` and `docs/COMMAND_GUIDE.md`.

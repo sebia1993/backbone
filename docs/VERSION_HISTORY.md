@@ -1,22 +1,23 @@
 # Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.8.36
+문서 버전: v0.8.37
 작성일: 2026-06-14
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
 
-### v0.8.36 - 2026-06-14
+### v0.8.37 - 2026-06-14
 
-- `docs/COMMAND_GUIDE.html`이 `config/commands.yaml`과 `docs/COMMAND_GUIDE.md`의 전체 명령 목록을 모두 포함하도록 보정했습니다.
-- HTML 가이드에 누락되어 있던 `system_clock`, `environment_status`, `link_aggregation_verbose`, `vlan_summary`, `ospf_routes` 설명을 추가했습니다.
-- 설정 파일, COMMAND_GUIDE MD, COMMAND_GUIDE HTML의 명령 ID 순서가 어긋나면 실패하는 문서 회귀 테스트를 추가했습니다.
-- 수집, SSH, 비교 등급 판단 로직은 변경하지 않았습니다.
+- HTML 비교 리포트에서 `변경없음` 상태 카드를 선택해도 변경없음 요약 묶음이 자동으로 펼쳐지지 않도록 수정했습니다.
+- `변경없음` 요약 묶음과 명령별 상세 블록은 제목만 보이고, 운영자가 직접 펼칠 때만 상세 내용을 보여줍니다.
+- 수동 펼침과 `상세 보기` 바로가기 동작은 유지했습니다.
+- 리포터 회귀 테스트를 갱신해 자동 펼침이 다시 들어오지 않도록 고정했습니다.
 
 ## 2. 이전 주요 변경
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.8.36 | 2026-06-14 | COMMAND_GUIDE HTML이 설정 파일과 MD의 전체 명령 목록을 모두 포함하도록 보정했습니다. |
 | v0.8.35 | 2026-06-14 | `vrrp_status` / `show vrrp` 명령을 추가하고 VRRP 라우팅 상태 비교 테스트를 보강했습니다. |
 | v0.8.34 | 2026-06-12 | 정상 CPU/Memory 동일 출력 처리 변경을 시도했으나 운영 기준에 맞지 않아 원복했습니다. |
 | v0.8.33 | 2026-06-12 | CPU/Memory 수치 변화가 기준값에 걸리지 않으면 주의로 승격되지 않도록 조정했습니다. |
@@ -159,15 +160,15 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.36 산출물 이름
+## 3. v0.8.37 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.36_20260614_source.zip
-dist\backbone_state_tracker_v0.8.36_20260614_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.36_20260614_windows_exe.zip
-dist\backbone_state_tracker_v0.8.36_20260614_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.36_20260614_release_manifest.txt
-dist\backbone_state_tracker_v0.8.36_20260614_verify_release_package.ps1
+dist\backbone_state_tracker_v0.8.37_20260614_source.zip
+dist\backbone_state_tracker_v0.8.37_20260614_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.37_20260614_windows_exe.zip
+dist\backbone_state_tracker_v0.8.37_20260614_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.37_20260614_release_manifest.txt
+dist\backbone_state_tracker_v0.8.37_20260614_verify_release_package.ps1
 ```
 
 ## 4. 릴리스 검증 기준
