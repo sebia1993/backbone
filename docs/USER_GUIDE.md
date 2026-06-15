@@ -1,12 +1,12 @@
 # Backbone State Tracker 사용자 가이드
 
-문서 버전: v0.8.56
+문서 버전: v0.8.57
 작성일: 2026-06-15
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
 ## 1. 핵심 흐름
 
-v0.8.52부터 프로그램 공통 테마는 HPE Aruba AirWave 계열 운영 콘솔을 참고한 차분한 색상과 조밀한 정보 배치를 사용합니다. v0.8.53에서는 장비 설정, 상태 수집, 비교 결과, 작업 로그 화면의 안내 패널과 선택 상태 표시를 더 명확하게 정리했고, v0.8.54에서는 비교 결과와 HTML 리포트에서 선택한 상태와 상세 맥락을 더 쉽게 추적하도록 개선했습니다. v0.8.55에서는 이 화면 기준을 사용자 가이드 이미지, 개발자 가이드, 릴리스 체크리스트, ZIP 산출물 검증 기준에 맞춰 마감했습니다. v0.8.56에서는 개발자 가이드에 현대화 전 문제 원인과 설계 대응 요약을 추가했습니다.
+v0.8.52부터 프로그램 공통 테마는 HPE Aruba AirWave 계열 운영 콘솔을 참고한 차분한 색상과 조밀한 정보 배치를 사용합니다. v0.8.53에서는 장비 설정, 상태 수집, 비교 결과, 작업 로그 화면의 안내 패널과 선택 상태 표시를 더 명확하게 정리했고, v0.8.54에서는 비교 결과와 HTML 리포트에서 선택한 상태와 상세 맥락을 더 쉽게 추적하도록 개선했습니다. v0.8.55에서는 이 화면 기준을 사용자 가이드 이미지, 개발자 가이드, 릴리스 체크리스트, ZIP 산출물 검증 기준에 맞춰 마감했습니다. v0.8.57에서는 개발자 가이드에 현대화 전 문제 원인과 설계 대응 요약을 추가했습니다.
 
 1. `장비 설정`에서 접속 계정, 백본3/4 대상 장비, 상태 수집을 한 화면에서 처리합니다.
 2. 대상 장비는 기본 2개 행으로 시작하며, 추가 장비가 있으면 `장비 추가`로 행을 늘립니다.
@@ -89,9 +89,9 @@ v0.8.52부터 프로그램 공통 테마는 HPE Aruba AirWave 계열 운영 콘�
 Windows EXE ZIP 예시:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.56_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.57_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 사내 메일이 `.exe`, `.py`, `.ps1` 포함 ZIP을 차단할 수 있습니다. 이 경우 승인된 내부 파일 반입 절차를 사용하세요.

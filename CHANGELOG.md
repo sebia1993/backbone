@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.57 - 2026-06-15
+
+- Added offline mock SSH/Telnet server support with bundled synthetic profiles for testing without real devices or exported logs.
+- Added safe diagnostic self-check reports that record staged status and diagnostic codes without raw command output.
+- Added automatic device, host, address, and secret masking for diagnostic artifacts.
+- Added diagnostic guide and error-code catalog documents to release packages and GUI Help.
+- Strengthened Windows EXE packaging checks to run smoke, diagnostic, mock Telnet, and mock SSH self-checks from the built executable.
+
 ## v0.8.56 - 2026-06-15
 
 - Added an explicit UI modernization analysis summary covering the old-looking causes, workflow structure, and AirWave-inspired design response.

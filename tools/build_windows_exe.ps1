@@ -124,6 +124,7 @@ $StagingRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("${ProjectName}_exe_
 $PayloadRoot = Join-Path $StagingRoot $ProjectName
 $CommandsData = (Join-Path $ProjectRoot "config\commands.yaml") + ";config"
 $DevicesExampleData = (Join-Path $ProjectRoot "config\devices.example.yaml") + ";config"
+$MockProfilesData = (Join-Path $ProjectRoot "config\mock_profiles.yaml") + ";config"
 $DocsData = (Join-Path $ProjectRoot "docs") + ";docs"
 
 try {
@@ -139,6 +140,7 @@ try {
             --paths $ParentDir `
             --add-data $CommandsData `
             --add-data $DevicesExampleData `
+            --add-data $MockProfilesData `
             --add-data $DocsData `
             --distpath $PyInstallerDist `
             --workpath $PyInstallerWork `
@@ -156,6 +158,18 @@ try {
     & $ExePath --smoke-check
     if ($LASTEXITCODE -ne 0) {
         throw "Executable smoke check failed with exit code $LASTEXITCODE"
+    }
+    & $ExePath --diagnose --self-check
+    if ($LASTEXITCODE -ne 0) {
+        throw "Executable diagnostic self-check failed with exit code $LASTEXITCODE"
+    }
+    & $ExePath --mock-server --protocol telnet --profile normal --self-check
+    if ($LASTEXITCODE -ne 0) {
+        throw "Executable mock Telnet self-check failed with exit code $LASTEXITCODE"
+    }
+    & $ExePath --mock-server --protocol ssh --profile normal --self-check
+    if ($LASTEXITCODE -ne 0) {
+        throw "Executable mock SSH self-check failed with exit code $LASTEXITCODE"
     }
 
     New-Item -ItemType Directory -Force -Path $PayloadRoot | Out-Null
@@ -178,6 +192,7 @@ Contents:
 - BackboneStateTracker.exe
 - Config examples
 - Operator and developer guides
+- Diagnostic mode guide and error-code catalog
 - Version history and changelog
 
 Excluded:
@@ -198,6 +213,10 @@ Backbone State Tracker v$Version
 1. Run BackboneStateTracker.exe.
 2. Edit config\devices.example.yaml or save device entries from the GUI.
 3. Runtime outputs are created under outputs\snapshots next to the executable.
+4. For local package checks without real devices, run:
+   BackboneStateTracker.exe --diagnose --self-check
+   BackboneStateTracker.exe --mock-server --protocol ssh --profile normal --self-check
+   BackboneStateTracker.exe --mock-server --protocol telnet --profile normal --self-check
 
 Security note:
 - No password is saved by the program.

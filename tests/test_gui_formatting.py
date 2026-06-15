@@ -445,6 +445,8 @@ class GuiDiffFormattingTests(unittest.TestCase):
                 "USER_GUIDE.html",
                 "COMMAND_GUIDE.html",
                 "VERSION_HISTORY.html",
+                "DIAGNOSTIC_MODE_GUIDE.html",
+                "ERROR_CODE_CATALOG.html",
             }
             for doc_name in expected_docs:
                 (docs_dir / doc_name).write_text("<html>guide</html>", encoding="utf-8")
@@ -458,6 +460,8 @@ class GuiDiffFormattingTests(unittest.TestCase):
             "USER_GUIDE.html",
             "COMMAND_GUIDE.html",
             "VERSION_HISTORY.html",
+            "DIAGNOSTIC_MODE_GUIDE.html",
+            "ERROR_CODE_CATALOG.html",
         )
 
         for doc_name in expected_docs:

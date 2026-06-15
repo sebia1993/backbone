@@ -10,6 +10,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from .collector import SnapshotCollector
 from .config import load_commands, load_devices, save_devices
+from .diagnostics.runner import run_self_check
 from .diff_engine import DiffEngine
 from .models import Device, DiffItem, DiffLine, DiffSummary
 from .mock_validation import create_mock_validation_artifacts
@@ -266,6 +267,10 @@ class BackboneStateTrackerApp(tk.Tk):
         help_menu.add_command(label="사용자 가이드 열기", command=lambda: self.open_doc("USER_GUIDE.html"))
         help_menu.add_command(label="점검 명령어 가이드 열기", command=lambda: self.open_doc("COMMAND_GUIDE.html"))
         help_menu.add_command(label="버전 변경내역 열기", command=lambda: self.open_doc("VERSION_HISTORY.html"))
+        help_menu.add_separator()
+        help_menu.add_command(label="진단 모드 가이드 열기", command=lambda: self.open_doc("DIAGNOSTIC_MODE_GUIDE.html"))
+        help_menu.add_command(label="오류 코드 카탈로그 열기", command=lambda: self.open_doc("ERROR_CODE_CATALOG.html"))
+        help_menu.add_command(label="진단 self-check 실행", command=self.run_diagnostic_self_check)
         menu_bar.add_cascade(label="도움말", menu=help_menu)
 
         self.config(menu=menu_bar)
@@ -1724,6 +1729,23 @@ class BackboneStateTrackerApp(tk.Tk):
             return
         searched = "\n".join(str(candidate) for candidate in self._doc_candidate_paths(file_name))
         messagebox.showinfo("문서 없음", f"문서를 찾을 수 없습니다:\n{searched}")
+
+    def run_diagnostic_self_check(self) -> None:
+        try:
+            result = run_self_check()
+        except Exception as exc:
+            self.log(traceback.format_exc())
+            messagebox.showerror("진단 실패", f"진단 self-check를 완료하지 못했습니다:\n{exc}")
+            return
+
+        self.log(f"진단 리포트 생성: {result.reports.html}")
+        self.log(f"진단 티켓 생성: {result.reports.ticket}")
+        messagebox.showinfo(
+            "진단 완료",
+            "장비 접속 없이 로컬 설정, mock profile, 문서 포함 여부를 확인했습니다.\n\n"
+            f"리포트: {result.reports.html}\n"
+            f"티켓: {result.reports.ticket}",
+        )
 
     def thread_log(self, message: str) -> None:
         self.after(0, lambda: self.log(message))

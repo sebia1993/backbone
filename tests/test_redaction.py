@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import unittest
 
-from backbone_state_tracker.core.connectivity import sanitize_connection_error
+from backbone_state_tracker.core.connectivity import (
+    diagnostic_code_for_connection_reason,
+    make_connectivity_result_for_device,
+    sanitize_connection_error,
+)
 from backbone_state_tracker.core.redaction import redact_payload, redact_sensitive_text
 
 
@@ -44,6 +48,20 @@ class RedactionTests(unittest.TestCase):
 
         self.assertNotIn("SecretValue", sanitized)
         self.assertLessEqual(len(sanitized), 300)
+
+    def test_connectivity_failures_include_diagnostic_codes(self) -> None:
+        result = make_connectivity_result_for_device(
+            device_name="backbone3",
+            host="192.0.2.3",
+            success=False,
+            reason="timeout",
+            error_message="password=SecretValue timed out",
+        )
+
+        self.assertEqual("BST-CON-301", diagnostic_code_for_connection_reason("timeout"))
+        self.assertEqual("unreachable: timeout (BST-CON-301)", result.output)
+        self.assertIn("BST-CON-301", result.error_message)
+        self.assertNotIn("SecretValue", result.error_message)
 
 
 if __name__ == "__main__":

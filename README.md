@@ -1,6 +1,6 @@
 # Backbone State Tracker
 
-Version: `v0.8.56`
+Version: `v0.8.57`
 
 Windows GUI utility for collecting read-only status snapshots from backbone 3
 and 4, then comparing snapshots to track operational changes during maintenance.
@@ -8,6 +8,10 @@ and 4, then comparing snapshots to track operational changes during maintenance.
 ## What It Does
 
 - Connects to backbone devices over SSH.
+- Provides offline mock SSH/Telnet servers with synthetic profiles so package behavior can be tested without real devices.
+- Provides a local diagnostic self-check mode for company-site validation without collecting raw device logs.
+- Generates safe diagnostic reports and tickets with staged status, diagnostic codes, and automatic sensitive-value masking.
+- Bundles an error-code catalog so external troubleshooting can start from a code only, without exported logs or topology data.
 - Runs read-only display/check commands from `config/commands.yaml`.
 - Adds `vrrp_status` with `show vrrp` to capture VRRP master/backup and virtual router state.
 - Verifies the bundled command set remains preflight-safe and read-only without warnings.
@@ -75,6 +79,8 @@ Passwords are never saved to configuration or report files.
 - `outputs/snapshots/`: generated snapshot and comparison outputs.
 - `docs/USER_GUIDE.md`: operator guide.
 - `docs/COMMAND_GUIDE.md`: command meaning and check-point guide.
+- `docs/DIAGNOSTIC_MODE_GUIDE.md`: offline mock and company-site diagnostic workflow.
+- `docs/ERROR_CODE_CATALOG.md`: diagnostic-code meaning and first action guide.
 - `docs/DEVELOPER_GUIDE_BEGINNER.md`: beginner developer guide.
 - `docs/VERSION_HISTORY.md`: version-by-version change history.
 - `docs/RELEASE_CHECKLIST.md`: release import and verification checklist.
@@ -107,15 +113,15 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 The generated ZIP is written to `dist\` as:
 
 ```text
-backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip
+backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip
 ```
 
 After moving a ZIP into the internal environment, verify it with:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.56_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.56_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip --require-manifest
+powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.57_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
 Corporate mail systems may block ZIP files containing `.exe`, `.py`, or `.ps1`

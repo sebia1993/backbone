@@ -1,11 +1,18 @@
 # Backbone State Tracker 버전별 변경내역
 
-문서 버전: v0.8.56
+문서 버전: v0.8.57
 작성일: 2026-06-15
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
 
+### v0.8.57 - 2026-06-15
+
+- 실제 장비 없이 테스트할 수 있는 mock SSH/Telnet 서버와 합성 profile을 포함했습니다.
+- 회사 현장 진단용 self-check 리포트가 원본 로그 없이 단계별 상태와 오류 코드만 남기도록 보강했습니다.
+- 진단 산출물에서 장비명, 호스트명, IP, secret 계열 값을 자동 마스킹하도록 적용했습니다.
+- GUI 도움말, 공유 리포트 ZIP, 릴리스 패키지에 진단 모드 가이드와 오류 코드 카탈로그를 포함했습니다.
+- Windows EXE 빌드 단계에서 smoke, 진단, mock Telnet, mock SSH self-check를 모두 실행하도록 검증 범위를 넓혔습니다.
 ### v0.8.56 - 2026-06-15
 
 - UI 현대화 분석 보강으로 현대화 전 문제 원인과 설계 대응 요약을 초급 개발자 가이드에 추가했습니다.
@@ -51,6 +58,8 @@
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.8.57 | 2026-06-15 | mock SSH/Telnet, 진단 self-check, 안전 리포트, 오류 코드 카탈로그, EXE 검증을 보강했습니다. |
+| v0.8.56 | 2026-06-15 | UI 현대화 전 문제 원인과 설계 대응 요약을 문서화했습니다. |
 | v0.8.55 | 2026-06-15 | 사용자 가이드 화면 캡처, 디자인 토큰 문서, 릴리스 반입 체크리스트를 마감했습니다. |
 | v0.8.54 | 2026-06-15 | GUI 선택 변경 맥락 패널과 HTML 리포트 필터 상태/상세 헤더를 개선했습니다. |
 | v0.8.53 | 2026-06-15 | 주요 업무 화면에 공통 상태 패널, 대상 요약 chip, 로그 가독성 개선을 적용했습니다. |
@@ -213,15 +222,15 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.56 산출물 이름
+## 3. v0.8.57 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.56_20260615_source.zip
-dist\backbone_state_tracker_v0.8.56_20260615_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.56_20260615_windows_exe.zip
-dist\backbone_state_tracker_v0.8.56_20260615_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.56_20260615_release_manifest.txt
-dist\backbone_state_tracker_v0.8.56_20260615_verify_release_package.ps1
+dist\backbone_state_tracker_v0.8.57_20260615_source.zip
+dist\backbone_state_tracker_v0.8.57_20260615_source.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.57_20260615_windows_exe.zip
+dist\backbone_state_tracker_v0.8.57_20260615_windows_exe.zip.sha256.txt
+dist\backbone_state_tracker_v0.8.57_20260615_release_manifest.txt
+dist\backbone_state_tracker_v0.8.57_20260615_verify_release_package.ps1
 ```
 
 ## 4. 릴리스 검증 기준

@@ -1,0 +1,67 @@
+profiles:
+  normal:
+    username: operator
+    password: mock-password
+    prompt: "<MOCK-BST> "
+    banner: "Backbone State Tracker mock device"
+    commands:
+      "screen-length disable": "Paging disabled for mock session."
+      "display clock": "Mock clock 2026-06-15 09:00:00 KST"
+      "display version": "Mock Network OS Version 1.0\nUptime 12 days\nImage mock-runtime.bin"
+      "display device": "Slot 1 State Normal\nControl Module Normal\nLine Module Normal"
+      "display power": "Power 1 State Normal\nPower 2 State Normal"
+      "display fan": "Fan 1 State Normal\nFan 2 State Normal"
+      "display environment": "Temperature Sensor 1 State Normal\nTemperature Sensor 2 State Normal"
+      "display alarm": "No active mock alarms."
+      "display interface brief": "Bridge-Aggregation10 UP\nGigabitEthernet1/0/1 UP\nGigabitEthernet1/0/2 UP"
+      "display link-aggregation summary": "Bridge-Aggregation10 Selected 2/2\nPeer mock-device-b synchronized"
+      "display link-aggregation verbose": "Bridge-Aggregation10\n  Member1 Selected\n  Member2 Selected"
+      "display vlan": "VLAN 10 active\nVLAN 20 active\nVLAN 30 active"
+      "display stp brief": "MSTID 0 Root mock-root\nPorts all forwarding"
+      "display ospf peer": "OSPF Peer mock-neighbor State Full"
+      "display ip routing-table protocol ospf": "OSPF route MOCK-NET-A via MOCK-NEXT-HOP"
+      "show vrrp": "VRID 10 State Master Priority 120 VirtualAddress MOCK-VIP-A"
+      "display cpu-usage": "5 seconds: 12%\n1 minute: 10%\n5 minutes: 8%"
+      "display memory": "Total 1000 Used 280 FreeRatio 72%"
+      "display logbuffer": "Mock log buffer contains no critical events."
+      "*": "Mock response: command accepted."
+
+  vrrp_role_change:
+    inherit: normal
+    commands:
+      "show vrrp": "VRID 10 State Backup Priority 90 VirtualAddress MOCK-VIP-A"
+
+  cpu_warning:
+    inherit: normal
+    commands:
+      "display cpu-usage": "5 seconds: 55%\n1 minute: 52%\n5 minutes: 50%"
+
+  cpu_critical:
+    inherit: normal
+    commands:
+      "display cpu-usage": "5 seconds: 75%\n1 minute: 71%\n5 minutes: 70%"
+
+  memory_warning:
+    inherit: normal
+    commands:
+      "display memory": "Total 1000 Used 620 FreeRatio 38%"
+
+  memory_critical:
+    inherit: normal
+    commands:
+      "display memory": "Total 1000 Used 730 FreeRatio 27%"
+
+  power_abnormal:
+    inherit: normal
+    commands:
+      "display power": "Power 1 State Fault\nPower 2 State Normal"
+
+  command_timeout:
+    inherit: normal
+    command_delays:
+      "display logbuffer": 3.0
+
+  auth_failed:
+    inherit: normal
+    auth_failure: true
+

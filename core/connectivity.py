@@ -12,6 +12,14 @@ DEVICE_CONNECTIVITY_DESCRIPTION = "Device connection status"
 DEVICE_CONNECTIVITY_CATEGORY = "connection"
 REACHABLE_OUTPUT = "reachable"
 LEGACY_CONNECTION_FAILURE_IDS = {"authentication_failed", "timeout_failed", "connection_failed"}
+CONNECTION_REASON_CODES = {
+    "timeout": "BST-CON-301",
+    "authentication": "BST-CON-302",
+    "auth": "BST-CON-302",
+    "telnet": "BST-CON-303",
+    "connection": "BST-CON-304",
+    "refused": "BST-CON-304",
+}
 
 
 def make_connectivity_result(
@@ -41,6 +49,12 @@ def make_connectivity_result_for_device(
     started_at: str = "",
     ended_at: str = "",
 ) -> CommandResult:
+    diagnostic_code = diagnostic_code_for_connection_reason(reason) if not success else ""
+    sanitized_error = sanitize_connection_error(error_message)
+    if diagnostic_code and sanitized_error:
+        sanitized_error = f"{diagnostic_code} {sanitized_error}"
+    elif diagnostic_code:
+        sanitized_error = diagnostic_code
     return CommandResult(
         device_name=device_name,
         host=host,
@@ -51,7 +65,7 @@ def make_connectivity_result_for_device(
         phase="check",
         success=success,
         output=format_connectivity_output(success, reason),
-        error_message=sanitize_connection_error(error_message),
+        error_message=sanitized_error,
         started_at=started_at,
         ended_at=ended_at,
     )
@@ -60,12 +74,21 @@ def make_connectivity_result_for_device(
 def format_connectivity_output(success: bool, reason: str = "") -> str:
     if success:
         return REACHABLE_OUTPUT
-    return f"unreachable: {normalize_connection_reason(reason)}"
+    normalized = normalize_connection_reason(reason)
+    return f"unreachable: {normalized} ({diagnostic_code_for_connection_reason(normalized)})"
 
 
 def normalize_connection_reason(reason: str) -> str:
     cleaned = (reason or "connection").strip().lower().replace("_", "-")
     return cleaned or "connection"
+
+
+def diagnostic_code_for_connection_reason(reason: str) -> str:
+    normalized = normalize_connection_reason(reason)
+    for key, code in CONNECTION_REASON_CODES.items():
+        if key in normalized:
+            return code
+    return CONNECTION_REASON_CODES["connection"]
 
 
 def sanitize_connection_error(message: str) -> str:

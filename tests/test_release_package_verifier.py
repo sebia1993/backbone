@@ -55,6 +55,7 @@ def _common_entries() -> dict[str, str]:
         "backbone_state_tracker/CHANGELOG.md": "changelog",
         "backbone_state_tracker/config/commands.yaml": "commands",
         "backbone_state_tracker/config/devices.example.yaml": "devices example",
+        "backbone_state_tracker/config/mock_profiles.yaml": "mock profiles",
         "backbone_state_tracker/docs/USER_GUIDE.md": "user md",
         "backbone_state_tracker/docs/USER_GUIDE.html": "user html",
         "backbone_state_tracker/docs/COMMAND_GUIDE.md": "command md",
@@ -65,6 +66,12 @@ def _common_entries() -> dict[str, str]:
         "backbone_state_tracker/docs/VERSION_HISTORY.html": "history html",
         "backbone_state_tracker/docs/RELEASE_CHECKLIST.md": "release checklist md",
         "backbone_state_tracker/docs/RELEASE_CHECKLIST.html": "release checklist html",
+        "backbone_state_tracker/docs/DIAGNOSTIC_ARCHITECTURE_PROPOSAL.md": "diagnostic proposal md",
+        "backbone_state_tracker/docs/DIAGNOSTIC_ARCHITECTURE_PROPOSAL.html": "diagnostic proposal html",
+        "backbone_state_tracker/docs/DIAGNOSTIC_MODE_GUIDE.md": "diagnostic mode md",
+        "backbone_state_tracker/docs/DIAGNOSTIC_MODE_GUIDE.html": "diagnostic mode html",
+        "backbone_state_tracker/docs/ERROR_CODE_CATALOG.md": "error catalog md",
+        "backbone_state_tracker/docs/ERROR_CODE_CATALOG.html": "error catalog html",
         "backbone_state_tracker/docs/images/settings-collection.png": "settings image",
         "backbone_state_tracker/docs/images/compare-results.png": "compare image",
         "backbone_state_tracker/docs/images/work-log.png": "log image",
@@ -82,9 +89,20 @@ def _source_entries() -> dict[str, str]:
             "backbone_state_tracker/core/collector.py": "collector",
             "backbone_state_tracker/core/config.py": "config",
             "backbone_state_tracker/core/connectivity.py": "connectivity",
+            "backbone_state_tracker/core/diagnostics/__init__.py": "diagnostics init",
+            "backbone_state_tracker/core/diagnostics/codes.py": "diagnostics codes",
+            "backbone_state_tracker/core/diagnostics/events.py": "diagnostics events",
+            "backbone_state_tracker/core/diagnostics/recorder.py": "diagnostics recorder",
+            "backbone_state_tracker/core/diagnostics/report.py": "diagnostics report",
+            "backbone_state_tracker/core/diagnostics/runner.py": "diagnostics runner",
             "backbone_state_tracker/core/diff_engine.py": "diff engine",
             "backbone_state_tracker/core/gui.py": "gui",
             "backbone_state_tracker/core/mock_validation.py": "mock validation",
+            "backbone_state_tracker/core/mockserver/__init__.py": "mockserver init",
+            "backbone_state_tracker/core/mockserver/profiles.py": "mockserver profiles",
+            "backbone_state_tracker/core/mockserver/runner.py": "mockserver runner",
+            "backbone_state_tracker/core/mockserver/ssh_server.py": "mockserver ssh",
+            "backbone_state_tracker/core/mockserver/telnet_server.py": "mockserver telnet",
             "backbone_state_tracker/core/models.py": "models",
             "backbone_state_tracker/core/paths.py": "paths",
             "backbone_state_tracker/core/preflight.py": "preflight",
@@ -99,10 +117,16 @@ def _source_entries() -> dict[str, str]:
             "backbone_state_tracker/tools/write_release_manifest.py": "manifest tool",
             "backbone_state_tracker/tools/verify_release_package.py": "verifier",
             "backbone_state_tracker/tools/verify_release_package.ps1": "powershell verifier",
+            "backbone_state_tracker/tests/test_diagnostics_codes.py": "diagnostic code tests",
+            "backbone_state_tracker/tests/test_diagnostics_report.py": "diagnostic report tests",
             "backbone_state_tracker/tests/test_diff_engine.py": "diff engine tests",
             "backbone_state_tracker/tests/test_documentation.py": "documentation tests",
             "backbone_state_tracker/tests/test_gui_formatting.py": "gui formatting tests",
+            "backbone_state_tracker/tests/test_mock_collector_integration.py": "mock collector integration tests",
             "backbone_state_tracker/tests/test_mock_validation.py": "mock validation tests",
+            "backbone_state_tracker/tests/test_mock_profiles.py": "mock profile tests",
+            "backbone_state_tracker/tests/test_mock_ssh_server.py": "mock ssh tests",
+            "backbone_state_tracker/tests/test_mock_telnet_server.py": "mock telnet tests",
             "backbone_state_tracker/tests/test_preflight.py": "preflight tests",
             "backbone_state_tracker/tests/test_redaction.py": "redaction tests",
             "backbone_state_tracker/tests/test_release_manifest.py": "manifest tests",
@@ -184,7 +208,10 @@ class ReleasePackageVerifierTests(unittest.TestCase):
         self.assertEqual(expected, set(DOC_ENTRY_PATTERN.findall(powershell_text)))
 
     def test_source_required_core_entries_match_current_core_files(self) -> None:
-        expected = {f"{CORE_ENTRY_PREFIX}{path.name}" for path in sorted((PROJECT_DIR / "core").glob("*.py"))}
+        expected = {
+            f"{CORE_ENTRY_PREFIX}{path.relative_to(PROJECT_DIR / 'core').as_posix()}"
+            for path in sorted((PROJECT_DIR / "core").rglob("*.py"))
+        }
         powershell_text = (PROJECT_DIR / "tools" / "verify_release_package.ps1").read_text(encoding="utf-8")
 
         self.assertEqual(expected, _core_entries(SOURCE_REQUIRED))

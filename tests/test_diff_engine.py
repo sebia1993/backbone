@@ -484,7 +484,7 @@ class DiffEngineTests(unittest.TestCase):
         self.assertEqual(connectivity.summary, "Target device connection failed.")
         self.assertEqual(connectivity.change_count, 1)
         self.assertEqual(connectivity.changed_lines[0].base_text, "reachable")
-        self.assertEqual(connectivity.changed_lines[0].target_text, "unreachable: timeout")
+        self.assertEqual(connectivity.changed_lines[0].target_text, "unreachable: timeout (BST-CON-301)")
         self.assertFalse(any(item.command_id == "interface_brief" and item.status == "removed" for item in summary.items))
 
     def test_restored_target_device_is_info_without_added_command_noise(self) -> None:
@@ -519,7 +519,7 @@ class DiffEngineTests(unittest.TestCase):
         connectivity = next(item for item in summary.items if item.command_id == DEVICE_CONNECTIVITY_COMMAND_ID)
         self.assertEqual(connectivity.severity, "Info")
         self.assertEqual(connectivity.summary, "Target device connection restored.")
-        self.assertEqual(connectivity.changed_lines[0].base_text, "unreachable: timeout")
+        self.assertEqual(connectivity.changed_lines[0].base_text, "unreachable: timeout (BST-CON-301)")
         self.assertEqual(connectivity.changed_lines[0].target_text, "reachable")
         self.assertFalse(any(item.command_id == "interface_brief" and item.status == "added" for item in summary.items))
 

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Backbone State Tracker 진단/Mock 서버 설계 제안</title>
+  <style>
+    :root {
+      --bg: #eef3f6;
+      --surface: #ffffff;
+      --text: #17212b;
+      --muted: #60717e;
+      --border: #ced9e2;
+      --accent: #01a982;
+      --accent-dark: #007a63;
+      --danger: #b42318;
+      --warning: #b54708;
+      --info: #2563a8;
+      --soft: #f4f8fa;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif;
+      line-height: 1.6;
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 24px 56px;
+    }
+    header {
+      background: #18232b;
+      color: #fff;
+      border-radius: 10px;
+      padding: 28px;
+      margin-bottom: 22px;
+    }
+    h1, h2, h3 { line-height: 1.25; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    h2 {
+      margin-top: 28px;
+      border-left: 4px solid var(--accent);
+      padding-left: 10px;
+      font-size: 20px;
+    }
+    h3 { margin-top: 22px; font-size: 16px; }
+    .meta { color: #dde7ee; font-size: 13px; }
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px;
+      margin-top: 18px;
+    }
+    code, pre {
+      font-family: Consolas, "Cascadia Mono", monospace;
+    }
+    pre {
+      background: #101820;
+      color: #dce6ed;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 18px;
+      font-size: 13px;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 9px 10px;
+      vertical-align: top;
+    }
+    th {
+      background: #f7fafb;
+      color: var(--muted);
+      text-align: left;
+    }
+    .note {
+      background: #ddf5f0;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent-dark);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 14px 0;
+    }
+    .danger { color: var(--danger); font-weight: 700; }
+    .warning { color: var(--warning); font-weight: 700; }
+    .info { color: var(--info); font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Backbone State Tracker 진단/Mock 서버 설계 제안</h1>
+    <div class="meta">문서 상태: 구현 전 설계안 | 대상 버전: v0.8.57 | 작성일: 2026-06-15</div>
+    <p>외부 개발 PC에서 실제 장비 정보 없이 검증하고, 회사 내부망 PC에서는 원본 로그를 외부로 반출하지 않고 오류 코드만으로 원인 분석이 가능하게 만드는 구조입니다.</p>
+  </header>
+
+  <section>
+    <h2>1. 설계 원칙</h2>
+    <ul>
+      <li>실제 장비 로그, 샘플 출력, IP, 호스트명, 계정 정보는 외부 개발 환경으로 가져오지 않습니다.</li>
+      <li>외부 개발 환경에서는 mock SSH/Telnet 서버와 합성 응답만 사용합니다.</li>
+      <li>회사 내부망 현장에서는 진단 모드가 단계별 상태와 오류 코드만 남기고 원본 명령 출력은 안전 리포트에서 제외합니다.</li>
+      <li>외부 전달용 자료는 오류 코드, 단계, 장비 alias, 조치 힌트, 앱 버전, 패키지 해시만 포함합니다.</li>
+      <li>Windows 11 반입 ZIP은 Python 설치 없이 <code>BackboneStateTracker.exe</code> 단독 실행이 가능해야 합니다.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2. 제안 폴더 구조</h2>
+    <pre>backbone_state_tracker/
+  core/
+    diagnostics/
+      codes.py
+      events.py
+      probes.py
+      recorder.py
+      report.py
+      runner.py
+    mockserver/
+      profiles.py
+      ssh_server.py
+      telnet_server.py
+      runner.py
+  config/
+    mock_profiles.yaml
+  docs/
+    DIAGNOSTIC_MODE_GUIDE.md/html
+    ERROR_CODE_CATALOG.md/html
+  tests/
+    test_diagnostics_codes.py
+    test_diagnostics_report.py
+    test_mock_telnet_server.py
+    test_mock_ssh_server.py</pre>
+    <div class="note">기존 <code>collector.py</code>, <code>redaction.py</code>, <code>preflight.py</code>, <code>reporter.py</code>는 유지하고, 진단/Mock 서버 기능을 별도 모듈로 추가하는 방식이 적절합니다.</div>
+  </section>
+
+  <section>
+    <h2>3. 실행 모드</h2>
+    <h3>외부 개발 PC mock 검증</h3>
+    <pre>BackboneStateTracker.exe --mock-server --profile normal --ssh-port 2222 --telnet-port 2323
+BackboneStateTracker.exe --mock-server --profile vrrp_role_change --ssh-port 2222</pre>
+    <table>
+      <tr><th>Profile</th><th>목적</th></tr>
+      <tr><td><code>normal</code></td><td>모든 명령 정상 응답</td></tr>
+      <tr><td><code>backbone3_down</code></td><td>한 장비 접속 실패 시나리오</td></tr>
+      <tr><td><code>auth_failed</code></td><td>인증 실패</td></tr>
+      <tr><td><code>command_timeout</code></td><td>특정 명령 지연/타임아웃</td></tr>
+      <tr><td><code>vrrp_role_change</code></td><td>VRRP Master/Backup 변경</td></tr>
+      <tr><td><code>cpu_warning</code>, <code>cpu_critical</code></td><td>CPU 임계치 판정 검증</td></tr>
+      <tr><td><code>memory_warning</code>, <code>memory_critical</code></td><td>Memory FreeRatio 임계치 판정 검증</td></tr>
+      <tr><td><code>power_abnormal</code></td><td>Power State 비정상 판정 검증</td></tr>
+    </table>
+    <h3>회사 현장 진단 모드</h3>
+    <pre>BackboneStateTracker.exe --diagnose
+BackboneStateTracker.exe --diagnose --safe-report
+BackboneStateTracker.exe --explain-code BST-CON-301</pre>
+  </section>
+
+  <section>
+    <h2>4. 진단 단계</h2>
+    <table>
+      <tr><th>단계</th><th>확인 내용</th><th>원본 로그 저장</th></tr>
+      <tr><td><code>startup</code></td><td>EXE 버전, 실행 경로, 필수 리소스 존재</td><td>없음</td></tr>
+      <tr><td><code>config</code></td><td>명령/장비 설정 형식, 포트 범위</td><td>없음</td></tr>
+      <tr><td><code>security</code></td><td>마스킹 정책, 저장 금지 경로, 반출 리포트 범위</td><td>없음</td></tr>
+      <tr><td><code>preflight</code></td><td>읽기 전용 명령 여부, 위험 명령 차단</td><td>없음</td></tr>
+      <tr><td><code>network</code></td><td>TCP 연결 가능 여부, SSH/Telnet 배너 단계</td><td>없음</td></tr>
+      <tr><td><code>auth</code></td><td>인증 성공/실패 코드화</td><td>없음</td></tr>
+      <tr><td><code>collect</code></td><td>명령 실행 성공/실패, 시간 초과</td><td>원본 출력 제외</td></tr>
+      <tr><td><code>report</code></td><td>안전 리포트 생성 여부</td><td>없음</td></tr>
+      <tr><td><code>package</code></td><td>EXE ZIP 리소스, manifest, SHA256 확인</td><td>없음</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>5. 오류 코드 체계</h2>
+    <table>
+      <tr><th>Prefix</th><th>영역</th><th>예시</th></tr>
+      <tr><td><code>BST-CFG-1xxx</code></td><td>설정 파일, 장비, 명령 정의</td><td><code>BST-CFG-101 DEVICE_CONFIG_MISSING</code></td></tr>
+      <tr><td><code>BST-SEC-2xxx</code></td><td>민감정보, 마스킹, 반출 안전성</td><td><code>BST-SEC-201 SECRET_REDACTED</code></td></tr>
+      <tr><td><code>BST-CON-3xxx</code></td><td>SSH/Telnet/TCP 접속</td><td><code>BST-CON-301 TCP_TIMEOUT</code></td></tr>
+      <tr><td><code>BST-COL-4xxx</code></td><td>명령 실행, 타임아웃, 부분 수집</td><td><code>BST-COL-401 COMMAND_TIMEOUT</code></td></tr>
+      <tr><td><code>BST-DIF-5xxx</code></td><td>스냅샷 비교와 판정</td><td><code>BST-DIF-501 BASELINE_NOT_FOUND</code></td></tr>
+      <tr><td><code>BST-REP-6xxx</code></td><td>리포트 생성과 공유 ZIP</td><td><code>BST-REP-601 SAFE_REPORT_CREATED</code></td></tr>
+      <tr><td><code>BST-PKG-7xxx</code></td><td>EXE 패키징과 리소스</td><td><code>BST-PKG-701 EXE_RESOURCE_MISSING</code></td></tr>
+      <tr><td><code>BST-MOCK-8xxx</code></td><td>mock 서버와 profile</td><td><code>BST-MOCK-801 MOCK_PROFILE_NOT_FOUND</code></td></tr>
+      <tr><td><code>BST-SYS-9xxx</code></td><td>OS, 권한, 경로, 런타임</td><td><code>BST-SYS-901 OUTPUT_PATH_DENIED</code></td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>6. 초기 필수 오류 코드</h2>
+    <table>
+      <tr><th>Code</th><th>이름</th><th>등급</th><th>의미</th><th>1차 조치</th></tr>
+      <tr><td><code>BST-CFG-101</code></td><td><code>DEVICE_CONFIG_MISSING</code></td><td class="danger">Critical</td><td>대상 장비 설정이 없음</td><td>장비 설정 화면에서 대상 장비 추가</td></tr>
+      <tr><td><code>BST-CFG-121</code></td><td><code>UNSAFE_COMMAND_BLOCKED</code></td><td class="danger">Critical</td><td>쓰기/변경성 명령 차단</td><td>명령 목록에서 해당 명령 제거</td></tr>
+      <tr><td><code>BST-CON-301</code></td><td><code>TCP_TIMEOUT</code></td><td class="danger">Critical</td><td>TCP 연결 시간 초과</td><td>관리망, 방화벽, 포트, 전원 확인</td></tr>
+      <tr><td><code>BST-CON-302</code></td><td><code>SSH_AUTH_FAILED</code></td><td class="danger">Critical</td><td>SSH 인증 실패</td><td>계정/암호/권한 확인</td></tr>
+      <tr><td><code>BST-COL-401</code></td><td><code>COMMAND_TIMEOUT</code></td><td class="warning">Warning</td><td>명령 응답 시간 초과</td><td>장비 부하 또는 timeout 값 확인</td></tr>
+      <tr><td><code>BST-REP-601</code></td><td><code>SAFE_REPORT_CREATED</code></td><td class="info">Info</td><td>안전 리포트 생성 완료</td><td>외부 공유 가능 파일 확인</td></tr>
+      <tr><td><code>BST-MOCK-801</code></td><td><code>MOCK_PROFILE_NOT_FOUND</code></td><td class="danger">Critical</td><td>mock profile 없음</td><td>profile 이름과 YAML 포함 여부 확인</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>7. 안전 리포트</h2>
+    <pre>outputs/diagnostics/YYYYMMDD_HHMMSS/
+  diagnostic_report.html
+  diagnostic_report.json
+  diagnostic_ticket.txt</pre>
+    <p>허용 항목은 앱 버전, OS, 진단 단계, 오류 코드, 등급, 장비 alias, 안전한 요약, 조치 힌트, 패키지 manifest/SHA256 상태입니다.</p>
+    <p>금지 항목은 원본 명령 출력, 실제 IP/호스트명/장비명, 계정, 암호, 토큰, SNMP community, 고객명, 위치명, 내부망 도메인, raw snapshot 경로입니다.</p>
+  </section>
+
+  <section>
+    <h2>8. 구현 단계 제안</h2>
+    <ol>
+      <li><strong>v0.8.57-alpha1</strong>: 오류 코드, 진단 이벤트, 안전 리포트 기반 구현</li>
+      <li><strong>v0.8.57-alpha2</strong>: mock Telnet 서버와 profile 테스트</li>
+      <li><strong>v0.8.57-alpha3</strong>: mock SSH 서버와 collector 연동 테스트</li>
+      <li><strong>v0.8.57-beta1</strong>: GUI 도움말/진단 실행 통합</li>
+      <li><strong>v0.8.57</strong>: EXE 패키징, 문서, release verifier 마감</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>9. 구현 전 결정사항</h2>
+    <ul>
+      <li>mock SSH 서버는 <code>paramiko</code> 기반을 권장합니다.</li>
+      <li>Telnet은 Python <code>telnetlib</code>에 의존하지 않고 socket 기반 서버로 구현하는 것이 안전합니다.</li>
+      <li>진단 리포트는 원본 로그 포함 옵션을 제공하지 않는 방향을 권장합니다.</li>
+      <li>장비 alias 원본 매핑 파일은 기본 저장하지 않는 방향을 권장합니다.</li>
+      <li>기능 규모가 크므로 릴리스는 <code>v0.8.57</code> 계열이 적절합니다.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
