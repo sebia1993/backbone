@@ -12,6 +12,9 @@ DEVICE_CONNECTIVITY_DESCRIPTION = "Device connection status"
 DEVICE_CONNECTIVITY_CATEGORY = "connection"
 REACHABLE_OUTPUT = "reachable"
 LEGACY_CONNECTION_FAILURE_IDS = {"authentication_failed", "timeout_failed", "connection_failed"}
+
+# 접속 실패는 원본 예외 메시지보다 코드가 중요합니다. 운영자가 외부에
+# BST-CON-* 코드만 전달해도 원인 범위를 좁힐 수 있게 reason을 표준 코드로 바꿉니다.
 CONNECTION_REASON_CODES = {
     "timeout": "BST-CON-301",
     "authentication": "BST-CON-302",
@@ -49,6 +52,8 @@ def make_connectivity_result_for_device(
     started_at: str = "",
     ended_at: str = "",
 ) -> CommandResult:
+    # 연결 실패 결과도 일반 명령 결과와 같은 모델로 저장합니다.
+    # 이렇게 하면 비교 엔진과 HTML 리포트가 별도 예외 처리 없이 같은 방식으로 표시합니다.
     diagnostic_code = diagnostic_code_for_connection_reason(reason) if not success else ""
     sanitized_error = sanitize_connection_error(error_message)
     if diagnostic_code and sanitized_error:

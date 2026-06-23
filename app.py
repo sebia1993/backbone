@@ -9,6 +9,8 @@ from core.mockserver.runner import run_mock_server_cli
 
 
 if __name__ == "__main__":
+    # 이 파일은 실행 모드의 교차로입니다. GUI 실행 외에도 테스트/진단/mock 서버를
+    # 같은 EXE에서 바로 호출할 수 있게 CLI 옵션을 먼저 확인합니다.
     if "--smoke-check" in sys.argv:
         smoke_check()
     elif "--mock-server" in sys.argv:

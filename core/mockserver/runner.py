@@ -27,10 +27,13 @@ def run_mock_server_cli(argv: list[str]) -> int:
 
     profile = load_mock_profile(args.profile_path, args.profile)
     if args.self_check:
+        # self-check는 서버를 잠깐 띄운 뒤 직접 접속해 응답을 확인합니다.
+        # 장기 실행 서버 모드와 달리 테스트가 끝나면 즉시 종료됩니다.
         if args.protocol == "ssh":
             return _self_check_ssh(profile, args.host, args.port)
         return _self_check_telnet(profile, args.host, args.port)
 
+    # self-check가 없으면 개발자가 수동 테스트에 사용할 mock 장비처럼 계속 대기합니다.
     if args.protocol == "ssh":
         run_ssh_server_forever(profile, args.host, args.port)
     else:
@@ -86,6 +89,8 @@ def _self_check_ssh(profile: MockProfile, host: str, port: int) -> int:
 
 
 def _recv_until(sock: socket.socket, marker: bytes) -> bytes:
+    # Telnet 응답은 한 번에 모두 오지 않을 수 있으므로 원하는 프롬프트가 보일 때까지
+    # 조각을 모읍니다. mock 테스트에서 실제 네트워크 지연을 흉내 내기 위한 기본 패턴입니다.
     chunks: list[bytes] = []
     while marker not in b"".join(chunks):
         chunk = sock.recv(4096)

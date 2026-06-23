@@ -2,121 +2,97 @@
 
 Version: `v0.8.57`
 
-Windows GUI utility for collecting read-only status snapshots from backbone 3
-and 4, then comparing snapshots to track operational changes during maintenance.
+HPE Aruba 계열 백본 3/4호기 상태를 읽기 전용 명령으로 수집하고, 작업 전후 스냅샷을 비교해 장애 징후와 변경점을 추적하는 Windows GUI 도구입니다.
 
-## What It Does
+집에서 개발한 뒤 회사 내부망 PC에 반입해 실행하는 상황을 전제로 합니다. 실제 장비 로그, 내부 IP, 호스트명, 계정 정보는 외부로 반출하지 않고, 필요한 경우 mock 서버와 안전 진단 리포트로 검증합니다.
 
-- Connects to backbone devices over SSH.
-- Provides offline mock SSH/Telnet servers with synthetic profiles so package behavior can be tested without real devices.
-- Provides a local diagnostic self-check mode for company-site validation without collecting raw device logs.
-- Generates safe diagnostic reports and tickets with staged status, diagnostic codes, and automatic sensitive-value masking.
-- Bundles an error-code catalog so external troubleshooting can start from a code only, without exported logs or topology data.
-- Runs read-only display/check commands from `config/commands.yaml`.
-- Adds `vrrp_status` with `show vrrp` to capture VRRP master/backup and virtual router state.
-- Verifies the bundled command set remains preflight-safe and read-only without warnings.
-- Keeps command guide MD/HTML entries aligned with the bundled command set.
-- Applies an AirWave-inspired operations-console theme with a dark navigation rail, Aruba teal action color, quieter cards, and denser tables.
-- Adds consistent workflow status panels for account/device setup, status collection, comparison status, and execution history.
-- Shows target device counts as a compact summary chip and highlights selected severity filters with filled status-card styling.
-- Uses a darker fixed-width work-log surface for easier review of timestamps, paths, and error messages.
-- Adds compare-detail context in the GUI so the selected severity, device, command, change type, and line stay visible while reviewing raw values.
-- Updates generated HTML comparison reports with an active filter state bar, severity-tinted count cards, and detail headers that keep device, command, status, category, and change count together.
-- Finalizes the UI modernization handoff with updated guide screenshots, design-token notes, release checklist coverage, and release packages.
-- Documents the modernization analysis so the old-looking UI causes and design response are preserved for future maintainers.
-- Starts on `장비 설정`.
-- Combines access account, target devices, and status collection in the settings screen.
-- Keeps two default target device rows and lets operators add more rows when extra backbone targets need the same check.
-- Keeps the settings screen scrollable and shows a live target device count summary when rows are added.
-- Uses a single optional collection stage-name field. Empty input is saved as `점검시간_YYYYMMDD_HHMM`.
-- Saves the first collection as the baseline snapshot and automatically compares later collections against the latest baseline.
-- Moves to `작업 로그` automatically when collection starts or input/preflight validation fails.
-- Blocks preflight and snapshot-list refresh actions while another collection or comparison workflow is already running.
-- Tracks per-device connectivity so an unreachable backbone is reported as one Critical `device_connectivity` comparison item.
-- Classifies `cpu_usage` and `memory_usage` by the current target snapshot thresholds only: Critical/Warning at the configured limits and Info when values are normal.
-- Shows clickable `긴급`, `주의`, `정보`, `변경없음` summary cards in the GUI and HTML report.
-- Keeps HTML report detail content hidden until an operator selects `긴급`, `주의`, `정보`, or `변경없음`, with enforced hidden rendering in the generated HTML.
-- Adds HTML report status shortcut buttons for the selected status only, then jumps directly to the matching device/command detail block.
-- Shows visible type, line, and change-content labels inside HTML report detail rows so isolated rows remain understandable.
-- Keeps unchanged HTML summary cards and detail blocks collapsed until an operator manually expands them.
-- Validates generated HTML report filter markup with parser-based regression tests.
-- Validates current-version alignment across README, CHANGELOG, and release guide MD/HTML documents.
-- Verifies source release ZIPs include the full regression test suite, not only packaging tests.
-- Checks the source ZIP verifier's required test-file lists stay aligned with the real `tests/test_*.py` files.
-- Verifies source release ZIPs include all `core/*.py` runtime modules and `requirements.txt` for internal rebuilds.
-- Checks release tool script requirements stay aligned with the real `tools/*.py` and `tools/*.ps1` files.
-- Checks packaged guide documents and guide images stay aligned with the real `docs/` files.
-- Checks packaged shareable config files stay aligned with the real `config/` files while keeping local `config/devices.yaml` excluded.
-- Verifies Windows EXE ZIPs cannot omit `BackboneStateTracker.exe` or `RUN_FIRST.txt`.
-- Rejects runtime outputs, build artifacts, virtual environments, and test caches in release ZIP verification.
-- Guards Korean user/developer guides against encoding corruption and missing core workflow terms.
-- Generates HTML, XLSX, and JSON comparison reports.
-- Keeps sample validation snapshots out of real pre-work baseline selection.
-- Labels sample snapshots as `샘플:` in the top runtime summary.
-- Labels sample snapshots as `샘플:` in HTML comparison report header metadata.
-- Creates a shared report ZIP with redacted reports, guides, and guide images while excluding snapshot raw output folders.
-- Includes operator, command, developer, version-history, and release-checklist guides in shared report ZIPs.
-- Includes Korean MD/HTML user, command, developer, version-history, and release-checklist documents.
-- Includes user-guide screenshots under `docs/images/`.
-- Writes SHA256 sidecars, a release manifest, `PACKAGE_INFO.txt`, and Python/PowerShell release ZIP verification helpers.
+## 주요 기능
 
-## Quick Start
+- 백본 장비에 SSH로 접속해 `config/commands.yaml`의 읽기 전용 점검 명령만 실행합니다.
+- `show vrrp`를 포함해 VRRP master/backup 상태, 인터페이스, LACP, OSPF, CPU, 메모리, 전원 상태를 점검합니다.
+- 첫 수집 결과를 기준 스냅샷으로 저장하고, 이후 수집 결과와 자동 비교합니다.
+- 비교 결과를 `긴급`, `주의`, `정보`, `변경없음` 상태로 분류합니다.
+- 장비 접속 실패는 여러 명령 실패로 흩어지지 않고 `device_connectivity` 항목 하나로 표시합니다.
+- 실제 장비 없이 테스트할 수 있는 mock SSH/Telnet 서버와 합성 profile을 제공합니다.
+- 회사 현장에서 `--diagnose --self-check`로 설정, mock profile, 문서 포함 여부를 안전하게 점검할 수 있습니다.
+- 진단 리포트는 원본 장비 로그 없이 단계별 상태와 `BST-*` 오류 코드만 남깁니다.
+- 장비명, 호스트명, IP, password, token, SNMP community 등 민감정보를 자동 마스킹합니다.
+- Windows 11에서 Python 설치 없이 실행 가능한 단독 EXE ZIP을 생성합니다.
+- 사용자 가이드, 점검 명령어 가이드, 초급 개발자 가이드, 버전 변경내역을 MD/HTML로 제공합니다.
+
+## 빠른 실행
 
 ```powershell
-cd "<folder-that-contains-backbone_state_tracker>\backbone_state_tracker"
+cd "<backbone_state_tracker가 들어있는 폴더>\backbone_state_tracker"
 python -m pip install -r requirements.txt
 python app.py
 ```
 
-Use the first `장비 설정` screen to enter backbone 3/4 device IPs, SSH username,
-and password. Use `장비 추가` only when more target devices need to be included.
-Passwords are never saved to configuration or report files.
+프로그램 첫 화면인 `장비 설정`에서 백본 3/4호기 접속 정보와 계정을 입력합니다. 비밀번호는 설정 파일이나 리포트에 저장하지 않습니다.
 
-## Important Files
+## 실제 장비 없이 확인
 
-- `config/devices.example.yaml`: sample device definitions.
-- `config/commands.yaml`: read-only command set.
-- `outputs/snapshots/`: generated snapshot and comparison outputs.
-- `docs/USER_GUIDE.md`: operator guide.
-- `docs/COMMAND_GUIDE.md`: command meaning and check-point guide.
-- `docs/DIAGNOSTIC_MODE_GUIDE.md`: offline mock and company-site diagnostic workflow.
-- `docs/ERROR_CODE_CATALOG.md`: diagnostic-code meaning and first action guide.
-- `docs/DEVELOPER_GUIDE_BEGINNER.md`: beginner developer guide.
-- `docs/VERSION_HISTORY.md`: version-by-version change history.
-- `docs/RELEASE_CHECKLIST.md`: release import and verification checklist.
-- `docs/images/`: user-guide screenshots.
-
-## Test
+mock 서버 self-check:
 
 ```powershell
-cd "<folder-that-contains-backbone_state_tracker>\backbone_state_tracker"
+python app.py --mock-server --protocol ssh --profile normal --self-check
+python app.py --mock-server --protocol telnet --profile normal --self-check
+```
+
+회사 현장 진단 self-check:
+
+```powershell
+python app.py --diagnose --self-check
+python app.py --explain-code BST-CON-301
+```
+
+진단 결과는 `outputs\diagnostics\` 아래에 HTML, JSON, ticket 텍스트로 생성됩니다. 이 리포트는 원본 장비 출력과 실제 내부 주소를 포함하지 않도록 설계되어 있습니다.
+
+## 주요 파일
+
+- `config/devices.example.yaml`: 장비 설정 예시입니다. 실제 `config/devices.yaml`은 로컬 전용이며 Git에 포함하지 않습니다.
+- `config/commands.yaml`: 읽기 전용 점검 명령 목록입니다.
+- `config/mock_profiles.yaml`: 실제 장비 없이 검증하는 mock 서버 합성 profile입니다.
+- `outputs/snapshots/`: 수집 스냅샷과 비교 결과가 생성되는 로컬 출력 폴더입니다.
+- `docs/USER_GUIDE.md`: 운영자용 사용자 가이드입니다.
+- `docs/COMMAND_GUIDE.md`: 명령어별 의미와 확인 포인트입니다.
+- `docs/DIAGNOSTIC_MODE_GUIDE.md`: mock 서버와 현장 진단 모드 사용법입니다.
+- `docs/ERROR_CODE_CATALOG.md`: `BST-*` 오류 코드 의미와 1차 조치 방향입니다.
+- `docs/DEVELOPER_GUIDE_BEGINNER.md`: 초급 개발자를 위한 구조 설명입니다.
+- `docs/VERSION_HISTORY.md`: 버전별 변경내역입니다.
+- `docs/RELEASE_CHECKLIST.md`: 사내 반입 전 검증 체크리스트입니다.
+- `docs/images/`: 사용자 가이드에 들어가는 화면 이미지입니다.
+
+## 테스트
+
+```powershell
+cd "<backbone_state_tracker가 들어있는 폴더>\backbone_state_tracker"
 $env:PYTHONPATH=(Split-Path (Get-Location) -Parent)
 python -m unittest discover -s tests
 python app.py --smoke-check
 ```
 
-## Source ZIP
+## Source ZIP 생성
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
 ```
 
-The source ZIP is written to `dist\`. It excludes `.git`, runtime outputs,
-local `config\devices.yaml`, caches, build folders, and virtual environments.
+Source ZIP은 `dist\`에 생성됩니다. `.git`, 런타임 출력, 로컬 `config\devices.yaml`, 캐시, build 폴더, 가상환경은 포함하지 않습니다.
 
-## Windows Executable ZIP
+## Windows EXE ZIP 생성
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 ```
 
-The generated ZIP is written to `dist\` as:
+생성되는 ZIP 이름 예시:
 
 ```text
 backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip
 ```
 
-After moving a ZIP into the internal environment, verify it with:
+사내 환경으로 ZIP을 반입한 뒤에는 다음 명령으로 검증합니다.
 
 ```powershell
 Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip
@@ -124,5 +100,4 @@ python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.57_Y
 powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.57_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip -RequireManifest
 ```
 
-Corporate mail systems may block ZIP files containing `.exe`, `.py`, or `.ps1`
-files. If upload is blocked, use the approved internal file transfer process.
+메일 시스템에서 `.exe`, `.py`, `.ps1`이 포함된 ZIP 업로드를 차단할 수 있습니다. 이 경우 사내 승인된 파일 반입 절차를 사용합니다.

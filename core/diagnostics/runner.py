@@ -28,6 +28,8 @@ def run_self_check(output_dir: Path | None = None) -> DiagnosticRunResult:
     recorder = DiagnosticRecorder()
     recorder.record("BST-SYS-900", stage="startup", status="started", safe_detail="mode=self-check")
 
+    # self-check는 실제 장비에 접속하지 않습니다. EXE 안에 필요한 설정/문서/mock
+    # profile이 들어있는지 확인하고, 결과를 오류 코드 중심 리포트로 남깁니다.
     resources = resource_root()
     commands_path = resources / "config" / "commands.yaml"
     mock_profiles_path = resources / "config" / "mock_profiles.yaml"
@@ -52,6 +54,8 @@ def run_self_check(output_dir: Path | None = None) -> DiagnosticRunResult:
                 safe_detail=f"resource=config/commands.yaml load_error={type(exc).__name__}",
             )
         else:
+            # 명령어 안전성 검사는 문서용 가짜 장비명으로만 수행합니다.
+            # 이렇게 해야 현장 내부 IP나 호스트명을 진단 산출물에 남기지 않습니다.
             synthetic_devices = [
                 Device(name="mock-backbone-3", host="mock-bst-3.local", port=22, device_type="hp_comware"),
                 Device(name="mock-backbone-4", host="mock-bst-4.local", port=22, device_type="hp_comware"),
@@ -136,6 +140,8 @@ def run_self_check(output_dir: Path | None = None) -> DiagnosticRunResult:
     try:
         destination.mkdir(parents=True, exist_ok=True)
     except OSError:
+        # 지정 경로에 쓸 수 없을 때도 진단 자체가 중단되지 않도록 실행 폴더 아래
+        # fallback 위치에 최소 리포트를 남깁니다.
         fallback = runtime_root() / "diagnostic_report_fallback"
         fallback.mkdir(parents=True, exist_ok=True)
         destination = fallback
