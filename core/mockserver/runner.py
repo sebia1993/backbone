@@ -15,7 +15,7 @@ def default_profile_path() -> Path:
 
 
 def run_mock_server_cli(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(description="Run a Backbone State Tracker mock SSH/Telnet server.")
+    parser = argparse.ArgumentParser(description="백본 상태 추적기 모의 SSH/Telnet 서버를 실행합니다.")
     parser.add_argument("--mock-server", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--protocol", choices=("telnet", "ssh"), default="telnet")
     parser.add_argument("--profile", default="normal")
@@ -53,8 +53,8 @@ def _self_check_telnet(profile: MockProfile, host: str, port: int) -> int:
             sock.sendall(b"display clock\n")
             payload = _recv_until(sock, profile.prompt.encode("utf-8"))
             if b"Mock clock" not in payload:
-                raise RuntimeError("Mock Telnet self-check did not receive expected command response.")
-        print(f"Mock telnet self-check OK host={server.host} port={server.port} profile={profile.name}")
+                raise RuntimeError("모의 Telnet 자체 점검에서 예상한 명령 응답을 받지 못했습니다.")
+        print(f"모의 telnet 자체 점검 OK host={server.host} port={server.port} profile={profile.name}")
     return 0
 
 
@@ -62,7 +62,7 @@ def _self_check_ssh(profile: MockProfile, host: str, port: int) -> int:
     try:
         import paramiko
     except ImportError as exc:  # pragma: no cover
-        raise RuntimeError("paramiko is required for mock SSH self-check.") from exc
+        raise RuntimeError("모의 SSH 자체 점검에는 paramiko가 필요합니다.") from exc
     with SshMockServer(profile, host=host, port=port) as server:
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -81,10 +81,10 @@ def _self_check_ssh(profile: MockProfile, host: str, port: int) -> int:
             _stdin, stdout, _stderr = client.exec_command("display clock", timeout=5)
             payload = stdout.read().decode("utf-8", errors="replace")
             if "Mock clock" not in payload:
-                raise RuntimeError("Mock SSH self-check did not receive expected command response.")
+                raise RuntimeError("모의 SSH 자체 점검에서 예상한 명령 응답을 받지 못했습니다.")
         finally:
             client.close()
-        print(f"Mock ssh self-check OK host={server.host} port={server.port} profile={profile.name}")
+        print(f"모의 ssh 자체 점검 OK host={server.host} port={server.port} profile={profile.name}")
     return 0
 
 

@@ -445,7 +445,7 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             _write_zip(package, _source_entries())
             write_package_checksum(package, "0.8.1", generated_at="2026-06-11T10:00:00+09:00")
             (dist / "backbone_state_tracker_v0.8.0_20260611_release_manifest.txt").write_text(
-                "Backbone State Tracker Release Manifest\n",
+                "백본 상태 추적기 릴리스 매니페스트\n",
                 encoding="utf-8",
             )
 
@@ -647,7 +647,7 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             (dist / "backbone_state_tracker_v0.8.9_20260612_release_manifest.txt").write_text(
                 "\n".join(
                     [
-                        "Backbone State Tracker Release Manifest",
+                        "백본 상태 추적기 릴리스 매니페스트",
                         "Project = backbone_state_tracker",
                         "Version = v0.8.8",
                         "Date stamp = 20260612",
@@ -677,7 +677,7 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             (dist / "backbone_state_tracker_v0.8.9_20260612_release_manifest.txt").write_text(
                 "\n".join(
                     [
-                        "Backbone State Tracker Release Manifest",
+                        "백본 상태 추적기 릴리스 매니페스트",
                         "Project = backbone_state_tracker",
                         "Version = v0.8.9",
                         "Date stamp = 20260611",
@@ -709,7 +709,7 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             (dist / "backbone_state_tracker_v0.8.10_20260612_release_manifest.txt").write_text(
                 "\n".join(
                     [
-                        "Backbone State Tracker Release Manifest",
+                        "백본 상태 추적기 릴리스 매니페스트",
                         "Project = backbone_state_tracker",
                         "Version = v0.8.10",
                         "Date stamp = 20260612",
@@ -742,7 +742,7 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             (dist / "backbone_state_tracker_v0.8.10_20260612_release_manifest.txt").write_text(
                 "\n".join(
                     [
-                        "Backbone State Tracker Release Manifest",
+                        "백본 상태 추적기 릴리스 매니페스트",
                         "Project = backbone_state_tracker",
                         "Version = v0.8.10",
                         "Date stamp = 20260612",
@@ -772,7 +772,7 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             (dist / "backbone_state_tracker_v0.8.13_20260612_release_manifest.txt").write_text(
                 "\n".join(
                     [
-                        "Backbone State Tracker Release Manifest",
+                        "백본 상태 추적기 릴리스 매니페스트",
                         "Project = backbone_state_tracker",
                         "Version = v0.8.13",
                         "Date stamp = 20260612",

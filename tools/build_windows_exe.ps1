@@ -88,14 +88,14 @@ function Update-LatestReleaseArtifacts {
     }
 
     $currentReleaseLines = @(
-        "Backbone State Tracker current release",
-        "Version = v$Version",
-        "DateStamp = $DateStamp",
-        "Created = $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")",
+        "백본 상태 추적기 최신 릴리스",
+        "버전 = v$Version",
+        "날짜 스탬프 = $DateStamp",
+        "생성 시각 = $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")",
         "",
-        "Use the files in dist\latest for internal transfer when multiple historical ZIP files exist.",
+        "과거 ZIP이 dist에 함께 남아 있을 때는 사내 반입용 최신 파일을 dist\latest에서 확인하세요.",
         "",
-        "Artifacts:"
+        "산출물:"
     )
     foreach ($artifact in $artifacts) {
         $currentReleaseLines += " - $($artifact.Name) ($($artifact.Length) bytes)"
@@ -165,11 +165,11 @@ try {
     }
     & $ExePath --mock-server --protocol telnet --profile normal --self-check
     if ($LASTEXITCODE -ne 0) {
-        throw "Executable mock Telnet self-check failed with exit code $LASTEXITCODE"
+        throw "실행 파일 모의 Telnet 자체 점검 실패: exit code $LASTEXITCODE"
     }
     & $ExePath --mock-server --protocol ssh --profile normal --self-check
     if ($LASTEXITCODE -ne 0) {
-        throw "Executable mock SSH self-check failed with exit code $LASTEXITCODE"
+        throw "실행 파일 모의 SSH 자체 점검 실패: exit code $LASTEXITCODE"
     }
 
     New-Item -ItemType Directory -Force -Path $PayloadRoot | Out-Null
@@ -184,44 +184,44 @@ try {
     Copy-Item -LiteralPath (Join-Path $ProjectRoot "CHANGELOG.md") -Destination (Join-Path $PayloadRoot "CHANGELOG.md") -Force
 
     $packageInfoText = @"
-Backbone State Tracker v$Version
-Package type: Windows EXE ZIP
-Created: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")
+백본 상태 추적기 v$Version
+패키지 형식: Windows EXE ZIP
+생성 시각: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")
 
-Contents:
+포함 항목:
 - BackboneStateTracker.exe
-- Config examples
-- Operator and developer guides
-- Diagnostic mode guide and error-code catalog
-- Version history and changelog
+- 설정 예시 파일
+- 운영자/개발자 가이드
+- 진단 모드 가이드와 오류 코드 카탈로그
+- 버전 변경내역과 CHANGELOG
 
-Excluded:
-- Runtime outputs
-- Local config\devices.yaml secrets
-- Source repository metadata
-- Build work folders
+제외 항목:
+- 실행 중 생성되는 outputs 등 런타임 산출물
+- 내부 장비 정보가 들어갈 수 있는 로컬 config\devices.yaml
+- 소스 저장소 메타데이터
+- 빌드 작업 폴더
 
-Verification:
-- Compare this ZIP file SHA256 with the matching .sha256.txt file in dist.
-- A version-level release_manifest.txt file is also generated in dist.
+검증 방법:
+- 이 ZIP 파일의 SHA256 값을 dist의 동일 이름 .sha256.txt 파일과 비교하세요.
+- 버전 단위 release_manifest.txt 파일도 dist에 함께 생성됩니다.
 "@
     Set-Content -LiteralPath (Join-Path $PayloadRoot "PACKAGE_INFO.txt") -Value $packageInfoText -Encoding UTF8
 
     $runText = @"
-Backbone State Tracker v$Version
+백본 상태 추적기 v$Version
 
-1. Run BackboneStateTracker.exe.
-2. Edit config\devices.example.yaml or save device entries from the GUI.
-3. Runtime outputs are created under outputs\snapshots next to the executable.
-4. For local package checks without real devices, run:
+1. BackboneStateTracker.exe를 실행합니다.
+2. config\devices.example.yaml을 참고해 장비 정보를 입력하거나 GUI에서 장비 목록을 저장합니다.
+3. 실행 결과는 EXE가 있는 폴더 아래 outputs\snapshots에 생성됩니다.
+4. 실제 장비 없이 패키지를 점검하려면 아래 명령을 실행합니다.
    BackboneStateTracker.exe --diagnose --self-check
    BackboneStateTracker.exe --mock-server --protocol ssh --profile normal --self-check
    BackboneStateTracker.exe --mock-server --protocol telnet --profile normal --self-check
 
-Security note:
-- No password is saved by the program.
-- Corporate mail systems may block ZIP files that contain EXE files.
-- If email upload is blocked, use the approved internal file transfer process.
+보안 안내:
+- 이 프로그램은 비밀번호를 저장하지 않습니다.
+- 일부 회사 메일 시스템은 EXE가 포함된 ZIP 업로드를 차단할 수 있습니다.
+- 메일 업로드가 차단되면 승인된 사내 파일 반입 절차를 사용하세요.
 "@
     Set-Content -LiteralPath (Join-Path $PayloadRoot "RUN_FIRST.txt") -Value $runText -Encoding UTF8
 

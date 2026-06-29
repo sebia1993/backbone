@@ -121,14 +121,14 @@ function Update-LatestReleaseArtifacts {
     }
 
     $currentReleaseLines = @(
-        "Backbone State Tracker current release",
-        "Version = v$Version",
-        "DateStamp = $DateStamp",
-        "Created = $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")",
+        "백본 상태 추적기 최신 릴리스",
+        "버전 = v$Version",
+        "날짜 스탬프 = $DateStamp",
+        "생성 시각 = $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")",
         "",
-        "Use the files in dist\latest for internal transfer when multiple historical ZIP files exist.",
+        "과거 ZIP이 dist에 함께 남아 있을 때는 사내 반입용 최신 파일을 dist\latest에서 확인하세요.",
         "",
-        "Artifacts:"
+        "산출물:"
     )
     foreach ($artifact in $artifacts) {
         $currentReleaseLines += " - $($artifact.Name) ($($artifact.Length) bytes)"
@@ -153,28 +153,28 @@ $PayloadRoot = Join-Path $StagingRoot $ProjectName
 try {
     Copy-ReleaseTree -SourceRoot $ProjectRoot -DestinationRoot $PayloadRoot
     $packageInfoText = @"
-Backbone State Tracker v$Version
-Package type: Source ZIP
-Created: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")
+백본 상태 추적기 v$Version
+패키지 형식: Source ZIP
+생성 시각: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")
 
-Contents:
-- Source code
-- Config examples
-- Operator and developer guides
-- Unit tests
-- Release packaging scripts
+포함 항목:
+- 소스 코드
+- 설정 예시 파일
+- 운영자/개발자 가이드
+- 단위 테스트
+- 릴리스 패키징 스크립트
 
-Excluded:
+제외 항목:
 - .git
 - outputs
 - dist
 - build
-- config\devices.yaml
-- Python caches and virtual environments
+- 내부 장비 정보가 들어갈 수 있는 로컬 config\devices.yaml
+- Python 캐시와 가상환경
 
-Verification:
-- Compare this ZIP file SHA256 with the matching .sha256.txt file in dist.
-- A version-level release_manifest.txt file is also generated in dist.
+검증 방법:
+- 이 ZIP 파일의 SHA256 값을 dist의 동일 이름 .sha256.txt 파일과 비교하세요.
+- 버전 단위 release_manifest.txt 파일도 dist에 함께 생성됩니다.
 "@
     Set-Content -LiteralPath (Join-Path $PayloadRoot "PACKAGE_INFO.txt") -Value $packageInfoText -Encoding UTF8
     Compress-Archive -LiteralPath $PayloadRoot -DestinationPath $ZipPath -CompressionLevel Optimal
@@ -202,4 +202,3 @@ Copy-Item -LiteralPath $PowerShellVerifierSource -Destination $PowerShellVerifie
 Update-LatestReleaseArtifacts -ProjectName $ProjectName -Version $Version -DateStamp $DateStamp -DistDir $DistDir
 
 Write-Host "Release ZIP created: $ZipPath"
-

@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 진단 모드 가이드</title>
+  <title>백본 상태 추적기 진단 모드 가이드</title>
   <style>
     body { margin: 0; background: #eef3f6; color: #17212b; font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif; line-height: 1.6; }
     main { max-width: 980px; margin: 0 auto; padding: 30px 22px 52px; }
@@ -21,7 +21,7 @@
 <body>
 <main>
   <header>
-    <h1>Backbone State Tracker 진단 모드 가이드</h1>
+    <h1>백본 상태 추적기 진단 모드 가이드</h1>
     <div class="meta">문서 버전: v0.8.57 | 작성일: 2026-06-15</div>
     <p>실제 장비 원본 로그를 외부로 보내지 않고 문제 원인을 추적하기 위한 기능입니다.</p>
   </header>
@@ -33,12 +33,12 @@ BackboneStateTracker.exe --explain-code BST-CON-301</pre>
 python app.py --explain-code BST-CON-301</pre>
   </section>
   <section>
-    <h2>Mock 서버 실행</h2>
-    <p>외부 개발 PC에서는 실제 장비 없이 mock 서버로 접속 흐름을 검증합니다. Mock profile은 실제 장비 출력 복사본이 아니라 합성 응답만 사용합니다.</p>
+    <h2>모의 서버 실행</h2>
+    <p>외부 개발 PC에서는 실제 장비 없이 모의 서버로 접속 흐름을 검증합니다. 모의 장비 프로파일은 실제 장비 출력 복사본이 아니라 합성 응답만 사용합니다.</p>
     <pre>BackboneStateTracker.exe --mock-server --protocol telnet --profile normal --self-check
 BackboneStateTracker.exe --mock-server --protocol ssh --profile normal --self-check
 BackboneStateTracker.exe --mock-server --protocol ssh --profile vrrp_role_change --host 127.0.0.1 --port 2222</pre>
-    <p>수집기 통합 검증은 <code>127.0.0.1</code>과 mock 서버 포트를 대상 장비로 지정해 수행합니다. 이때 장비명은 <code>mock-device-a</code> 같은 합성 이름을 사용합니다.</p>
+    <p>수집기 통합 검증은 <code>127.0.0.1</code>과 모의 서버 포트를 대상 장비로 지정해 수행합니다. 이때 장비명은 <code>mock-device-a</code> 같은 합성 이름을 사용합니다.</p>
   </section>
   <section>
     <h2>생성 파일</h2>
@@ -60,7 +60,7 @@ BackboneStateTracker.exe --mock-server --protocol ssh --profile vrrp_role_change
       <li>진단 단계, 오류 코드, 등급</li>
       <li>장비 alias</li>
       <li>안전한 요약과 조치 힌트</li>
-      <li><code>raw_log_included=false</code></li>
+      <li><code>원본 로그 포함=false</code></li>
     </ul>
   </section>
   <section>
@@ -84,11 +84,11 @@ BackboneStateTracker.exe --mock-server --protocol ssh --profile vrrp_role_change
   </section>
   <section>
     <h2>예시</h2>
-    <pre>Backbone State Tracker v0.8.57 diagnostic ticket
-raw_log_included=false
+    <pre>백본 상태 추적기 v0.8.57 진단 티켓
+원본 로그 포함=false
 
-Events:
-- BST-CON-301 Critical stage=network status=failed device=DEV-001 summary=TCP connection timed out.</pre>
+이벤트:
+- BST-CON-301 긴급 단계=network 상태=failed 장비=DEV-001 요약=TCP 연결 시간이 초과됐습니다.</pre>
   </section>
 </main>
 </body>

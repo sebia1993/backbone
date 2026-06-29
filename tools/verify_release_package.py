@@ -413,7 +413,7 @@ def verify_release_package(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Verify a Backbone State Tracker release ZIP.")
+    parser = argparse.ArgumentParser(description="백본 상태 추적기 릴리스 ZIP을 검증합니다.")
     parser.add_argument("package", type=Path)
     parser.add_argument("--type", choices=("source", "windows_exe", "unknown"), default=None)
     parser.add_argument("--require-manifest", action="store_true")
@@ -424,18 +424,18 @@ def main(argv: list[str] | None = None) -> int:
         package_type=args.type,
         require_manifest=args.require_manifest,
     )
-    print(f"Package: {result.package_path}")
-    print(f"Type: {result.package_type}")
+    print(f"패키지: {result.package_path}")
+    print(f"유형: {result.package_type}")
     if result.warnings:
-        print("Warnings:")
+        print("경고:")
         for warning in result.warnings:
             print(f"- {warning}")
     if result.errors:
-        print("Errors:")
+        print("오류:")
         for error in result.errors:
             print(f"- {error}")
         return 1
-    print("Verification OK")
+    print("검증 OK")
     return 0
 
 

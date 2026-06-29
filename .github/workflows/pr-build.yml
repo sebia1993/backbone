@@ -1,0 +1,70 @@
+name: PR 빌드 검증
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: ${{ github.workspace }}
+  PYTHONDONTWRITEBYTECODE: "1"
+
+defaults:
+  run:
+    shell: pwsh
+    working-directory: backbone_state_tracker
+
+jobs:
+  build:
+    name: 테스트 및 Windows 패키지 빌드
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          path: backbone_state_tracker
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backbone_state_tracker/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests
+
+      - name: Run source smoke check
+        run: python app.py --smoke-check
+
+      - name: Build Windows EXE ZIP
+        run: powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests
+
+      - name: Locate built package
+        id: package
+        run: |
+          $zip = Get-ChildItem -LiteralPath dist -Filter "*_windows_exe.zip" -File |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if (-not $zip) {
+            throw "Windows EXE ZIP이 생성되지 않았습니다."
+          }
+
+          $sidecarPath = "$($zip.FullName).sha256.txt"
+          if (-not (Test-Path -LiteralPath $sidecarPath)) {
+            throw "Checksum sidecar가 생성되지 않았습니다: $sidecarPath"
+          }
+
+          "zip_path=$($zip.FullName)" >> $env:GITHUB_OUTPUT
+
+      - name: Verify package explicitly
+        run: python .\tools\verify_release_package.py "${{ steps.package.outputs.zip_path }}" --type windows_exe --require-manifest

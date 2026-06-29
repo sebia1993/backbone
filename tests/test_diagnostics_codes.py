@@ -15,14 +15,15 @@ class DiagnosticCodeTests(unittest.TestCase):
         text = explain_code("bst-con-301")
 
         self.assertIn("BST-CON-301 TCP_TIMEOUT", text)
-        self.assertIn("Severity: Critical", text)
-        self.assertIn("Action:", text)
+        self.assertIn("심각도: 긴급", text)
+        self.assertIn("조치:", text)
+        self.assertIn("TCP 연결 시간이 초과됐습니다.", text)
 
     def test_unknown_code_explains_version_mismatch_possibility(self) -> None:
         text = explain_code("BST-XXX-999")
 
         self.assertIn("UNKNOWN", text)
-        self.assertIn("application version", text)
+        self.assertIn("애플리케이션 버전", text)
 
     def test_get_code_is_case_insensitive(self) -> None:
         item = get_code("bst-sec-201")

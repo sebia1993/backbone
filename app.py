@@ -21,7 +21,7 @@ if __name__ == "__main__":
         print(explain_code(code))
     elif "--diagnose" in sys.argv:
         result = run_self_check()
-        print(f"Diagnostic report: {result.reports.html}")
-        print(f"Diagnostic ticket: {result.reports.ticket}")
+        print(f"진단 리포트: {result.reports.html}")
+        print(f"진단 티켓: {result.reports.ticket}")
     else:
         main()

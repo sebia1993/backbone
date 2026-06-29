@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>Backbone State Tracker 진단/Mock 서버 설계 제안</title>
+  <title>백본 상태 추적기 진단/모의 서버 설계 제안</title>
   <style>
     :root {
       --bg: #eef3f6;
@@ -95,7 +95,7 @@
 <body>
 <main>
   <header>
-    <h1>Backbone State Tracker 진단/Mock 서버 설계 제안</h1>
+    <h1>백본 상태 추적기 진단/모의 서버 설계 제안</h1>
     <div class="meta">문서 상태: 구현 전 설계안 | 대상 버전: v0.8.57 | 작성일: 2026-06-15</div>
     <p>외부 개발 PC에서 실제 장비 정보 없이 검증하고, 회사 내부망 PC에서는 원본 로그를 외부로 반출하지 않고 오류 코드만으로 원인 분석이 가능하게 만드는 구조입니다.</p>
   </header>
@@ -104,7 +104,7 @@
     <h2>1. 설계 원칙</h2>
     <ul>
       <li>실제 장비 로그, 샘플 출력, IP, 호스트명, 계정 정보는 외부 개발 환경으로 가져오지 않습니다.</li>
-      <li>외부 개발 환경에서는 mock SSH/Telnet 서버와 합성 응답만 사용합니다.</li>
+      <li>외부 개발 환경에서는 모의 SSH/Telnet 서버와 합성 응답만 사용합니다.</li>
       <li>회사 내부망 현장에서는 진단 모드가 단계별 상태와 오류 코드만 남기고 원본 명령 출력은 안전 리포트에서 제외합니다.</li>
       <li>외부 전달용 자료는 오류 코드, 단계, 장비 alias, 조치 힌트, 앱 버전, 패키지 해시만 포함합니다.</li>
       <li>Windows 11 반입 ZIP은 Python 설치 없이 <code>BackboneStateTracker.exe</code> 단독 실행이 가능해야 합니다.</li>
@@ -137,7 +137,7 @@
     test_diagnostics_report.py
     test_mock_telnet_server.py
     test_mock_ssh_server.py</pre>
-    <div class="note">기존 <code>collector.py</code>, <code>redaction.py</code>, <code>preflight.py</code>, <code>reporter.py</code>는 유지하고, 진단/Mock 서버 기능을 별도 모듈로 추가하는 방식이 적절합니다.</div>
+    <div class="note">기존 <code>collector.py</code>, <code>redaction.py</code>, <code>preflight.py</code>, <code>reporter.py</code>는 유지하고, 진단/모의 서버 기능을 별도 모듈로 추가하는 방식이 적절합니다.</div>
   </section>
 
   <section>
@@ -197,14 +197,14 @@ BackboneStateTracker.exe --explain-code BST-CON-301</pre>
   <section>
     <h2>6. 초기 필수 오류 코드</h2>
     <table>
-      <tr><th>Code</th><th>이름</th><th>등급</th><th>의미</th><th>1차 조치</th></tr>
-      <tr><td><code>BST-CFG-101</code></td><td><code>DEVICE_CONFIG_MISSING</code></td><td class="danger">Critical</td><td>대상 장비 설정이 없음</td><td>장비 설정 화면에서 대상 장비 추가</td></tr>
-      <tr><td><code>BST-CFG-121</code></td><td><code>UNSAFE_COMMAND_BLOCKED</code></td><td class="danger">Critical</td><td>쓰기/변경성 명령 차단</td><td>명령 목록에서 해당 명령 제거</td></tr>
-      <tr><td><code>BST-CON-301</code></td><td><code>TCP_TIMEOUT</code></td><td class="danger">Critical</td><td>TCP 연결 시간 초과</td><td>관리망, 방화벽, 포트, 전원 확인</td></tr>
-      <tr><td><code>BST-CON-302</code></td><td><code>SSH_AUTH_FAILED</code></td><td class="danger">Critical</td><td>SSH 인증 실패</td><td>계정/암호/권한 확인</td></tr>
-      <tr><td><code>BST-COL-401</code></td><td><code>COMMAND_TIMEOUT</code></td><td class="warning">Warning</td><td>명령 응답 시간 초과</td><td>장비 부하 또는 timeout 값 확인</td></tr>
-      <tr><td><code>BST-REP-601</code></td><td><code>SAFE_REPORT_CREATED</code></td><td class="info">Info</td><td>안전 리포트 생성 완료</td><td>외부 공유 가능 파일 확인</td></tr>
-      <tr><td><code>BST-MOCK-801</code></td><td><code>MOCK_PROFILE_NOT_FOUND</code></td><td class="danger">Critical</td><td>mock profile 없음</td><td>profile 이름과 YAML 포함 여부 확인</td></tr>
+      <tr><th>코드</th><th>이름</th><th>등급</th><th>의미</th><th>1차 조치</th></tr>
+      <tr><td><code>BST-CFG-101</code></td><td><code>DEVICE_CONFIG_MISSING</code></td><td class="danger">긴급</td><td>대상 장비 설정이 없음</td><td>장비 설정 화면에서 대상 장비 추가</td></tr>
+      <tr><td><code>BST-CFG-121</code></td><td><code>UNSAFE_COMMAND_BLOCKED</code></td><td class="danger">긴급</td><td>쓰기/변경성 명령 차단</td><td>명령 목록에서 해당 명령 제거</td></tr>
+      <tr><td><code>BST-CON-301</code></td><td><code>TCP_TIMEOUT</code></td><td class="danger">긴급</td><td>TCP 연결 시간 초과</td><td>관리망, 방화벽, 포트, 전원 확인</td></tr>
+      <tr><td><code>BST-CON-302</code></td><td><code>SSH_AUTH_FAILED</code></td><td class="danger">긴급</td><td>SSH 인증 실패</td><td>계정/암호/권한 확인</td></tr>
+      <tr><td><code>BST-COL-401</code></td><td><code>COMMAND_TIMEOUT</code></td><td class="warning">주의</td><td>명령 응답 시간 초과</td><td>장비 부하 또는 timeout 값 확인</td></tr>
+      <tr><td><code>BST-REP-601</code></td><td><code>SAFE_REPORT_CREATED</code></td><td class="info">정보</td><td>안전 리포트 생성 완료</td><td>외부 공유 가능 파일 확인</td></tr>
+      <tr><td><code>BST-MOCK-801</code></td><td><code>MOCK_PROFILE_NOT_FOUND</code></td><td class="danger">긴급</td><td>모의 장비 프로파일 없음</td><td>프로파일 이름과 YAML 포함 여부 확인</td></tr>
     </table>
   </section>
 
@@ -222,8 +222,8 @@ BackboneStateTracker.exe --explain-code BST-CON-301</pre>
     <h2>8. 구현 단계 제안</h2>
     <ol>
       <li><strong>v0.8.57-alpha1</strong>: 오류 코드, 진단 이벤트, 안전 리포트 기반 구현</li>
-      <li><strong>v0.8.57-alpha2</strong>: mock Telnet 서버와 profile 테스트</li>
-      <li><strong>v0.8.57-alpha3</strong>: mock SSH 서버와 collector 연동 테스트</li>
+      <li><strong>v0.8.57-alpha2</strong>: 모의 Telnet 서버와 프로파일 테스트</li>
+      <li><strong>v0.8.57-alpha3</strong>: 모의 SSH 서버와 collector 연동 테스트</li>
       <li><strong>v0.8.57-beta1</strong>: GUI 도움말/진단 실행 통합</li>
       <li><strong>v0.8.57</strong>: EXE 패키징, 문서, release verifier 마감</li>
     </ol>

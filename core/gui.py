@@ -270,7 +270,7 @@ class BackboneStateTrackerApp(tk.Tk):
         help_menu.add_separator()
         help_menu.add_command(label="진단 모드 가이드 열기", command=lambda: self.open_doc("DIAGNOSTIC_MODE_GUIDE.html"))
         help_menu.add_command(label="오류 코드 카탈로그 열기", command=lambda: self.open_doc("ERROR_CODE_CATALOG.html"))
-        help_menu.add_command(label="진단 self-check 실행", command=self.run_diagnostic_self_check)
+        help_menu.add_command(label="진단 자체 점검 실행", command=self.run_diagnostic_self_check)
         menu_bar.add_cascade(label="도움말", menu=help_menu)
 
         self.config(menu=menu_bar)
@@ -314,7 +314,7 @@ class BackboneStateTrackerApp(tk.Tk):
 
         logo = tk.Label(
             brand,
-            text="BST",
+            text="백본",
             bg=PALETTE["accent"],
             fg="#FFFFFF",
             font=("Malgun Gothic", 11, "bold"),
@@ -1735,14 +1735,14 @@ class BackboneStateTrackerApp(tk.Tk):
             result = run_self_check()
         except Exception as exc:
             self.log(traceback.format_exc())
-            messagebox.showerror("진단 실패", f"진단 self-check를 완료하지 못했습니다:\n{exc}")
+            messagebox.showerror("진단 실패", f"진단 자체 점검을 완료하지 못했습니다:\n{exc}")
             return
 
         self.log(f"진단 리포트 생성: {result.reports.html}")
         self.log(f"진단 티켓 생성: {result.reports.ticket}")
         messagebox.showinfo(
             "진단 완료",
-            "장비 접속 없이 로컬 설정, mock profile, 문서 포함 여부를 확인했습니다.\n\n"
+            "장비 접속 없이 로컬 설정, 모의 장비 프로파일, 문서 포함 여부를 확인했습니다.\n\n"
             f"리포트: {result.reports.html}\n"
             f"티켓: {result.reports.ticket}",
         )

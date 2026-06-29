@@ -62,7 +62,7 @@ def write_package_checksum(
         f"Date stamp = {package_date_stamp(package_path) or 'unknown'}",
         f"Generated = {generated_at or _now_text()}",
         "",
-        "PowerShell verification:",
+        "PowerShell 검증:",
         f"Get-FileHash -Algorithm SHA256 .\\{record['name']}",
         "",
     ]
@@ -98,7 +98,7 @@ def write_release_manifest(
     generated = generated_at or _now_text()
 
     lines = [
-        "Backbone State Tracker Release Manifest",
+        "백본 상태 추적기 릴리스 매니페스트",
         f"Project = {project_name}",
         f"Version = {_version_label(version)}",
         f"Date stamp = {date_stamp}",
@@ -107,7 +107,7 @@ def write_release_manifest(
         "Packages",
     ]
     if not packages:
-        lines.append("- No package ZIP files found.")
+        lines.append("- 패키지 ZIP 파일을 찾지 못했습니다.")
     for package in packages:
         record = package_record(package)
         lines.extend(
@@ -121,10 +121,10 @@ def write_release_manifest(
     lines.extend(
         [
             "",
-            "Verification",
-            "1. Keep each ZIP file with its matching .sha256.txt sidecar file.",
-            "2. After transfer, run Get-FileHash -Algorithm SHA256 against the ZIP.",
-            "3. Compare the resulting hash with the value listed here or in the sidecar.",
+            "검증 방법",
+            "1. 각 ZIP 파일과 같은 이름의 .sha256.txt 파일을 함께 보관하세요.",
+            "2. 파일을 옮긴 뒤 ZIP에 대해 Get-FileHash -Algorithm SHA256을 실행하세요.",
+            "3. 계산된 해시를 이 매니페스트 또는 sidecar 파일의 값과 비교하세요.",
             "",
         ]
     )
@@ -133,7 +133,7 @@ def write_release_manifest(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Write SHA256 sidecars and release manifest files.")
+    parser = argparse.ArgumentParser(description="SHA256 sidecar와 릴리스 매니페스트 파일을 생성합니다.")
     parser.add_argument("--project-name", required=True)
     parser.add_argument("--version", required=True)
     parser.add_argument("--date-stamp", required=True)
@@ -148,8 +148,8 @@ def main(argv: list[str] | None = None) -> int:
         args.date_stamp,
         args.dist_dir,
     )
-    print(f"Checksum file: {checksum_path}")
-    print(f"Release manifest: {manifest_path}")
+    print(f"Checksum 파일: {checksum_path}")
+    print(f"릴리스 매니페스트: {manifest_path}")
     return 0
 
 

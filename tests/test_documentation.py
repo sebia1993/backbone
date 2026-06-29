@@ -142,7 +142,7 @@ class DocumentationPortabilityTests(unittest.TestCase):
         date_stamp = APP_RELEASE_DATE.replace("-", "")
         expectations = {
             "README.md": (
-                f"Version: `{version}`",
+                f"버전: `{version}`",
                 f"backbone_state_tracker_{version}_YYYYMMDD_windows_exe.zip",
             ),
             "CHANGELOG.md": (f"## {version} - {APP_RELEASE_DATE}",),

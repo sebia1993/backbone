@@ -198,17 +198,17 @@ def _paramiko() -> Any:
     try:
         import paramiko
     except ImportError as exc:  # pragma: no cover
-        raise RuntimeError("paramiko is required for the mock SSH server.") from exc
+        raise RuntimeError("모의 SSH 서버에는 paramiko가 필요합니다.") from exc
     return paramiko
 
 
 def run_ssh_server_forever(profile: MockProfile, host: str, port: int, log: Callable[[str], None] = print) -> None:
     server = SshMockServer(profile, host=host, port=port).start()
     try:
-        log(f"Mock SSH server listening on {server.host}:{server.port} profile={profile.name}")
+        log(f"모의 SSH 서버 대기 중: {server.host}:{server.port} 프로파일={profile.name}")
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        log("Stopping mock SSH server.")
+        log("모의 SSH 서버를 중지합니다.")
     finally:
         server.stop()

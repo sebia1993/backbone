@@ -102,10 +102,10 @@ class TelnetMockServer:
 def run_telnet_server_forever(profile: MockProfile, host: str, port: int, log: Callable[[str], None] = print) -> None:
     server = TelnetMockServer(profile, host=host, port=port).start()
     try:
-        log(f"Mock Telnet server listening on {server.host}:{server.port} profile={profile.name}")
+        log(f"모의 Telnet 서버 대기 중: {server.host}:{server.port} 프로파일={profile.name}")
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        log("Stopping mock Telnet server.")
+        log("모의 Telnet 서버를 중지합니다.")
     finally:
         server.stop()

@@ -1,0 +1,164 @@
+name: Windows 패키지 릴리스
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+env:
+  PYTHONPATH: ${{ github.workspace }}
+  PYTHONDONTWRITEBYTECODE: "1"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: pwsh
+    working-directory: backbone_state_tracker
+
+jobs:
+  release:
+    name: 빌드, 검증, 릴리스 게시
+    runs-on: windows-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: backbone_state_tracker
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backbone_state_tracker/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests
+
+      - name: Run source smoke check
+        run: python app.py --smoke-check
+
+      - name: Build Windows EXE ZIP
+        run: powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests
+
+      - name: Collect release artifact
+        id: artifact
+        run: |
+          $zip = Get-ChildItem -LiteralPath dist -Filter "*_windows_exe.zip" -File |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if (-not $zip) {
+            throw "Windows EXE ZIP이 생성되지 않았습니다."
+          }
+
+          $buildSidecarPath = "$($zip.FullName).sha256.txt"
+          if (-not (Test-Path -LiteralPath $buildSidecarPath)) {
+            throw "빌드 checksum sidecar가 생성되지 않았습니다: $buildSidecarPath"
+          }
+
+          $checksum = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip.FullName).Hash.ToLowerInvariant()
+          $releaseChecksumPath = Join-Path $zip.DirectoryName "$($zip.Name).sha256"
+          Set-Content -LiteralPath $releaseChecksumPath -Value "$checksum  $($zip.Name)" -Encoding ASCII
+
+          "artifact_path=$($zip.FullName)" >> $env:GITHUB_OUTPUT
+          "artifact_name=$($zip.Name)" >> $env:GITHUB_OUTPUT
+          "checksum_path=$releaseChecksumPath" >> $env:GITHUB_OUTPUT
+          "checksum_name=$(Split-Path -Leaf $releaseChecksumPath)" >> $env:GITHUB_OUTPUT
+          "checksum=$checksum" >> $env:GITHUB_OUTPUT
+
+      - name: Verify package explicitly
+        run: python .\tools\verify_release_package.py "${{ steps.artifact.outputs.artifact_path }}" --type windows_exe --require-manifest
+
+      - name: Create KST release metadata
+        id: release_meta
+        run: |
+          $kstZone = [System.TimeZoneInfo]::FindSystemTimeZoneById("Korea Standard Time")
+          $kstNow = [System.TimeZoneInfo]::ConvertTime([System.DateTimeOffset]::UtcNow, $kstZone)
+          $baseTag = $kstNow.ToString("'v'yyyy.MM.dd-HHmmss")
+          $tag = $baseTag
+          $suffix = 1
+
+          while ($true) {
+            git ls-remote --exit-code --tags origin "refs/tags/$tag" *> $null
+            if ($LASTEXITCODE -ne 0) {
+              break
+            }
+            $tag = "$baseTag-$suffix"
+            $suffix += 1
+          }
+
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "title=백본 상태 추적기 $tag" >> $env:GITHUB_OUTPUT
+
+      - name: Write release notes
+        id: notes
+        run: |
+          $previousTag = git describe --tags --abbrev=0 --match "v*" HEAD^ 2>$null
+          if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($previousTag)) {
+            $commitRange = "$previousTag..HEAD"
+            $rangeLabel = "$previousTag 이후"
+          } else {
+            $commitRange = "HEAD"
+            $rangeLabel = "확인 가능한 전체 커밋"
+          }
+
+          $commits = git log --pretty=format:"- %h %s" $commitRange
+          if ([string]::IsNullOrWhiteSpace($commits)) {
+            $commits = "- 커밋 항목을 찾지 못했습니다."
+          }
+
+          $notesPath = Join-Path $PWD "release_notes.md"
+          $notes = @"
+          ## 릴리스 요약
+
+          - 브랜치: ${{ github.ref_name }}
+          - 기준 커밋 SHA: ${{ github.sha }}
+          - 산출물: ${{ steps.artifact.outputs.artifact_name }}
+          - SHA256: ${{ steps.artifact.outputs.checksum }}
+
+          ## 변경 커밋 목록 ($rangeLabel)
+
+          $commits
+
+          ## 실행한 검증 명령
+
+          - python -m unittest discover -s tests
+          - python app.py --smoke-check
+          - powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests
+          - python .\tools\verify_release_package.py .\dist\${{ steps.artifact.outputs.artifact_name }} --type windows_exe --require-manifest
+          "@
+          Set-Content -LiteralPath $notesPath -Value $notes -Encoding UTF8
+          "notes_path=$notesPath" >> $env:GITHUB_OUTPUT
+
+      - name: Create and push Git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.release_meta.outputs.tag }}" "${{ github.sha }}" -m "백본 상태 추적기 ${{ steps.release_meta.outputs.tag }}"
+          git push origin "refs/tags/${{ steps.release_meta.outputs.tag }}"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.release_meta.outputs.tag }}" `
+            "${{ steps.artifact.outputs.artifact_path }}#${{ steps.artifact.outputs.artifact_name }}" `
+            "${{ steps.artifact.outputs.checksum_path }}#${{ steps.artifact.outputs.checksum_name }}" `
+            --title "${{ steps.release_meta.outputs.title }}" `
+            --notes-file "${{ steps.notes.outputs.notes_path }}" `
+            --latest `
+            --verify-tag

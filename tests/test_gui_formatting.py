@@ -43,6 +43,17 @@ class GuiDiffFormattingTests(unittest.TestCase):
                 return found
         return None
 
+    def test_runtime_branding_uses_korean_display_name(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            texts = self._widget_texts(app)
+
+            self.assertIn("백본 상태 추적기", app.title())
+            self.assertIn("백본", texts)
+        finally:
+            app.destroy()
+
     def test_initial_screen_is_settings_with_workflow_order_nav(self) -> None:
         app = BackboneStateTrackerApp()
         app.withdraw()

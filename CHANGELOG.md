@@ -2,11 +2,12 @@
 
 ## v0.8.57 - 2026-06-15
 
-- Added offline mock SSH/Telnet server support with bundled synthetic profiles for testing without real devices or exported logs.
-- Added safe diagnostic self-check reports that record staged status and diagnostic codes without raw command output.
-- Added automatic device, host, address, and secret masking for diagnostic artifacts.
-- Added diagnostic guide and error-code catalog documents to release packages and GUI Help.
-- Strengthened Windows EXE packaging checks to run smoke, diagnostic, mock Telnet, and mock SSH self-checks from the built executable.
+- 실행 화면의 앱 표시명, 진단 리포트 라벨, 진단 티켓 문구, 오류 코드 설명을 한글화했습니다.
+- 실제 장비나 반출 로그 없이 검증할 수 있도록 오프라인 모의 SSH/Telnet 서버와 합성 프로파일을 포함했습니다.
+- 원본 명령 출력 없이 단계별 상태와 진단 코드를 남기는 안전 진단 자체 점검 리포트를 추가했습니다.
+- 진단 산출물에 장비명, 호스트, 주소, 민감정보가 남지 않도록 자동 마스킹을 보강했습니다.
+- 진단 모드 가이드와 오류 코드 카탈로그를 릴리스 패키지와 GUI 도움말에 포함했습니다.
+- 빌드된 실행 파일에서 smoke, 진단, 모의 Telnet, 모의 SSH 자체 점검을 실행하도록 Windows EXE 패키징 검증을 강화했습니다.
 
 ## v0.8.56 - 2026-06-15
 
@@ -531,7 +532,7 @@
 
 ## v0.1.0 - 2026-06-11
 
-- Initial Backbone State Tracker implementation.
+- Initial 백본 상태 추적기 implementation.
 - Added read-only SSH snapshot collection for backbone devices.
 - Added snapshot storage and raw command output preservation.
 - Added snapshot comparison with Critical, Warning, Info, and Unchanged classification.

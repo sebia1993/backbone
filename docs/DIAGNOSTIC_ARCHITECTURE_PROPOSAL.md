@@ -1,4 +1,4 @@
-# Backbone State Tracker 진단/Mock 서버 설계 제안
+# 백본 상태 추적기 진단/모의 서버 설계 제안
 
 문서 상태: 구현 전 설계안  
 대상 버전: v0.8.57  
@@ -8,7 +8,7 @@
 ## 1. 설계 원칙
 
 - 실제 장비 로그, 샘플 출력, IP, 호스트명, 계정 정보는 외부 개발 환경으로 가져오지 않는다.
-- 외부 개발 환경에서는 mock SSH/Telnet 서버와 합성 응답만 사용한다.
+- 외부 개발 환경에서는 모의 SSH/Telnet 서버와 합성 응답만 사용한다.
 - 회사 내부망 현장에서는 진단 모드가 단계별 상태와 오류 코드만 남기고, 원본 명령 출력은 안전 리포트에서 제외한다.
 - 외부 전달용 자료는 `오류 코드`, `단계`, `장비 alias`, `조치 힌트`, `앱 버전`, `패키지 해시`만 포함한다.
 - 모든 텍스트 저장 지점은 민감정보 마스킹을 기본값으로 사용한다.
@@ -29,10 +29,10 @@ backbone_state_tracker/
       runner.py             # 회사 현장 진단 모드 실행 흐름
     mockserver/
       __init__.py
-      profiles.py           # mock profile 로드와 명령별 응답 매핑
-      ssh_server.py         # 로컬 SSH mock 서버
-      telnet_server.py      # 로컬 Telnet mock 서버
-      runner.py             # mock 서버 시작/중지 CLI 진입점
+      profiles.py           # 모의 장비 프로파일 로드와 명령별 응답 매핑
+      ssh_server.py         # 로컬 SSH 모의 서버
+      telnet_server.py      # 로컬 Telnet 모의 서버
+      runner.py             # 모의 서버 시작/중지 CLI 진입점
   config/
     mock_profiles.yaml      # 정상/장애/VRRP/CPU/Memory 합성 시나리오
   docs/
@@ -55,7 +55,7 @@ backbone_state_tracker/
 - `core/redaction.py`: 기존 마스킹을 확장해 IP, 호스트명, 장비명 alias까지 처리한다.
 - `core/preflight.py`: 현장 진단 모드의 설정/명령 안전성 probe에서 재사용한다.
 - `core/reporter.py`: 원본 출력 포함 비교 리포트는 유지하되, 진단 모드는 별도 `diagnostics/report.py`에서 안전 리포트를 만든다.
-- `tools/build_windows_exe.ps1`: mock profile, 진단 문서, 오류 코드 카탈로그가 EXE ZIP에 포함되도록 확장한다.
+- `tools/build_windows_exe.ps1`: 모의 장비 프로파일, 진단 문서, 오류 코드 카탈로그가 EXE ZIP에 포함되도록 확장한다.
 
 ## 3. 실행 모드
 
@@ -70,7 +70,7 @@ BackboneStateTracker.exe --mock-server --profile normal --ssh-port 2222 --telnet
 BackboneStateTracker.exe --mock-server --profile vrrp_role_change --ssh-port 2222
 ```
 
-mock server profile 후보:
+모의 서버 프로파일 후보:
 
 | Profile | 목적 |
 | --- | --- |
@@ -126,7 +126,7 @@ BackboneStateTracker.exe --explain-code BST-CON-301
   "severity": "Critical",
   "device_alias": "DEV-001",
   "status": "failed",
-  "summary": "TCP connection timed out.",
+  "summary": "TCP 연결 시간이 초과됐습니다.",
   "action_hint": "장비 전원, 관리망, 방화벽, 포트 번호를 현장에서 확인하세요.",
   "safe_detail": "connect_timeout_seconds=30",
   "raw_log_included": false
@@ -155,21 +155,21 @@ BackboneStateTracker.exe --explain-code BST-CON-301
 
 | Code | 이름 | 등급 | 의미 | 1차 조치 |
 | --- | --- | --- | --- | --- |
-| `BST-CFG-101` | `DEVICE_CONFIG_MISSING` | Critical | 대상 장비 설정이 없음 | 장비 설정 화면에서 대상 장비를 추가 |
-| `BST-CFG-102` | `COMMAND_CONFIG_MISSING` | Critical | 명령 설정 파일 없음 | ZIP에 `config/commands.yaml` 포함 여부 확인 |
-| `BST-CFG-121` | `UNSAFE_COMMAND_BLOCKED` | Critical | 쓰기/변경성 명령 차단 | 명령 목록에서 해당 명령 제거 |
-| `BST-SEC-201` | `SECRET_REDACTED` | Info | 민감정보가 마스킹됨 | 정상 동작, 원문 공유 금지 |
-| `BST-SEC-211` | `DEVICE_ALIAS_APPLIED` | Info | 장비명이 alias로 치환됨 | 외부 공유 시 alias만 전달 |
-| `BST-CON-301` | `TCP_TIMEOUT` | Critical | TCP 연결 시간 초과 | 관리망, 방화벽, 포트, 전원 확인 |
-| `BST-CON-302` | `SSH_AUTH_FAILED` | Critical | SSH 인증 실패 | 계정/암호/권한 확인 |
-| `BST-CON-303` | `TELNET_LOGIN_FAILED` | Critical | Telnet 로그인 실패 | 계정/암호/접속 방식 확인 |
-| `BST-CON-304` | `CONNECTION_REFUSED` | Critical | 원격 포트 연결 거부 | 서비스 활성화와 포트 확인 |
-| `BST-COL-401` | `COMMAND_TIMEOUT` | Warning | 명령 응답 시간 초과 | 장비 부하 또는 timeout 값 확인 |
-| `BST-COL-411` | `DEVICE_PARTIAL_COLLECTION` | Warning | 일부 명령만 수집됨 | 실패한 명령 코드 확인 |
-| `BST-REP-601` | `SAFE_REPORT_CREATED` | Info | 안전 리포트 생성 완료 | 외부 공유 가능 파일 확인 |
-| `BST-PKG-701` | `EXE_RESOURCE_MISSING` | Critical | EXE 실행 리소스 누락 | ZIP 재빌드 또는 반입 파일 확인 |
-| `BST-MOCK-801` | `MOCK_PROFILE_NOT_FOUND` | Critical | mock profile 없음 | profile 이름과 YAML 포함 여부 확인 |
-| `BST-SYS-901` | `OUTPUT_PATH_DENIED` | Critical | 출력 경로 쓰기 실패 | 폴더 권한 또는 보안 정책 확인 |
+| `BST-CFG-101` | `DEVICE_CONFIG_MISSING` | 긴급 | 대상 장비 설정이 없음 | 장비 설정 화면에서 대상 장비를 추가 |
+| `BST-CFG-102` | `COMMAND_CONFIG_MISSING` | 긴급 | 명령 설정 파일 없음 | ZIP에 `config/commands.yaml` 포함 여부 확인 |
+| `BST-CFG-121` | `UNSAFE_COMMAND_BLOCKED` | 긴급 | 쓰기/변경성 명령 차단 | 명령 목록에서 해당 명령 제거 |
+| `BST-SEC-201` | `SECRET_REDACTED` | 정보 | 민감정보가 마스킹됨 | 정상 동작, 원문 공유 금지 |
+| `BST-SEC-211` | `DEVICE_ALIAS_APPLIED` | 정보 | 장비명이 alias로 치환됨 | 외부 공유 시 alias만 전달 |
+| `BST-CON-301` | `TCP_TIMEOUT` | 긴급 | TCP 연결 시간 초과 | 관리망, 방화벽, 포트, 전원 확인 |
+| `BST-CON-302` | `SSH_AUTH_FAILED` | 긴급 | SSH 인증 실패 | 계정/암호/권한 확인 |
+| `BST-CON-303` | `TELNET_LOGIN_FAILED` | 긴급 | Telnet 로그인 실패 | 계정/암호/접속 방식 확인 |
+| `BST-CON-304` | `CONNECTION_REFUSED` | 긴급 | 원격 포트 연결 거부 | 서비스 활성화와 포트 확인 |
+| `BST-COL-401` | `COMMAND_TIMEOUT` | 주의 | 명령 응답 시간 초과 | 장비 부하 또는 timeout 값 확인 |
+| `BST-COL-411` | `DEVICE_PARTIAL_COLLECTION` | 주의 | 일부 명령만 수집됨 | 실패한 명령 코드 확인 |
+| `BST-REP-601` | `SAFE_REPORT_CREATED` | 정보 | 안전 리포트 생성 완료 | 외부 공유 가능 파일 확인 |
+| `BST-PKG-701` | `EXE_RESOURCE_MISSING` | 긴급 | EXE 실행 리소스 누락 | ZIP 재빌드 또는 반입 파일 확인 |
+| `BST-MOCK-801` | `MOCK_PROFILE_NOT_FOUND` | 긴급 | 모의 장비 프로파일 없음 | 프로파일 이름과 YAML 포함 여부 확인 |
+| `BST-SYS-901` | `OUTPUT_PATH_DENIED` | 긴급 | 출력 경로 쓰기 실패 | 폴더 권한 또는 보안 정책 확인 |
 
 ## 6. 안전 리포트 설계
 
@@ -249,15 +249,15 @@ backbone_state_tracker/
 - 원본 로그 없는 HTML/JSON/TXT 리포트
 - 오류 코드 카탈로그 문서
 
-### v0.8.57-alpha2: mock Telnet 서버
+### v0.8.57-alpha2: 모의 Telnet 서버
 
 - `core/mockserver/telnet_server.py`
 - `config/mock_profiles.yaml`
 - Telnet 기반 정상/장애 profile 테스트
 
-### v0.8.57-alpha3: mock SSH 서버
+### v0.8.57-alpha3: 모의 SSH 서버
 
-- `paramiko` 기반 mock SSH 서버
+- `paramiko` 기반 모의 SSH 서버
 - SSH 인증 실패, 접속 거부, 명령 timeout profile
 - 기존 collector와 mock 서버 연동 테스트
 
@@ -270,14 +270,13 @@ backbone_state_tracker/
 ### v0.8.57: 패키징과 반입 검증
 
 - source ZIP / windows EXE ZIP 재생성
-- release verifier에 진단 문서, mock profile, EXE self-check 포함 여부 검증
+- release verifier에 진단 문서, 모의 장비 프로파일, EXE self-check 포함 여부 검증
 - 사용자 가이드와 초급 개발자 가이드 갱신
 
 ## 10. 구현 전 결정사항
 
-1. mock SSH 서버 의존성은 `paramiko`를 사용할지 확인이 필요하다. 이미 Netmiko가 Paramiko 계열을 사용하므로 패키징 충돌 가능성은 낮다.
+1. 모의 SSH 서버 의존성은 `paramiko`를 사용할지 확인이 필요하다. 이미 Netmiko가 Paramiko 계열을 사용하므로 패키징 충돌 가능성은 낮다.
 2. Telnet 지원은 표준 socket 기반으로 구현하는 것이 안전하다. Python `telnetlib` 의존은 피한다.
 3. 진단 리포트는 기본적으로 외부 공유 가능 수준으로 만들고, 원본 로그 포함 옵션은 제공하지 않는 것을 권장한다.
 4. 장비 alias 원본 매핑 파일은 기본 저장하지 않는 방향을 권장한다. 현장 사용자가 필요할 때만 별도 내부 전용 파일로 저장하게 한다.
 5. 기능 규모가 크므로 릴리스는 `v0.8.57` 계열로 올리는 것이 적절하다.
-
