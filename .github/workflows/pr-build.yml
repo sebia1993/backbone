@@ -49,7 +49,7 @@ jobs:
         run: python app.py --smoke-check
 
       - name: Build Windows EXE ZIP
-        run: powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests
+        run: pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests
 
       - name: Locate built package
         id: package

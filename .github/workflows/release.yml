@@ -55,7 +55,7 @@ jobs:
         run: python app.py --smoke-check
 
       - name: Build Windows EXE ZIP
-        run: powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests
+        run: pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests
 
       - name: Collect release artifact
         id: artifact
@@ -140,7 +140,7 @@ jobs:
 
           - python -m unittest discover -s tests
           - python app.py --smoke-check
-          - powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests
+          - pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests
           - python .\tools\verify_release_package.py .\dist\${{ steps.artifact.outputs.artifact_name }} --type windows_exe --require-manifest
           "@
           Set-Content -LiteralPath $notesPath -Value $notes -Encoding UTF8
