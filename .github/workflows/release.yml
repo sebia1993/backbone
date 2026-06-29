@@ -95,8 +95,8 @@ jobs:
           $suffix = 1
 
           while ($true) {
-            git ls-remote --exit-code --tags origin "refs/tags/$tag" *> $null
-            if ($LASTEXITCODE -ne 0) {
+            $existingTag = git ls-remote --tags origin "refs/tags/$tag"
+            if ([string]::IsNullOrWhiteSpace($existingTag)) {
               break
             }
             $tag = "$baseTag-$suffix"
