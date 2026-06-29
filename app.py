@@ -2,6 +2,23 @@ from __future__ import annotations
 
 import sys
 
+
+def _configure_cli_output_encoding(*streams: object) -> None:
+    if not streams:
+        streams = (sys.stdout, sys.stderr)
+
+    for stream in streams:
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+        except (OSError, ValueError):
+            continue
+
+
+_configure_cli_output_encoding()
+
 from core.diagnostics.codes import explain_code
 from core.diagnostics.runner import run_self_check
 from core.gui import main, smoke_check

@@ -90,6 +90,7 @@ SOURCE_REQUIRED = COMMON_REQUIRED | {
     "backbone_state_tracker/tools/write_release_manifest.py",
     "backbone_state_tracker/tools/verify_release_package.py",
     "backbone_state_tracker/tools/verify_release_package.ps1",
+    "backbone_state_tracker/tests/test_cli_output_encoding.py",
     "backbone_state_tracker/tests/test_diagnostics_codes.py",
     "backbone_state_tracker/tests/test_diagnostics_report.py",
     "backbone_state_tracker/tests/test_diff_engine.py",

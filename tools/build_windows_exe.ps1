@@ -105,6 +105,55 @@ function Update-LatestReleaseArtifacts {
     Set-Content -LiteralPath (Join-Path $LatestDir "CURRENT_RELEASE.txt") -Value $currentReleaseLines -Encoding UTF8
 }
 
+function Write-CheckLog {
+    param(
+        [string]$Path
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return
+    }
+
+    $text = Get-Content -LiteralPath $Path -Raw -Encoding UTF8
+    if (-not [string]::IsNullOrWhiteSpace($text)) {
+        Write-Host $text.TrimEnd()
+    }
+}
+
+function Invoke-ExecutableCheck {
+    param(
+        [string]$ExePath,
+        [string[]]$Arguments,
+        [string]$Description
+    )
+
+    $LogRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("${ProjectName}_exe_check_" + [guid]::NewGuid().ToString("N"))
+    $StdoutPath = Join-Path $LogRoot "stdout.log"
+    $StderrPath = Join-Path $LogRoot "stderr.log"
+
+    try {
+        New-Item -ItemType Directory -Force -Path $LogRoot | Out-Null
+        $process = Start-Process `
+            -FilePath $ExePath `
+            -ArgumentList $Arguments `
+            -Wait `
+            -PassThru `
+            -RedirectStandardOutput $StdoutPath `
+            -RedirectStandardError $StderrPath
+
+        Write-CheckLog -Path $StdoutPath
+        Write-CheckLog -Path $StderrPath
+
+        if ($process.ExitCode -ne 0) {
+            throw "$Description failed with exit code $($process.ExitCode)"
+        }
+    } finally {
+        if (Test-Path -LiteralPath $LogRoot) {
+            Remove-Item -LiteralPath $LogRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
 if (-not $SkipTests) {
     Invoke-SourceValidation
 }
@@ -155,22 +204,10 @@ try {
         throw "Executable was not created: $ExePath"
     }
 
-    & $ExePath --smoke-check
-    if ($LASTEXITCODE -ne 0) {
-        throw "Executable smoke check failed with exit code $LASTEXITCODE"
-    }
-    & $ExePath --diagnose --self-check
-    if ($LASTEXITCODE -ne 0) {
-        throw "Executable diagnostic self-check failed with exit code $LASTEXITCODE"
-    }
-    & $ExePath --mock-server --protocol telnet --profile normal --self-check
-    if ($LASTEXITCODE -ne 0) {
-        throw "실행 파일 모의 Telnet 자체 점검 실패: exit code $LASTEXITCODE"
-    }
-    & $ExePath --mock-server --protocol ssh --profile normal --self-check
-    if ($LASTEXITCODE -ne 0) {
-        throw "실행 파일 모의 SSH 자체 점검 실패: exit code $LASTEXITCODE"
-    }
+    Invoke-ExecutableCheck -ExePath $ExePath -Arguments @("--smoke-check") -Description "Executable smoke check"
+    Invoke-ExecutableCheck -ExePath $ExePath -Arguments @("--diagnose", "--self-check") -Description "Executable diagnostic self-check"
+    Invoke-ExecutableCheck -ExePath $ExePath -Arguments @("--mock-server", "--protocol", "telnet", "--profile", "normal", "--self-check") -Description "실행 파일 모의 Telnet 자체 점검"
+    Invoke-ExecutableCheck -ExePath $ExePath -Arguments @("--mock-server", "--protocol", "ssh", "--profile", "normal", "--self-check") -Description "실행 파일 모의 SSH 자체 점검"
 
     New-Item -ItemType Directory -Force -Path $PayloadRoot | Out-Null
     Copy-Item -LiteralPath $ExePath -Destination (Join-Path $PayloadRoot "${ExeName}.exe") -Force

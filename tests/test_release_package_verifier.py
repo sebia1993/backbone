@@ -117,6 +117,7 @@ def _source_entries() -> dict[str, str]:
             "backbone_state_tracker/tools/write_release_manifest.py": "manifest tool",
             "backbone_state_tracker/tools/verify_release_package.py": "verifier",
             "backbone_state_tracker/tools/verify_release_package.ps1": "powershell verifier",
+            "backbone_state_tracker/tests/test_cli_output_encoding.py": "cli output encoding tests",
             "backbone_state_tracker/tests/test_diagnostics_codes.py": "diagnostic code tests",
             "backbone_state_tracker/tests/test_diagnostics_report.py": "diagnostic report tests",
             "backbone_state_tracker/tests/test_diff_engine.py": "diff engine tests",
