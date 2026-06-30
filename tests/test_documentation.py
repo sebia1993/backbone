@@ -196,3 +196,29 @@ class DocumentationPortabilityTests(unittest.TestCase):
                     missing.append(f"{relative_path} missing {fragment}")
 
         self.assertEqual([], missing)
+
+    def test_release_workflow_notes_follow_user_facing_release_format(self) -> None:
+        workflow = (PROJECT_DIR / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+
+        required_fragments = [
+            "${{ steps.release_meta.outputs.tag }} 릴리스입니다.",
+            "주요 변경사항:",
+            'git log --pretty=format:"- %s" $commitRange',
+            "검증:",
+            "- Windows EXE ZIP 빌드 통과",
+            "- Windows EXE release package verifier 통과",
+            "첨부파일:",
+            "- Windows EXE ZIP:",
+            "- SHA256 sidecar:",
+            "배포 메타데이터:",
+            "- 브랜치:",
+            "- 기준 커밋 SHA:",
+            "- 산출물 파일명:",
+            "- SHA256 checksum:",
+            "- 변경 커밋 목록 ($rangeLabel):",
+            'git log --pretty=format:"- %h %s" $commitRange',
+        ]
+
+        missing = [fragment for fragment in required_fragments if fragment not in workflow]
+
+        self.assertEqual([], missing)

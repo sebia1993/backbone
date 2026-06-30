@@ -123,26 +123,37 @@ jobs:
             $commits = "- 커밋 항목을 찾지 못했습니다."
           }
 
+          $changeSummaries = git log --pretty=format:"- %s" $commitRange
+          if ([string]::IsNullOrWhiteSpace($changeSummaries)) {
+            $changeSummaries = "- 변경 항목을 찾지 못했습니다."
+          }
+
           $notesPath = Join-Path $PWD "release_notes.md"
-          $notes = @"
-          ## 릴리스 요약
-
-          - 브랜치: ${{ github.ref_name }}
-          - 기준 커밋 SHA: ${{ github.sha }}
-          - 산출물: ${{ steps.artifact.outputs.artifact_name }}
-          - SHA256: ${{ steps.artifact.outputs.checksum }}
-
-          ## 변경 커밋 목록 ($rangeLabel)
-
-          $commits
-
-          ## 실행한 검증 명령
-
-          - python -m unittest discover -s tests
-          - python app.py --smoke-check
-          - pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests
-          - python .\tools\verify_release_package.py .\dist\${{ steps.artifact.outputs.artifact_name }} --type windows_exe --require-manifest
-          "@
+          $notesLines = @(
+            "${{ steps.release_meta.outputs.tag }} 릴리스입니다.",
+            "",
+            "주요 변경사항:",
+            $changeSummaries,
+            "",
+            "검증:",
+            '- `python -m unittest discover -s tests` 통과',
+            '- `python app.py --smoke-check` 통과',
+            "- Windows EXE ZIP 빌드 통과",
+            "- Windows EXE release package verifier 통과",
+            "",
+            "첨부파일:",
+            "- Windows EXE ZIP: ``${{ steps.artifact.outputs.artifact_name }}``",
+            "- SHA256 sidecar: ``${{ steps.artifact.outputs.checksum_name }}``",
+            "",
+            "배포 메타데이터:",
+            "- 브랜치: ``${{ github.ref_name }}``",
+            "- 기준 커밋 SHA: ``${{ github.sha }}``",
+            "- 산출물 파일명: ``${{ steps.artifact.outputs.artifact_name }}``",
+            "- SHA256 checksum: ``${{ steps.artifact.outputs.checksum }}``",
+            "- 변경 커밋 목록 ($rangeLabel):",
+            $commits
+          )
+          $notes = $notesLines -join [Environment]::NewLine
           Set-Content -LiteralPath $notesPath -Value $notes -Encoding UTF8
           "notes_path=$notesPath" >> $env:GITHUB_OUTPUT
 
