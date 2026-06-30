@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from backbone_state_tracker.core.models import CommandResult, Device
-from backbone_state_tracker.core.snapshot import SnapshotStore, sanitize_filename
+from backbone_state_tracker.core.snapshot import SnapshotStore, atomic_write_text, sanitize_filename
 
 
 class SnapshotStoreTests(unittest.TestCase):
@@ -72,6 +72,26 @@ class SnapshotStoreTests(unittest.TestCase):
 
     def test_sanitize_filename_preserves_korean_stage_label(self) -> None:
         self.assertEqual(sanitize_filename("점검시간_20260612_2130"), "점검시간_20260612_2130")
+
+    def test_incomplete_snapshot_without_manifest_is_not_listed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            store = SnapshotStore(root)
+            device = Device(name="backbone3", host="192.0.2.3")
+
+            def fail_final_manifest(path: Path, text: str, encoding: str = "utf-8") -> None:
+                if path.name == "snapshot.json":
+                    raise OSError("simulated manifest write failure")
+                atomic_write_text(path, text, encoding=encoding)
+
+            with patch("backbone_state_tracker.core.snapshot.atomic_write_text", side_effect=fail_final_manifest):
+                with self.assertRaises(OSError):
+                    store.write_snapshot("pre", [device], {device.name: [self._result(device)]})
+
+            snapshot_dirs = [path for path in root.iterdir() if path.is_dir()]
+            self.assertEqual(1, len(snapshot_dirs))
+            self.assertFalse((snapshot_dirs[0] / "snapshot.json").exists())
+            self.assertEqual([], store.list_snapshots())
 
 
 if __name__ == "__main__":

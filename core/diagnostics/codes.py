@@ -68,6 +68,14 @@ _CODE_LIST = (
         "차단된 명령을 제거하고 show/display 계열 읽기 전용 명령만 유지하세요.",
     ),
     DiagnosticCode(
+        "BST-CFG-122",
+        "ANALYSIS_RULES_INVALID",
+        "Critical",
+        "config",
+        "분석 규칙 파일을 읽거나 해석할 수 없습니다.",
+        "config/analysis_rules.yaml 형식과 포함 여부를 확인한 뒤 패키지를 다시 검증하세요.",
+    ),
+    DiagnosticCode(
         "BST-SEC-201",
         "SECRET_REDACTED",
         "Info",
@@ -146,6 +154,14 @@ _CODE_LIST = (
         "report",
         "원본 명령 출력 없이 안전 진단 리포트가 생성됐습니다.",
         "외부 분석 요청 시 진단 티켓 또는 안전 리포트를 공유하세요.",
+    ),
+    DiagnosticCode(
+        "BST-REP-602",
+        "REPORT_WRITE_FAILED",
+        "Critical",
+        "report",
+        "스냅샷, 비교 리포트, 공유 ZIP 중 하나를 생성하지 못했습니다.",
+        "출력 폴더 권한과 디스크 여유 공간을 확인한 뒤 다시 실행하세요.",
     ),
     DiagnosticCode(
         "BST-PKG-701",

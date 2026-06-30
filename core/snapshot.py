@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import tempfile
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -11,11 +14,46 @@ from .models import CommandResult, Device, Snapshot
 from .redaction import redact_payload, redact_sensitive_text
 from .version import APP_NAME, APP_VERSION
 
+TRANSIENT_WRITE_RETRY_DELAYS = (0.05, 0.1, 0.2)
+
 
 def sanitize_filename(value: str, fallback: str = "item") -> str:
     cleaned = re.sub(r"[^\w_.-]+", "_", value.strip(), flags=re.UNICODE)
     cleaned = cleaned.strip("._")
     return cleaned or fallback
+
+
+def atomic_replace_file(source: Path, target: Path) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    last_error: OSError | None = None
+    for attempt, delay in enumerate((0.0, *TRANSIENT_WRITE_RETRY_DELAYS)):
+        if delay:
+            time.sleep(delay)
+        try:
+            os.replace(source, target)
+            return
+        except OSError as exc:
+            last_error = exc
+            if attempt == len(TRANSIENT_WRITE_RETRY_DELAYS):
+                break
+    if last_error is not None:
+        raise last_error
+
+
+def atomic_write_text(path: Path, text: str, encoding: str = "utf-8") -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    temp_path = Path(temp_name)
+    try:
+        with os.fdopen(fd, "w", encoding=encoding) as handle:
+            handle.write(text)
+        atomic_replace_file(temp_path, path)
+    except Exception:
+        try:
+            temp_path.unlink()
+        except OSError:
+            pass
+        raise
 
 
 def read_text_lossless(path: Path) -> str:
@@ -53,7 +91,7 @@ class SnapshotStore:
             for result in device_results:
                 raw_name = f"{sanitize_filename(result.command_id)}.txt"
                 raw_path = device_dir / raw_name
-                raw_path.write_text(result.output or "", encoding="utf-8")
+                atomic_write_text(raw_path, result.output or "")
                 result.raw_file = str(raw_path.relative_to(snapshot_dir))
                 metadata = redact_payload(result.to_metadata())
                 metadata["sha256"] = hashlib.sha256((result.output or "").encode("utf-8")).hexdigest()
@@ -71,7 +109,7 @@ class SnapshotStore:
                         "",
                     ]
                 )
-            (device_dir / "_combined.txt").write_text("\n".join(combined_lines), encoding="utf-8")
+            atomic_write_text(device_dir / "_combined.txt", "\n".join(combined_lines))
 
         metadata_payload = {
             "app_name": APP_NAME,
@@ -83,9 +121,9 @@ class SnapshotStore:
             "devices": [device.to_safe_dict() for device in devices],
             "results": metadata_results,
         }
-        (snapshot_dir / "snapshot.json").write_text(
+        atomic_write_text(
+            snapshot_dir / "snapshot.json",
             json.dumps(metadata_payload, indent=2, ensure_ascii=True),
-            encoding="utf-8",
         )
         return snapshot_dir
 

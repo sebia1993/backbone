@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import os
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from .paths import resource_root, runtime_root
-from .snapshot import sanitize_filename
+from .snapshot import atomic_replace_file, sanitize_filename
 from .version import APP_NAME, APP_VERSION
 
 
@@ -51,20 +53,31 @@ def create_share_report_bundle(
         raise FileNotFoundError(f"No comparison report files found in: {report_dir}")
 
     resolved_docs_dir = docs_dir or resolve_docs_dir()
-    with ZipFile(bundle_path, "w", ZIP_DEFLATED) as archive:
-        archive.writestr("README_SHARED_REPORT.txt", build_bundle_readme(report_dir))
-        for path in report_files:
-            archive.write(path, f"reports/{path.name}")
-        if resolved_docs_dir is not None:
-            for name in GUIDE_FILE_NAMES:
-                path = resolved_docs_dir / name
-                if path.exists():
-                    archive.write(path, f"docs/{name}")
-            images_dir = resolved_docs_dir / "images"
-            if images_dir.exists():
-                for path in sorted(images_dir.rglob("*")):
-                    if path.is_file():
-                        archive.write(path, f"docs/images/{path.relative_to(images_dir).as_posix()}")
+    fd, temp_name = tempfile.mkstemp(prefix=f".{bundle_path.name}.", suffix=".tmp", dir=report_dir)
+    os.close(fd)
+    temp_bundle_path = Path(temp_name)
+    try:
+        with ZipFile(temp_bundle_path, "w", ZIP_DEFLATED) as archive:
+            archive.writestr("README_SHARED_REPORT.txt", build_bundle_readme(report_dir))
+            for path in report_files:
+                archive.write(path, f"reports/{path.name}")
+            if resolved_docs_dir is not None:
+                for name in GUIDE_FILE_NAMES:
+                    path = resolved_docs_dir / name
+                    if path.exists():
+                        archive.write(path, f"docs/{name}")
+                images_dir = resolved_docs_dir / "images"
+                if images_dir.exists():
+                    for path in sorted(images_dir.rglob("*")):
+                        if path.is_file():
+                            archive.write(path, f"docs/images/{path.relative_to(images_dir).as_posix()}")
+        atomic_replace_file(temp_bundle_path, bundle_path)
+    except Exception:
+        try:
+            temp_bundle_path.unlink()
+        except OSError:
+            pass
+        raise
     return bundle_path
 
 

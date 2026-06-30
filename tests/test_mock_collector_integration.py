@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
+from backbone_state_tracker.core.collector import format_command_failure_message
 from backbone_state_tracker.core.collector import SnapshotCollector
 from backbone_state_tracker.core.models import CommandSpec, Device
 from backbone_state_tracker.core.mockserver.profiles import load_mock_profile
@@ -33,6 +34,14 @@ class MockCollectorIntegrationTests(unittest.TestCase):
         self.assertTrue(device_results[1].success)
         self.assertEqual("system_clock", device_results[1].command_id)
         self.assertIn("Mock clock", device_results[1].output)
+
+    def test_command_failure_message_includes_diagnostic_code_and_redacts_secret(self) -> None:
+        message = format_command_failure_message(TimeoutError("read timeout password=UltraSecret"))
+
+        self.assertIn("BST-COL-401", message)
+        self.assertIn("명령 응답 시간이 초과", message)
+        self.assertNotIn("UltraSecret", message)
+        self.assertIn("***", message)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ import os
 import shutil
 import threading
 import traceback
+from collections.abc import Callable
 from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
@@ -1473,16 +1474,16 @@ class BackboneStateTrackerApp(tk.Tk):
                     stage_slug=stage.slug,
                 )
                 self.thread_log(f"[{stage.name}] 스냅샷 저장 완료: {snapshot_dir}")
-                self.after(0, lambda: self._select_snapshot_after_collect(snapshot_dir, stage))
+                self._safe_after(0, lambda: self._select_snapshot_after_collect(snapshot_dir, stage))
 
                 if stage.auto_compare:
                     self._auto_compare_against_pre_work(snapshot_dir)
                 else:
                     self.thread_log("[작업 전] 자동 비교 기준으로 지정했습니다.")
-                    self.after(0, lambda: self._finish_baseline_collect(snapshot_dir))
+                    self._safe_after(0, lambda: self._finish_baseline_collect(snapshot_dir))
             except Exception:
                 self.thread_log(traceback.format_exc())
-                self.after(0, lambda: self._set_failed_status("수집 실패"))
+                self._safe_after(0, lambda: self._set_failed_status("수집 실패"))
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -1521,17 +1522,17 @@ class BackboneStateTrackerApp(tk.Tk):
         baseline_dir = find_latest_pre_work_snapshot(snapshot_dirs)
         if baseline_dir is None:
             self.thread_log("작업 전 스냅샷이 없어 자동 비교를 건너뜁니다. 먼저 [작업 전] 상태를 수집하세요.")
-            self.after(0, lambda: self._set_failed_status("기준 없음"))
+            self._safe_after(0, lambda: self._set_failed_status("기준 없음"))
             return
 
         summary, paths = self._compare_snapshot_dirs(baseline_dir, target_dir)
         counts = summary.counts
         self.thread_log(f"자동 비교 완료: {self._format_counts(counts)}")
         self.thread_log(f"HTML 리포트: {paths['html']}")
-        self.thread_log(f"공유 ZIP: {paths['share_zip']}")
-        self.after(
+        self._log_share_bundle_result(paths)
+        self._safe_after(
             0,
-            lambda summary=summary, html_path=paths["html"], share_zip_path=paths["share_zip"]: self._select_compared_snapshots(
+            lambda summary=summary, html_path=paths["html"], share_zip_path=paths.get("share_zip"): self._select_compared_snapshots(
                 baseline_dir.name,
                 target_dir.name,
                 "자동 비교 완료",
@@ -1564,6 +1565,9 @@ class BackboneStateTrackerApp(tk.Tk):
         if share_bundle_path is not None:
             self.latest_share_bundle = share_bundle_path
             self.latest_share_bundle_var.set(share_bundle_path.name)
+        else:
+            self.latest_share_bundle = None
+            self.latest_share_bundle_var.set("-")
         self._update_runtime_summary()
 
     def refresh_snapshots(self, log_message: bool = True) -> None:
@@ -1608,10 +1612,10 @@ class BackboneStateTrackerApp(tk.Tk):
                 counts = summary.counts
                 self.thread_log(f"수동 비교 완료: {self._format_counts(counts)}")
                 self.thread_log(f"HTML 리포트: {paths['html']}")
-                self.thread_log(f"공유 ZIP: {paths['share_zip']}")
-                self.after(
+                self._log_share_bundle_result(paths)
+                self._safe_after(
                     0,
-                    lambda summary=summary, html_path=paths["html"], share_zip_path=paths["share_zip"]: self._finish_manual_compare(
+                    lambda summary=summary, html_path=paths["html"], share_zip_path=paths.get("share_zip"): self._finish_manual_compare(
                         summary,
                         html_path,
                         share_zip_path,
@@ -1619,7 +1623,7 @@ class BackboneStateTrackerApp(tk.Tk):
                 )
             except Exception:
                 self.thread_log(traceback.format_exc())
-                self.after(0, lambda: self._set_failed_status("비교 실패"))
+                self._safe_after(0, lambda: self._set_failed_status("비교 실패"))
 
         self.log(f"선택 항목을 비교합니다: {base_name} -> {target_name}")
         threading.Thread(target=worker, daemon=True).start()
@@ -1662,6 +1666,9 @@ class BackboneStateTrackerApp(tk.Tk):
         if share_bundle_path is not None:
             self.latest_share_bundle = share_bundle_path
             self.latest_share_bundle_var.set(share_bundle_path.name)
+        else:
+            self.latest_share_bundle = None
+            self.latest_share_bundle_var.set("-")
         self.compare_status_var.set("선택 항목 비교 완료")
         self.status_chip_var.set("비교 완료")
         self.workflow_busy = False
@@ -1789,8 +1796,36 @@ class BackboneStateTrackerApp(tk.Tk):
             f"티켓: {result.reports.ticket}",
         )
 
+    def _log_share_bundle_result(self, paths: dict[str, Path]) -> None:
+        share_zip = paths.get("share_zip")
+        if share_zip is not None:
+            self.thread_log(f"공유 ZIP: {share_zip}")
+            return
+        warning_path = paths.get("warning")
+        if warning_path is not None:
+            self.thread_log(f"공유 ZIP 생성 실패, 리포트는 보존됨: {warning_path}")
+
+    def _safe_after(self, delay_ms: int, callback: Callable[[], None]) -> None:
+        try:
+            if not self.winfo_exists():
+                return
+        except tk.TclError:
+            return
+
+        def guarded_callback() -> None:
+            try:
+                if self.winfo_exists():
+                    callback()
+            except tk.TclError:
+                return
+
+        try:
+            self.after(delay_ms, guarded_callback)
+        except tk.TclError:
+            return
+
     def thread_log(self, message: str) -> None:
-        self.after(0, lambda: self.log(message))
+        self._safe_after(0, lambda: self.log(message))
 
     def log(self, message: str) -> None:
         self.log_text.insert("end", redact_sensitive_text(message) + "\n")
@@ -1804,10 +1839,13 @@ def main() -> None:
 
 def smoke_check() -> None:
     app = BackboneStateTrackerApp()
-    app.update()
-    print(app.title())
-    print(f"pages={','.join(sorted(app.pages))}")
-    app.destroy()
+    try:
+        app.update_idletasks()
+        print(app.title(), flush=True)
+        print(f"pages={','.join(sorted(app.pages))}", flush=True)
+    finally:
+        app.quit()
+        app.destroy()
 
 
 def expectation_label(item: DiffItem) -> str:

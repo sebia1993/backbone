@@ -5,6 +5,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 from zipfile import ZipFile
 
 from backbone_state_tracker.core.diff_engine import DiffEngine
@@ -551,6 +552,28 @@ class ReportWriterTests(unittest.TestCase):
             self.assertNotIn("OldSecret", payload)
             self.assertNotIn("NewSecret", payload)
             self.assertIn("***", payload)
+
+    def test_share_bundle_failure_preserves_created_reports(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(root, "base", "GE1/0/1 UP")
+            target = self._snapshot(root, "target", "GE1/0/1 DOWN")
+            summary = DiffEngine().compare(base, target)
+
+            with patch(
+                "backbone_state_tracker.core.reporter.create_share_report_bundle",
+                side_effect=OSError("zip target is locked"),
+            ):
+                paths = ReportWriter().write_reports(summary)
+
+            self.assertTrue(paths["html"].exists())
+            self.assertTrue(paths["json"].exists())
+            self.assertTrue(("xlsx" in paths and paths["xlsx"].exists()) or ("csv" in paths and paths["csv"].exists()))
+            self.assertNotIn("share_zip", paths)
+            self.assertIn("warning", paths)
+            warning = paths["warning"].read_text(encoding="utf-8")
+            self.assertIn("공유 ZIP 생성 실패", warning)
+            self.assertIn("zip target is locked", warning)
 
 
 if __name__ == "__main__":

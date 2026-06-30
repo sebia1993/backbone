@@ -696,6 +696,25 @@ class GuiDiffFormattingTests(unittest.TestCase):
         finally:
             app.destroy()
 
+    def test_thread_log_ignores_callback_after_window_destroy(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        app.destroy()
+
+        app.thread_log("late worker message")
+
+    def test_share_bundle_warning_is_logged_when_zip_is_missing(self) -> None:
+        app = BackboneStateTrackerApp()
+        app.withdraw()
+        try:
+            with patch.object(app, "thread_log") as thread_log:
+                app._log_share_bundle_result({"warning": Path("/tmp/report_warning.txt")})
+
+            thread_log.assert_called_once()
+            self.assertIn("공유 ZIP 생성 실패", thread_log.call_args.args[0])
+        finally:
+            app.destroy()
+
 
 if __name__ == "__main__":
     unittest.main()

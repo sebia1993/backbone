@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import csv
+import io
 import json
+import os
+import tempfile
 from dataclasses import asdict
 from html import escape
 from pathlib import Path
@@ -9,7 +12,7 @@ from pathlib import Path
 from .models import DiffItem, DiffLine, DiffSummary
 from .redaction import redact_payload, redact_sensitive_text
 from .report_bundle import create_share_report_bundle
-from .snapshot import SnapshotStore, sanitize_filename
+from .snapshot import SnapshotStore, atomic_replace_file, atomic_write_text, sanitize_filename
 from .version import APP_NAME, APP_VERSION
 from .workflow import is_sample_snapshot, severity_to_korean, status_to_korean
 
@@ -76,22 +79,37 @@ class ReportWriter:
         xlsx_path = report_dir / "diff_summary.xlsx"
         csv_path = report_dir / "diff_summary.csv"
 
-        manifest_path.write_text(
+        atomic_write_text(
+            manifest_path,
             json.dumps(redact_payload(asdict(summary)), indent=2, ensure_ascii=True),
-            encoding="utf-8",
         )
         self._write_html(html_path, summary)
         written_xlsx = self._write_xlsx(xlsx_path, summary)
         if not written_xlsx:
             self._write_csv(csv_path, summary)
-        share_zip_path = create_share_report_bundle(report_dir)
+        share_zip_path = None
+        warning_path = None
+        try:
+            share_zip_path = create_share_report_bundle(report_dir)
+        except Exception as exc:
+            warning_path = report_dir / "report_warning.txt"
+            atomic_write_text(
+                warning_path,
+                "공유 ZIP 생성 실패\n"
+                f"- error_type: {type(exc).__name__}\n"
+                f"- message: {redact_sensitive_text(str(exc))}\n"
+                "- already_created: diff_report.html, diff_manifest.json, diff_summary\n",
+            )
 
         paths = {"html": html_path, "json": manifest_path}
         if written_xlsx:
             paths["xlsx"] = xlsx_path
         else:
             paths["csv"] = csv_path
-        paths["share_zip"] = share_zip_path
+        if share_zip_path is not None:
+            paths["share_zip"] = share_zip_path
+        if warning_path is not None:
+            paths["warning"] = warning_path
         return paths
 
     @staticmethod
@@ -145,10 +163,11 @@ class ReportWriter:
 
     def _write_csv(self, path: Path, summary: DiffSummary) -> None:
         rows = self._rows(summary)
-        with path.open("w", encoding="utf-8-sig", newline="") as handle:
-            writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()) if rows else ["severity"])
-            writer.writeheader()
-            writer.writerows(rows)
+        handle = io.StringIO()
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()) if rows else ["severity"])
+        writer.writeheader()
+        writer.writerows(rows)
+        atomic_write_text(path, "\ufeff" + handle.getvalue())
 
     def _write_xlsx(self, path: Path, summary: DiffSummary) -> bool:
         try:
@@ -222,7 +241,18 @@ class ReportWriter:
                 for cell in row:
                     cell.alignment = Alignment(vertical="top", wrap_text=True)
 
-        workbook.save(path)
+        fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+        os.close(fd)
+        temp_path = Path(temp_name)
+        try:
+            workbook.save(temp_path)
+            atomic_replace_file(temp_path, path)
+        except Exception:
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
+            raise
         return True
 
     @staticmethod
@@ -800,7 +830,7 @@ class ReportWriter:
 </body>
 </html>
 """
-        path.write_text(html, encoding="utf-8")
+        atomic_write_text(path, html)
 
 
 def style_worksheet(sheet, headers, header_fill, severity_fill, max_width: int) -> None:

@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from backbone_state_tracker.core.diagnostics.recorder import DiagnosticRecorder
 from backbone_state_tracker.core.diagnostics.report import write_diagnostic_reports
@@ -57,9 +58,28 @@ class DiagnosticReportTests(unittest.TestCase):
             self.assertIn("BST-SEC-211", codes)
             self.assertIn("BST-REP-601", codes)
             self.assertIn("commands_config=loaded", details)
+            self.assertIn("analysis_rules=loaded", details)
             self.assertIn("mock_profiles=loaded", details)
             self.assertIn("docs=present", details)
+            self.assertIn("snapshot_report_bundle_write=passed", details)
             self.assertFalse(payload["raw_log_included"])
+
+    def test_self_check_reports_invalid_analysis_rules(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch(
+                "backbone_state_tracker.core.diagnostics.runner.load_analysis_rules",
+                side_effect=ValueError("invalid severity"),
+            ):
+                result = run_self_check(Path(tmp))
+
+            payload = json.loads(result.reports.json.read_text(encoding="utf-8"))
+            failures = [
+                event
+                for event in payload["events"]
+                if event["code"] == "BST-CFG-122" and event["status"] == "failed"
+            ]
+            self.assertEqual(1, len(failures))
+            self.assertIn("load_error=ValueError", failures[0]["safe_detail"])
 
 
 if __name__ == "__main__":

@@ -8,10 +8,30 @@ from .models import CommandResult, CommandSpec, Device
 
 
 ProgressCallback = Callable[[str], None]
+COMMAND_TIMEOUT_CODE = "BST-COL-401"
+PARTIAL_COLLECTION_CODE = "BST-COL-411"
+COMMAND_TIMEOUT_HINTS = ("timeout", "timed out", "read_timeout", "netmikotimeout")
 
 
 class CollectionError(RuntimeError):
     pass
+
+
+def command_failure_code(exc: Exception) -> str:
+    error_text = f"{type(exc).__name__} {exc}".lower()
+    if any(hint in error_text for hint in COMMAND_TIMEOUT_HINTS):
+        return COMMAND_TIMEOUT_CODE
+    return PARTIAL_COLLECTION_CODE
+
+
+def format_command_failure_message(exc: Exception) -> str:
+    code = command_failure_code(exc)
+    safe_error = sanitize_connection_error(str(exc))
+    if code == COMMAND_TIMEOUT_CODE:
+        reason = "명령 응답 시간이 초과됐습니다."
+    else:
+        reason = "일부 명령 수집에 실패했습니다."
+    return f"{code} {reason} detail={safe_error}"
 
 
 class SnapshotCollector:
@@ -52,6 +72,7 @@ class SnapshotCollector:
                     fast_cli=False,
                 )
                 device_results.append(make_connectivity_result(device, True))
+                failed_command_count = 0
                 for command in commands:
                     result = CommandResult.started(device, command)
                     self.progress(f"[{device.name}] run: {command.command}")
@@ -65,12 +86,19 @@ class SnapshotCollector:
                         )
                         result.success = True
                     except Exception as exc:
+                        failed_command_count += 1
                         result.success = False
-                        result.error_message = sanitize_connection_error(str(exc))
+                        result.error_message = format_command_failure_message(exc)
                         if not command.allow_failure:
-                            self.progress(f"[{device.name}] required command failed: {command.id}")
+                            self.progress(
+                                f"[{device.name}] required command failed: {command.id} ({command_failure_code(exc)})"
+                            )
                     finally:
                         device_results.append(result.finish())
+                if failed_command_count:
+                    self.progress(
+                        f"[{device.name}] partial collection: failed_commands={failed_command_count} ({PARTIAL_COLLECTION_CODE})"
+                    )
             except NetMikoAuthenticationException as exc:
                 device_results.append(make_connectivity_result(device, False, "authentication", str(exc)))
                 self.progress(f"[{device.name}] authentication failed")
