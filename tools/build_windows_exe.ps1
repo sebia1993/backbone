@@ -174,6 +174,7 @@ $PayloadRoot = Join-Path $StagingRoot $ProjectName
 $CommandsData = (Join-Path $ProjectRoot "config\commands.yaml") + ";config"
 $DevicesExampleData = (Join-Path $ProjectRoot "config\devices.example.yaml") + ";config"
 $MockProfilesData = (Join-Path $ProjectRoot "config\mock_profiles.yaml") + ";config"
+$AnalysisRulesData = (Join-Path $ProjectRoot "config\analysis_rules.yaml") + ";config"
 $DocsData = (Join-Path $ProjectRoot "docs") + ";docs"
 
 try {
@@ -190,6 +191,7 @@ try {
             --add-data $CommandsData `
             --add-data $DevicesExampleData `
             --add-data $MockProfilesData `
+            --add-data $AnalysisRulesData `
             --add-data $DocsData `
             --distpath $PyInstallerDist `
             --workpath $PyInstallerWork `

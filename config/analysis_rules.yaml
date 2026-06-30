@@ -1,0 +1,136 @@
+thresholds:
+  cpu_usage:
+    warning_percent: 50
+    critical_percent: 70
+  memory_free_ratio:
+    warning_percent: 40
+    critical_percent: 30
+
+findings:
+  connection_failed:
+    title: 장비 접속 실패
+    impact_reason: 대상 장비에서 상태 명령을 실행할 수 없어 다른 변경 결과를 신뢰하기 어렵습니다.
+    action_hint: 장비 전원, 관리망, SSH/Telnet 접근, 작업 단계상 의도된 차단인지 확인하세요.
+    priority: 10
+  connection_restored:
+    title: 장비 접속 복구
+    impact_reason: 이전 기준에서 실패했던 장비 접속이 비교 시점에 복구됐습니다.
+    action_hint: 복구 후 OSPF, LACP, 인터페이스, 전원 상태가 정상인지 이어서 확인하세요.
+    priority: 80
+  command_failed:
+    title: 명령 실행 실패
+    impact_reason: 비교 시점 명령 출력이 없어 해당 항목의 상태 판단이 제한됩니다.
+    action_hint: 명령 지원 여부, 권한, 타임아웃, 장비 상태를 확인한 뒤 재수집하세요.
+    priority: 15
+  interface_down:
+    title: 인터페이스 Down 감지
+    impact_reason: 작업 계획에 없는 링크 Down은 이중화 경로, LACP, 라우팅 안정성에 영향을 줄 수 있습니다.
+    action_hint: 대상 포트가 계획된 차단인지 확인하고 케이블, 포트 상태, 상대 장비 로그를 확인하세요.
+    priority: 20
+  lacp_selected_decrease:
+    title: LACP selected 감소
+    impact_reason: 집계 링크의 실제 사용 멤버 수가 줄어 대역폭 또는 이중화가 약해졌을 수 있습니다.
+    action_hint: 제외된 멤버 포트, 상대 장비 LACP 상태, planned shutdown 여부를 확인하세요.
+    priority: 21
+  ospf_peer_not_full:
+    title: OSPF 인접 상태 이탈
+    impact_reason: OSPF neighbor가 Full 상태를 벗어나면 경로 우회 또는 단절이 발생할 수 있습니다.
+    action_hint: neighbor 상태, 인터페이스 상태, 라우팅 테이블, 작업 단계별 expected failover 여부를 확인하세요.
+    priority: 22
+  vrrp_role_change:
+    title: VRRP 역할 변화
+    impact_reason: Master/Backup 또는 priority 변화는 게이트웨이 역할 이동을 의미할 수 있습니다.
+    action_hint: 현재 Master 장비가 의도한 장비인지, VIP 응답과 우선순위 설정을 확인하세요.
+    priority: 45
+  vrrp_down:
+    title: VRRP Down 상태
+    impact_reason: VRRP 가상 게이트웨이가 정상 역할을 수행하지 못할 수 있습니다.
+    action_hint: VRID 상태, VIP, priority, 인터페이스 상태, 상대 장비 VRRP 상태를 확인하세요.
+    priority: 18
+  hardware_critical:
+    title: 하드웨어 긴급 상태
+    impact_reason: 모듈, 섀시, 팬, 전원, 알람 상태가 정상 범위를 벗어났습니다.
+    action_hint: 장비 전면 상태, power/fan/module 상세 명령, 알람 로그를 확인하세요.
+    priority: 25
+  hardware_warning:
+    title: 하드웨어 주의 상태
+    impact_reason: 하드웨어 알람 또는 경고성 문구가 새로 확인됐습니다.
+    action_hint: 알람 원인과 지속 여부를 확인하고 필요하면 장애 접수 기준에 맞춰 후속 조치하세요.
+    priority: 48
+  power_non_normal:
+    title: 전원 상태 비정상
+    impact_reason: 전원 State가 Normal이 아니면 전원 이중화 또는 장비 안정성이 저하될 수 있습니다.
+    action_hint: PSU 상태, 입력 전원, 알람, 현장 전원 작업 여부를 확인하세요.
+    priority: 16
+  cpu_critical:
+    title: CPU 사용률 긴급
+    impact_reason: CPU 사용률이 70% 이상으로 제어/라우팅 처리 지연 가능성이 있습니다.
+    action_hint: 일시적인 피크인지 재확인하고 프로세스, 로그 폭증, 루프성 트래픽을 확인하세요.
+    priority: 30
+  cpu_warning:
+    title: CPU 사용률 주의
+    impact_reason: CPU 사용률이 50~69%로 평소보다 높은 상태일 수 있습니다.
+    action_hint: 작업 중 일시 증가인지 추이를 확인하고 복구 후 기준값으로 돌아오는지 확인하세요.
+    priority: 55
+  cpu_info:
+    title: CPU 정상 범위
+    impact_reason: CPU 사용률이 경고 기준 미만입니다.
+    action_hint: 별도 조치 없이 다른 긴급/주의 항목을 우선 확인하세요.
+    priority: 90
+  memory_critical:
+    title: 메모리 FreeRatio 긴급
+    impact_reason: FreeRatio가 30% 이하로 낮아 장비 안정성 저하 가능성이 있습니다.
+    action_hint: 메모리 추이, 프로세스 사용량, 최근 로그를 확인하고 재수집으로 지속 여부를 확인하세요.
+    priority: 31
+  memory_warning:
+    title: 메모리 FreeRatio 주의
+    impact_reason: FreeRatio가 31~40%로 낮아지는 추세일 수 있습니다.
+    action_hint: 작업 전후 변화량과 복구 후 정상 범위 회복 여부를 확인하세요.
+    priority: 56
+  memory_info:
+    title: 메모리 정상 범위
+    impact_reason: FreeRatio가 경고 기준을 초과합니다.
+    action_hint: 별도 조치 없이 다른 긴급/주의 항목을 우선 확인하세요.
+    priority: 91
+  log_critical:
+    title: 신규 긴급 의심 로그
+    impact_reason: 로그에 down, failure, major alarm 같은 위험 키워드가 새로 확인됐습니다.
+    action_hint: 로그 시각과 작업 시각을 대조하고 관련 인터페이스/라우팅/하드웨어 상태를 확인하세요.
+    priority: 35
+  log_warning:
+    title: 신규 주의 로그
+    impact_reason: 로그에 warning, error, minor alarm 같은 확인 필요 문구가 있습니다.
+    action_hint: 반복 발생 여부와 관련 상태 명령 결과를 함께 확인하세요.
+    priority: 60
+  operational_change:
+    title: 운영 상태 변화
+    impact_reason: 라우팅, 스위칭, 로그, 리소스 상태가 기준과 달라졌습니다.
+    action_hint: 변경이 작업 계획에 포함된 정상 변화인지 확인하고 관련 항목을 교차 확인하세요.
+    priority: 70
+  output_changed:
+    title: 일반 출력 변화
+    impact_reason: 위험 키워드나 임계값 위반은 없지만 출력 내용이 기준과 달라졌습니다.
+    action_hint: 필요 시 원본 diff에서 변경 라인을 확인하세요.
+    priority: 85
+  command_added_removed:
+    title: 명령 결과 추가/삭제
+    impact_reason: 기준 또는 비교 스냅샷 한쪽에만 명령 결과가 있어 동일 조건 비교가 어렵습니다.
+    action_hint: 수집 대상, 명령 세트, 장비 접속 상태가 두 스냅샷에서 같은지 확인하세요.
+    priority: 65
+  unchanged:
+    title: 의미 있는 변경 없음
+    impact_reason: 비교 기준과 비교 시점 사이에 의미 있는 차이가 감지되지 않았습니다.
+    action_hint: 조치가 필요한 항목이 아닙니다.
+    priority: 100
+
+expected_changes:
+  - stage_slugs: ["bb3_off", "sample_bb3_off"]
+    device_names: ["backbone3", "백본3"]
+    command_ids: ["device_connectivity"]
+    summaries: ["Target device connection failed."]
+    title: 백본3 OFF 단계의 접속 실패
+    action_hint: 계획된 OFF 단계라면 백본4 경로 유지와 복구 후 접속 회복 여부를 확인하세요.
+  - stage_slugs: ["post_restore", "sample_restored"]
+    summaries: ["Target device connection restored."]
+    title: 복구 단계의 접속 회복
+    action_hint: 복구 후 OSPF, LACP, 인터페이스, 전원 상태가 정상인지 확인하세요.

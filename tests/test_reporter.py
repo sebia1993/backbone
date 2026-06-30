@@ -85,6 +85,9 @@ class ReportWriterTests(unittest.TestCase):
             paths = ReportWriter().write_reports(summary)
 
             html = paths["html"].read_text(encoding="utf-8")
+            self.assertIn("먼저 확인할 문제", html)
+            self.assertIn("인터페이스 Down 감지", html)
+            self.assertIn("권장 조치", html)
             self.assertIn("summary-list", html)
             self.assertIn("summary-card", html)
             self.assertIn('data-filter="Critical"', html)
@@ -148,7 +151,12 @@ class ReportWriterTests(unittest.TestCase):
             from openpyxl import load_workbook
 
             workbook = load_workbook(paths["xlsx"])
+            self.assertIn("problem_summary", workbook.sheetnames)
             self.assertIn("diff_detail", workbook.sheetnames)
+            summary_sheet = workbook["problem_summary"]
+            summary_rows = list(summary_sheet.iter_rows(values_only=True))
+            self.assertIn("finding_title", summary_rows[0])
+            self.assertTrue(any("인터페이스 Down 감지" in row for row in summary_rows[1:]))
             detail_sheet = workbook["diff_detail"]
             rows = list(detail_sheet.iter_rows(values_only=True))
             self.assertIn("base_text", rows[0])

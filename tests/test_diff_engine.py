@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from backbone_state_tracker.core.analysis_rules import analysis_rules_from_mapping
 from backbone_state_tracker.core.connectivity import DEVICE_CONNECTIVITY_COMMAND_ID, make_connectivity_result_for_device
 from backbone_state_tracker.core.diff_engine import DiffEngine
 from backbone_state_tracker.core.models import CommandResult, Device
@@ -11,11 +12,19 @@ from backbone_state_tracker.core.snapshot import SnapshotStore
 
 
 class DiffEngineTests(unittest.TestCase):
-    def _snapshot(self, root: Path, label: str, output: str, command_id: str = "interface_brief", category: str = "interface") -> Path:
+    def _snapshot(
+        self,
+        root: Path,
+        label: str,
+        output: str,
+        command_id: str = "interface_brief",
+        category: str = "interface",
+        stage_slug: str = "",
+    ) -> Path:
         store = SnapshotStore(root)
         device = Device(name="backbone4", host="192.0.2.4")
         result = self._command_result(device, command_id=command_id, output=output, category=category)
-        return store.write_snapshot(label, [device], {device.name: [result]})
+        return store.write_snapshot(label, [device], {device.name: [result]}, stage_slug=stage_slug)
 
     def _command_result(
         self,
@@ -63,6 +72,9 @@ class DiffEngineTests(unittest.TestCase):
         changed = [item for item in summary.items if item.status == "changed"]
         self.assertEqual(len(changed), 1)
         self.assertEqual(changed[0].severity, "Critical")
+        self.assertEqual(changed[0].finding_title, "인터페이스 Down 감지")
+        self.assertEqual(changed[0].expectation, "unexpected")
+        self.assertIn("이중화 경로", changed[0].impact_reason)
 
     def test_lacp_selected_count_decrease_is_critical(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -266,6 +278,19 @@ class DiffEngineTests(unittest.TestCase):
         item = self._diff_item(summary, "cpu_usage")
         self.assertEqual(item.severity, "Critical")
         self.assertEqual(item.summary, "CPU usage is 70% or higher.")
+
+    def test_cpu_thresholds_are_loaded_from_analysis_rules(self) -> None:
+        rules = analysis_rules_from_mapping({"thresholds": {"cpu_usage": {"warning_percent": 20, "critical_percent": 80}}})
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            base = self._snapshot(root, "base", "5 seconds: 10%", command_id="cpu_usage", category="resource")
+            target = self._snapshot(root, "target", "5 seconds: 25%", command_id="cpu_usage", category="resource")
+
+            summary = DiffEngine(rules=rules).compare(base, target)
+
+        item = self._diff_item(summary, "cpu_usage")
+        self.assertEqual(item.severity, "Warning")
+        self.assertEqual(item.finding_title, "확인 필요")
 
     def test_memory_free_ratio_critical_even_when_output_is_unchanged(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -485,7 +510,46 @@ class DiffEngineTests(unittest.TestCase):
         self.assertEqual(connectivity.change_count, 1)
         self.assertEqual(connectivity.changed_lines[0].base_text, "reachable")
         self.assertEqual(connectivity.changed_lines[0].target_text, "unreachable: timeout (BST-CON-301)")
+        self.assertEqual(connectivity.expectation, "unexpected")
+        self.assertEqual(connectivity.finding_title, "장비 접속 실패")
         self.assertFalse(any(item.command_id == "interface_brief" and item.status == "removed" for item in summary.items))
+
+    def test_expected_stage_change_marks_backbone3_off_connectivity_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            store = SnapshotStore(root)
+            device = Device(name="backbone3", host="192.0.2.3")
+            base = store.write_snapshot(
+                "base",
+                [device],
+                {device.name: [self._command_result(device, output="GE1/0/1 UP")]},
+                stage_slug="pre_work",
+            )
+            target = store.write_snapshot(
+                "target",
+                [device],
+                {
+                    device.name: [
+                        make_connectivity_result_for_device(
+                            device_name=device.name,
+                            host=device.host,
+                            success=False,
+                            reason="timeout",
+                            started_at="2026-06-11T10:05:00",
+                            ended_at="2026-06-11T10:05:00",
+                        )
+                    ]
+                },
+                stage_slug="bb3_off",
+            )
+
+            summary = DiffEngine().compare(base, target)
+
+        connectivity = next(item for item in summary.items if item.command_id == DEVICE_CONNECTIVITY_COMMAND_ID)
+        self.assertEqual(connectivity.severity, "Critical")
+        self.assertEqual(connectivity.expectation, "expected")
+        self.assertEqual(connectivity.finding_title, "백본3 OFF 단계의 접속 실패")
+        self.assertIn("계획된 OFF 단계", connectivity.action_hint)
 
     def test_restored_target_device_is_info_without_added_command_noise(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

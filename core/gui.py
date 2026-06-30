@@ -42,6 +42,7 @@ OUTPUT_DIR = PROJECT_DIR / "outputs" / "snapshots"
 COMMANDS_PATH = CONFIG_DIR / "commands.yaml"
 DEVICES_PATH = CONFIG_DIR / "devices.yaml"
 DEVICES_EXAMPLE_PATH = CONFIG_DIR / "devices.example.yaml"
+ANALYSIS_RULES_PATH = CONFIG_DIR / "analysis_rules.yaml"
 
 
 PALETTE = {
@@ -81,13 +82,20 @@ SEVERITY_META = {
     "Unchanged": ("변경없음", PALETTE["accent_dark"], PALETTE["accent_soft"]),
 }
 SEVERITY_FILTERS = {
+    "문제": "__problems__",
     "전체": "",
     "긴급": "Critical",
     "주의": "Warning",
-    "정보": "Info",
+    "예상된 변화": "__expected__",
+    "정보/변경없음": "__low__",
     "변경없음": "Unchanged",
 }
 SEVERITY_FILTER_LABELS = {value: label for label, value in SEVERITY_FILTERS.items() if value}
+EXPECTATION_LABELS_KO = {
+    "unexpected": "문제",
+    "expected": "예상된 변화",
+    "unknown": "참고",
+}
 
 
 class BackboneStateTrackerApp(tk.Tk):
@@ -136,7 +144,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self.latest_snapshot_var = tk.StringVar(value="-")
         self.latest_report_var = tk.StringVar(value="-")
         self.latest_share_bundle_var = tk.StringVar(value="-")
-        self.diff_severity_filter_var = tk.StringVar(value="전체")
+        self.diff_severity_filter_var = tk.StringVar(value="문제")
         self.diff_search_var = tk.StringVar()
         self.diff_filter_status_var = tk.StringVar(value="필터: -")
         self.diff_selection_var = tk.StringVar(value="선택된 변경 행이 없습니다.")
@@ -153,6 +161,7 @@ class BackboneStateTrackerApp(tk.Tk):
     def _ensure_runtime_config_files(self) -> None:
         _copy_if_missing(BUNDLED_CONFIG_DIR / "commands.yaml", COMMANDS_PATH)
         _copy_if_missing(BUNDLED_CONFIG_DIR / "devices.example.yaml", DEVICES_EXAMPLE_PATH)
+        _copy_if_missing(BUNDLED_CONFIG_DIR / "analysis_rules.yaml", ANALYSIS_RULES_PATH)
 
     def _configure_styles(self) -> None:
         style = ttk.Style(self)
@@ -723,12 +732,12 @@ class BackboneStateTrackerApp(tk.Tk):
         filter_bar = tk.Frame(detail_body, bg=PALETTE["surface"])
         filter_bar.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 10))
         filter_bar.columnconfigure(3, weight=1)
-        tk.Label(filter_bar, text="등급", bg=PALETTE["surface"], fg=PALETTE["muted"]).grid(row=0, column=0, sticky="w")
+        tk.Label(filter_bar, text="보기", bg=PALETTE["surface"], fg=PALETTE["muted"]).grid(row=0, column=0, sticky="w")
         severity_filter = ttk.Combobox(
             filter_bar,
             textvariable=self.diff_severity_filter_var,
             values=list(SEVERITY_FILTERS.keys()),
-            width=10,
+            width=13,
             state="readonly",
         )
         severity_filter.grid(row=0, column=1, sticky="w", padx=(8, 16))
@@ -837,14 +846,14 @@ class BackboneStateTrackerApp(tk.Tk):
 
         total_rows = 0
         severity_filter = self._selected_diff_severity_filter()
-        include_unchanged = severity_filter == "Unchanged"
+        include_unchanged = severity_filter in {"", "Unchanged", "__low__"}
         query = self.diff_search_var.get().strip()
         for item in summary.items:
             if item.status == "unchanged":
+                total_rows += 1
                 if not include_unchanged:
                     continue
                 line = DiffLine(kind="unchanged", target_text=summary_label(item))
-                total_rows += 1
                 if not self._diff_row_matches_filter(item, line, severity_filter, query):
                     continue
                 row_index = len(self.diff_detail_rows)
@@ -857,10 +866,10 @@ class BackboneStateTrackerApp(tk.Tk):
                         severity_to_korean(item.severity),
                         item.device_name,
                         item.command_id,
-                        self._shorten(summary_label(item), 80),
+                        self._shorten(self._finding_title(item), 80),
                         change_type_label(line.kind),
                         "-",
-                        "의미 있는 변경 없음",
+                        self._shorten(item.evidence or "의미 있는 변경 없음", 120),
                     ),
                     tags=(f"severity_{item.severity}",),
                 )
@@ -881,10 +890,10 @@ class BackboneStateTrackerApp(tk.Tk):
                         severity_to_korean(item.severity),
                         item.device_name,
                         item.command_id,
-                        self._shorten(summary_label(item), 80),
+                        self._shorten(self._finding_title(item), 80),
                         change_type_label(line.kind),
                         self._format_line_location(line),
-                        self._shorten(self._format_line_preview(line), 120),
+                        self._shorten(item.evidence or self._format_line_preview(line), 120),
                     ),
                     tags=(f"severity_{item.severity}",),
                 )
@@ -907,7 +916,7 @@ class BackboneStateTrackerApp(tk.Tk):
         self._update_metric_chip_state()
 
     def reset_diff_filters(self) -> None:
-        self.diff_severity_filter_var.set("전체")
+        self.diff_severity_filter_var.set("문제")
         self.diff_search_var.set("")
         self._render_diff_details()
         self._update_metric_chip_state()
@@ -934,7 +943,16 @@ class BackboneStateTrackerApp(tk.Tk):
 
     @staticmethod
     def _diff_row_matches_filter(item: DiffItem, line: DiffLine, severity_filter: str, query: str) -> bool:
-        if severity_filter and item.severity != severity_filter:
+        if severity_filter == "__problems__":
+            if not BackboneStateTrackerApp._is_problem_item(item):
+                return False
+        elif severity_filter == "__expected__":
+            if item.expectation != "expected":
+                return False
+        elif severity_filter == "__low__":
+            if item.severity not in {"Info", "Unchanged"}:
+                return False
+        elif severity_filter and item.severity != severity_filter:
             return False
         terms = [term for term in query.lower().split() if term]
         if not terms:
@@ -948,6 +966,12 @@ class BackboneStateTrackerApp(tk.Tk):
                 item.command_id,
                 redact_sensitive_text(item.command),
                 item.category,
+                item.expectation,
+                expectation_label(item),
+                item.finding_title,
+                item.impact_reason,
+                item.evidence,
+                item.action_hint,
                 summary_label(item),
                 change_type_label(line.kind),
                 BackboneStateTrackerApp._format_line_location(line),
@@ -1022,13 +1046,23 @@ class BackboneStateTrackerApp(tk.Tk):
     @staticmethod
     def _format_selection_context(item: DiffItem, line: DiffLine) -> str:
         return (
-            f"{severity_to_korean(item.severity)} | {item.device_name} / {item.command_id} | "
+            f"{expectation_label(item)} | {severity_to_korean(item.severity)} | {item.device_name} / {item.command_id} | "
             f"{change_type_label(line.kind)} | 라인 {BackboneStateTrackerApp._format_line_location(line)}"
         )
 
     @staticmethod
     def _format_selected_diff_detail(item: DiffItem, line: DiffLine) -> str:
+        title = BackboneStateTrackerApp._finding_title(item)
+        impact_reason = item.impact_reason or "기준과 비교 시점의 상태가 달라졌습니다."
+        action_hint = item.action_hint or BackboneStateTrackerApp._severity_guidance(item.severity)
+        evidence = item.evidence or BackboneStateTrackerApp._format_line_preview(line) or summary_label(item)
         return (
+            "문제 요약\n"
+            f"- 구분: {expectation_label(item)}\n"
+            f"- 제목: {title}\n"
+            f"- 왜 문제인가: {impact_reason}\n"
+            f"- 판단 근거: {redact_sensitive_text(evidence)}\n"
+            f"- 권장 조치: {action_hint}\n\n"
             "핵심 판단\n"
             f"- 등급: {severity_to_korean(item.severity)}\n"
             f"- 판단: {summary_label(item)}\n"
@@ -1045,6 +1079,14 @@ class BackboneStateTrackerApp(tk.Tk):
             f"- 비교 원본: {item.target_raw_file or '-'}\n"
             f"- 운영 메모: {BackboneStateTrackerApp._severity_guidance(item.severity)}"
         )
+
+    @staticmethod
+    def _finding_title(item: DiffItem) -> str:
+        return item.finding_title or summary_label(item)
+
+    @staticmethod
+    def _is_problem_item(item: DiffItem) -> bool:
+        return item.expectation == "unexpected" and item.severity in {"Critical", "Warning"}
 
     @staticmethod
     def _change_kind_to_korean(kind: str) -> str:
@@ -1766,6 +1808,10 @@ def smoke_check() -> None:
     print(app.title())
     print(f"pages={','.join(sorted(app.pages))}")
     app.destroy()
+
+
+def expectation_label(item: DiffItem) -> str:
+    return EXPECTATION_LABELS_KO.get(item.expectation, "참고")
 
 
 def _copy_if_missing(source: Path, target: Path) -> None:

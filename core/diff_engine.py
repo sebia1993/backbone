@@ -5,6 +5,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+from .analysis_rules import AnalysisRules, load_analysis_rules
 from .connectivity import (
     DEVICE_CONNECTIVITY_COMMAND_ID,
     is_connectivity_result,
@@ -63,6 +64,9 @@ MEMORY_WARNING_FREE_RATIO = 40.0
 
 
 class DiffEngine:
+    def __init__(self, rules: AnalysisRules | None = None) -> None:
+        self.rules = rules or load_analysis_rules()
+
     def compare(self, base_dir: Path, target_dir: Path) -> DiffSummary:
         base = SnapshotStore.load_snapshot(base_dir)
         target = SnapshotStore.load_snapshot(target_dir)
@@ -94,11 +98,11 @@ class DiffEngine:
                 continue
 
             if base_result is None or target_result is None:
-                items.append(self._missing_item(base_dir, target_dir, key, base_result, target_result))
+                self._append_item(items, self._missing_item(base_dir, target_dir, key, base_result, target_result), target.stage_slug)
                 continue
 
             if command_id == DEVICE_CONNECTIVITY_COMMAND_ID:
-                items.append(self._connectivity_item(base_dir, target_dir, base_result, target_result))
+                self._append_item(items, self._connectivity_item(base_dir, target_dir, base_result, target_result), target.stage_slug)
                 continue
 
             base_text = self._read_result_output(base_dir, base_result)
@@ -107,13 +111,14 @@ class DiffEngine:
             target_lines = normalize_output_lines(target_text, command_id=target_result.command_id)
             base_normalized = "\n".join(line for _, line in base_lines).strip()
             target_normalized = "\n".join(line for _, line in target_lines).strip()
-            health = assess_target_health(target_result, target_lines)
+            health = assess_target_health(target_result, target_lines, self.rules)
 
             if base_normalized == target_normalized and base_result.success == target_result.success:
                 if health is not None:
                     severity, summary, health_line = health
                     change_count, changed_lines, change_preview = summarize_changed_lines([health_line])
-                    items.append(
+                    self._append_item(
+                        items,
                         DiffItem(
                             device_name=target_result.device_name,
                             command_id=target_result.command_id,
@@ -127,10 +132,12 @@ class DiffEngine:
                             changed_lines=changed_lines,
                             change_count=change_count,
                             change_preview=change_preview,
-                        )
+                        ),
+                        target.stage_slug,
                     )
                     continue
-                items.append(
+                self._append_item(
+                    items,
                     DiffItem(
                         device_name=target_result.device_name,
                         command_id=target_result.command_id,
@@ -141,7 +148,8 @@ class DiffEngine:
                         summary="No meaningful change detected.",
                         base_raw_file=base_result.raw_file,
                         target_raw_file=target_result.raw_file,
-                    )
+                    ),
+                    target.stage_slug,
                 )
                 continue
 
@@ -164,7 +172,8 @@ class DiffEngine:
             if health_line is not None:
                 changed_lines = [health_line] + changed_lines
             change_count, changed_lines, change_preview = summarize_changed_lines(changed_lines)
-            items.append(
+            self._append_item(
+                items,
                 DiffItem(
                     device_name=target_result.device_name,
                     command_id=target_result.command_id,
@@ -179,7 +188,8 @@ class DiffEngine:
                     changed_lines=changed_lines,
                     change_count=change_count,
                     change_preview=change_preview,
-                )
+                ),
+                target.stage_slug,
             )
 
         return DiffSummary(
@@ -188,6 +198,26 @@ class DiffEngine:
             generated_at=datetime.now().isoformat(timespec="seconds"),
             items=items,
         )
+
+    def _append_item(self, items: list[DiffItem], item: DiffItem, target_stage_slug: str) -> None:
+        items.append(self._enrich_item(item, target_stage_slug))
+
+    def _enrich_item(self, item: DiffItem, target_stage_slug: str) -> DiffItem:
+        finding_key = infer_finding_key(item)
+        finding = self.rules.finding(finding_key)
+        expected_change = self.rules.expected_change(
+            stage_slug=target_stage_slug,
+            device_name=item.device_name,
+            command_id=item.command_id,
+            summary=item.summary,
+        )
+        item.finding_title = expected_change.title if expected_change and expected_change.title else finding.title
+        item.impact_reason = finding.impact_reason
+        item.evidence = item.change_preview or item.summary
+        item.action_hint = expected_change.action_hint if expected_change and expected_change.action_hint else finding.action_hint
+        item.expectation = classify_expectation(item, expected_change is not None)
+        item.priority = finding.priority
+        return item
 
     @staticmethod
     def _index_results(results: list[CommandResult]) -> dict[tuple[str, str], CommandResult]:
@@ -409,6 +439,74 @@ class DiffEngine:
         )
 
 
+def classify_expectation(item: DiffItem, expected_match: bool) -> str:
+    if expected_match:
+        return "expected"
+    if item.severity in {"Critical", "Warning"}:
+        return "unexpected"
+    return "unknown"
+
+
+def infer_finding_key(item: DiffItem) -> str:
+    summary = item.summary
+    command_id = item.command_id
+    category = item.category
+
+    if command_id == DEVICE_CONNECTIVITY_COMMAND_ID:
+        if summary == "Target device connection failed.":
+            return "connection_failed"
+        if summary == "Target device connection restored.":
+            return "connection_restored"
+    if summary == "Target snapshot command failed.":
+        return "command_failed"
+
+    if command_id == "cpu_usage":
+        if item.severity == "Critical":
+            return "cpu_critical"
+        if item.severity == "Warning":
+            return "cpu_warning"
+        return "cpu_info"
+    if command_id == "memory_usage":
+        if item.severity == "Critical":
+            return "memory_critical"
+        if item.severity == "Warning":
+            return "memory_warning"
+        return "memory_info"
+    if command_id == "power_status" or summary == "Power State is not Normal.":
+        return "power_non_normal" if item.severity != "Unchanged" else "unchanged"
+
+    if item.status in {"added", "removed"}:
+        return "command_added_removed"
+    if item.severity == "Unchanged":
+        return "unchanged"
+
+    if command_id == "interface_brief" and item.severity == "Critical":
+        return "interface_down"
+    if command_id.startswith("link_aggregation") and item.severity == "Critical":
+        return "lacp_selected_decrease"
+    if command_id == "ospf_peer" and item.severity == "Critical":
+        return "ospf_peer_not_full"
+    if command_id == "vrrp_status":
+        return "vrrp_down" if item.severity == "Critical" else "vrrp_role_change"
+    if command_id == "recent_log":
+        return "log_critical" if item.severity == "Critical" else "log_warning"
+    if category == "hardware" and item.severity in {"Critical", "Warning"}:
+        return "hardware_critical" if item.severity == "Critical" else "hardware_warning"
+    if summary == "Operational state changed.":
+        return "operational_change"
+    if summary == "Output changed.":
+        return "output_changed"
+    if summary == "New critical-looking log line detected.":
+        return "log_critical"
+    if summary == "Warning keyword detected in changed output.":
+        return "log_warning" if category == "log" else "operational_change"
+    if summary == "Hardware warning or alarm keyword detected in changed output.":
+        return "hardware_warning"
+    if summary == "Critical state keyword detected in changed output.":
+        return "hardware_critical" if category == "hardware" else "operational_change"
+    return "output_changed"
+
+
 def normalize_output(text: str, command_id: str = "") -> str:
     return "\n".join(line for _, line in normalize_output_lines(text, command_id=command_id)).strip()
 
@@ -532,7 +630,11 @@ def classify_connectivity_change(base_result: CommandResult, target_result: Comm
     return "Info", "Output changed."
 
 
-def assess_target_health(result: CommandResult, target_lines: list[tuple[int, str]]) -> tuple[str, str, DiffLine] | None:
+def assess_target_health(
+    result: CommandResult,
+    target_lines: list[tuple[int, str]],
+    rules: AnalysisRules | None = None,
+) -> tuple[str, str, DiffLine] | None:
     if not result.success:
         message = result.error_message or "command failed"
         return (
@@ -547,20 +649,23 @@ def assess_target_health(result: CommandResult, target_lines: list[tuple[int, st
         )
 
     if result.command_id == "cpu_usage":
-        return assess_cpu_usage(target_lines)
+        return assess_cpu_usage(target_lines, rules)
     if result.command_id == "memory_usage":
-        return assess_memory_free_ratio(target_lines)
+        return assess_memory_free_ratio(target_lines, rules)
     if result.command_id == "power_status":
         return assess_power_state(target_lines)
     return None
 
 
-def assess_cpu_usage(target_lines: list[tuple[int, str]]) -> tuple[str, str, DiffLine] | None:
+def assess_cpu_usage(target_lines: list[tuple[int, str]], rules: AnalysisRules | None = None) -> tuple[str, str, DiffLine] | None:
     values = find_cpu_usage_values(target_lines)
     if not values:
         return None
+    thresholds = rules or AnalysisRules()
+    critical_usage = thresholds.threshold("cpu_usage", "critical_percent", CPU_CRITICAL_USAGE)
+    warning_usage = thresholds.threshold("cpu_usage", "warning_percent", CPU_WARNING_USAGE)
 
-    critical = max((value for value in values if value[2] >= CPU_CRITICAL_USAGE), key=lambda value: value[2], default=None)
+    critical = max((value for value in values if value[2] >= critical_usage), key=lambda value: value[2], default=None)
     if critical is not None:
         line_no, label, usage, source = critical
         display_value = format_threshold_number(usage)
@@ -575,7 +680,7 @@ def assess_cpu_usage(target_lines: list[tuple[int, str]]) -> tuple[str, str, Dif
             ),
         )
 
-    warning = max((value for value in values if value[2] >= CPU_WARNING_USAGE), key=lambda value: value[2], default=None)
+    warning = max((value for value in values if value[2] >= warning_usage), key=lambda value: value[2], default=None)
     if warning is not None:
         line_no, label, usage, source = warning
         display_value = format_threshold_number(usage)
@@ -603,14 +708,17 @@ def assess_cpu_usage(target_lines: list[tuple[int, str]]) -> tuple[str, str, Dif
     )
 
 
-def assess_memory_free_ratio(target_lines: list[tuple[int, str]]) -> tuple[str, str, DiffLine] | None:
+def assess_memory_free_ratio(target_lines: list[tuple[int, str]], rules: AnalysisRules | None = None) -> tuple[str, str, DiffLine] | None:
     parsed = find_memory_free_ratio(target_lines)
     if parsed is None:
         return None
 
     line_no, value, source = parsed
     display_value = format_threshold_number(value)
-    if value <= MEMORY_CRITICAL_FREE_RATIO:
+    thresholds = rules or AnalysisRules()
+    critical_free_ratio = thresholds.threshold("memory_free_ratio", "critical_percent", MEMORY_CRITICAL_FREE_RATIO)
+    warning_free_ratio = thresholds.threshold("memory_free_ratio", "warning_percent", MEMORY_WARNING_FREE_RATIO)
+    if value <= critical_free_ratio:
         return (
             "Critical",
             "Memory FreeRatio is 30% or lower.",
@@ -621,7 +729,7 @@ def assess_memory_free_ratio(target_lines: list[tuple[int, str]]) -> tuple[str, 
                 target_text=f"current FreeRatio {display_value}% ({source})",
             ),
         )
-    if value <= MEMORY_WARNING_FREE_RATIO:
+    if value <= warning_free_ratio:
         return (
             "Warning",
             "Memory FreeRatio is between 31% and 40%.",

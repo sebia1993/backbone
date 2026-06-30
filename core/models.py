@@ -139,6 +139,12 @@ class DiffItem:
     changed_lines: list[DiffLine] = field(default_factory=list)
     change_count: int = 0
     change_preview: str = ""
+    finding_title: str = ""
+    impact_reason: str = ""
+    evidence: str = ""
+    action_hint: str = ""
+    expectation: str = "unknown"
+    priority: int = 50
 
 
 @dataclass

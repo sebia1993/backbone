@@ -333,6 +333,7 @@ class GuiDiffFormattingTests(unittest.TestCase):
             self.assertEqual(app.metric_vars["Info"].get(), "3")
             self.assertEqual(app.metric_vars["Unchanged"].get(), "4")
             self.assertEqual(set(app.metric_chips), {"Critical", "Warning", "Info", "Unchanged"})
+            self.assertEqual(app.diff_severity_filter_var.get(), "문제")
         finally:
             app.destroy()
 
@@ -383,6 +384,11 @@ class GuiDiffFormattingTests(unittest.TestCase):
                 severity="Warning",
                 status="changed",
                 summary="Operational state changed.",
+                finding_title="VRRP 역할 변화",
+                impact_reason="게이트웨이 역할 이동 가능성이 있습니다.",
+                evidence="Backup -> Master",
+                action_hint="현재 Master 장비가 의도한 장비인지 확인하세요.",
+                expectation="unexpected",
                 changed_lines=[
                     DiffLine(
                         kind="changed",
@@ -404,7 +410,7 @@ class GuiDiffFormattingTests(unittest.TestCase):
             app.diff_tree.selection_set("0")
             app._on_diff_detail_selected(tk.Event())
 
-            self.assertIn("주의 | backbone4 / vrrp_status | 변경 | 라인 4 → 4", app.diff_selection_var.get())
+            self.assertIn("문제 | 주의 | backbone4 / vrrp_status | 변경 | 라인 4 → 4", app.diff_selection_var.get())
         finally:
             app.destroy()
 
@@ -421,6 +427,7 @@ class GuiDiffFormattingTests(unittest.TestCase):
                 severity="Critical",
                 status="changed",
                 summary="Critical state keyword detected in changed output.",
+                expectation="unexpected",
                 changed_lines=[DiffLine(kind="changed", base_line_no=1, target_line_no=1, base_text="UP", target_text="DOWN")],
                 change_count=1,
                 change_preview="UP -> DOWN",
@@ -514,9 +521,11 @@ class GuiDiffFormattingTests(unittest.TestCase):
 
         detail = BackboneStateTrackerApp._format_selected_diff_detail(item, line)
 
+        self.assertIn("문제 요약", detail)
         self.assertIn("핵심 판단", detail)
         self.assertIn("- 등급: 긴급", detail)
         self.assertIn("- 판단: 변경 출력에서 긴급 상태 키워드 감지", detail)
+        self.assertIn("- 권장 조치:", detail)
         self.assertIn("- 위치: 2 → 2", detail)
         self.assertIn("기준: GE1/0/1 UP", detail)
         self.assertIn("비교: GE1/0/1 DOWN", detail)
@@ -531,6 +540,7 @@ class GuiDiffFormattingTests(unittest.TestCase):
             severity="Critical",
             status="changed",
             summary="Critical state keyword detected in changed output.",
+            expectation="unexpected",
         )
         line = DiffLine(
             kind="changed",
@@ -542,7 +552,9 @@ class GuiDiffFormattingTests(unittest.TestCase):
 
         self.assertTrue(BackboneStateTrackerApp._diff_row_matches_filter(item, line, "Critical", "backbone4 down"))
         self.assertTrue(BackboneStateTrackerApp._diff_row_matches_filter(item, line, "", "interface 2"))
+        self.assertTrue(BackboneStateTrackerApp._diff_row_matches_filter(item, line, "__problems__", "interface"))
         self.assertFalse(BackboneStateTrackerApp._diff_row_matches_filter(item, line, "Warning", "backbone4"))
+        self.assertFalse(BackboneStateTrackerApp._diff_row_matches_filter(item, line, "__expected__", "backbone4"))
         self.assertFalse(BackboneStateTrackerApp._diff_row_matches_filter(item, line, "", "ospf"))
 
     def test_diff_filter_uses_redacted_values_for_search(self) -> None:

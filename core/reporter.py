@@ -41,6 +41,15 @@ CHANGE_TYPE_LABELS_KO = {
     "unchanged": "변경없음",
 }
 
+EXPECTATION_LABELS_KO = {
+    "unexpected": "문제",
+    "expected": "예상된 변화",
+    "unknown": "참고",
+}
+
+SEVERITY_SORT_ORDER = {"Critical": 0, "Warning": 1, "Info": 2, "Unchanged": 3}
+EXPECTATION_SORT_ORDER = {"unexpected": 0, "expected": 1, "unknown": 2}
+
 SEVERITY_COLORS = {
     "Critical": "#b42318",
     "Warning": "#b54708",
@@ -89,12 +98,18 @@ class ReportWriter:
     def _rows(summary: DiffSummary) -> list[dict[str, str]]:
         return [
             {
+                "expectation": expectation_label(item),
                 "severity": item.severity,
                 "status": item.status,
                 "device": item.device_name,
                 "command_id": item.command_id,
                 "command": redact_sensitive_text(item.command),
                 "category": item.category,
+                "finding_title": redact_sensitive_text(finding_title(item)),
+                "impact_reason": redact_sensitive_text(item.impact_reason),
+                "evidence": redact_sensitive_text(item.evidence or item.change_preview),
+                "action_hint": redact_sensitive_text(item.action_hint),
+                "priority": str(item.priority),
                 "summary": summary_label(item),
                 "change_count": str(item.change_count),
                 "change_preview": redact_sensitive_text(item.change_preview),
@@ -142,15 +157,29 @@ class ReportWriter:
         except ImportError:  # pragma: no cover
             return False
 
-        summary_rows = self._rows(summary)
+        summary_rows = sorted(self._rows(summary), key=lambda row: problem_row_sort_key(row))
         summary_headers = (
             list(summary_rows[0].keys())
             if summary_rows
-            else ["severity", "status", "device", "command_id", "summary", "change_count", "change_preview"]
+            else [
+                "expectation",
+                "severity",
+                "status",
+                "device",
+                "command_id",
+                "finding_title",
+                "impact_reason",
+                "evidence",
+                "action_hint",
+                "priority",
+                "summary",
+                "change_count",
+                "change_preview",
+            ]
         )
         workbook = Workbook()
         summary_sheet = workbook.active
-        summary_sheet.title = "diff_summary"
+        summary_sheet.title = "problem_summary"
         summary_sheet.append(summary_headers)
         for row in summary_rows:
             summary_sheet.append([row.get(header, "") for header in summary_headers])
@@ -205,12 +234,17 @@ class ReportWriter:
         summary_cards_html = []
         unchanged_summary_cards_html = []
         details_html = []
+        problem_items = [item for item in sorted(summary.items, key=problem_item_sort_key) if is_problem_item(item)]
         for index, item in enumerate(summary.items, start=1):
             detail_id = f"diff-{index}"
             severity_label = severity_to_korean(item.severity)
             status_label = status_to_korean(item.status)
             item_summary = redact_sensitive_text(summary_label(item))
             change_preview = redact_sensitive_text(item.change_preview or "-")
+            item_title = redact_sensitive_text(finding_title(item))
+            impact_reason = redact_sensitive_text(item.impact_reason or "-")
+            evidence = redact_sensitive_text(item.evidence or change_preview)
+            action_hint = redact_sensitive_text(item.action_hint or "-")
             default_hidden_attr = " hidden aria-hidden='true'"
             card_html = (
                 f"<article class='summary-card' data-severity='{escape(item.severity)}' aria-labelledby='summary-{index}'{default_hidden_attr}>"
@@ -227,6 +261,10 @@ class ReportWriter:
                 f"<div class='summary-item'><span class='summary-label'>분류</span><span class='summary-value'>{escape(item.category)}</span></div>"
                 f"<div class='summary-item'><span class='summary-label'>변경 수</span><span class='summary-value'>{item.change_count}</span></div>"
                 "</div>"
+                f"<div class='summary-field'><span class='summary-label'>문제 제목</span><span class='summary-value'>{escape(item_title)}</span></div>"
+                f"<div class='summary-field'><span class='summary-label'>영향 이유</span><span class='summary-value'>{escape(impact_reason)}</span></div>"
+                f"<div class='summary-field'><span class='summary-label'>판단 근거</span><span class='summary-value'>{escape(evidence)}</span></div>"
+                f"<div class='summary-field'><span class='summary-label'>권장 조치</span><span class='summary-value'>{escape(action_hint)}</span></div>"
                 f"<div class='summary-field'><span class='summary-label'>첫 변경</span><span class='summary-value'>{escape(change_preview)}</span></div>"
                 f"<div class='summary-field'><span class='summary-label'>요약</span><span class='summary-value'>{escape(item_summary)}</span></div>"
                 "</article>"
@@ -273,6 +311,7 @@ class ReportWriter:
                 f"<div class='unchanged-summary-body'>{''.join(unchanged_summary_cards_html)}</div>"
                 "</details>"
             )
+        problem_summary_html = render_problem_summary(problem_items)
 
         html = f"""<!doctype html>
 <html lang="ko">
@@ -356,6 +395,41 @@ class ReportWriter:
     .count-hint {{ display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }}
     .count:hover {{ border-color: var(--accent); }}
     .count.is-active {{ outline: 2px solid var(--accent); border-color: var(--accent); }}
+    .problem-summary {{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--critical);
+      border-radius: 8px;
+      margin: 0 0 16px;
+      padding: 16px;
+      box-shadow: 0 1px 2px rgba(16, 24, 32, 0.04);
+    }}
+    .problem-summary h2 {{ margin: 0 0 4px; font-size: 18px; }}
+    .problem-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }}
+    .problem-card {{
+      border: 1px solid #e3e8ee;
+      border-radius: 8px;
+      background: var(--panel-alt);
+      padding: 12px;
+    }}
+    .problem-card-head {{
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }}
+    .problem-card h3 {{
+      margin: 0 0 8px;
+      font-size: 15px;
+      overflow-wrap: anywhere;
+    }}
+    .problem-field {{ margin-top: 8px; }}
     .jump-list {{
       background: var(--panel);
       border: 1px solid var(--line);
@@ -613,6 +687,7 @@ class ReportWriter:
       <button class="count" type="button" data-filter="Info"><span class="count-label">정보</span><strong>{counts.get('Info', 0)}</strong><span class="count-hint">기록 확인</span></button>
       <button class="count" type="button" data-filter="Unchanged"><span class="count-label">변경없음</span><strong>{counts.get('Unchanged', 0)}</strong><span class="count-hint">필요 시 펼침</span></button>
     </section>
+    {problem_summary_html}
     {status_jump_html}
     <section class="summary-list" aria-label="비교 요약" data-summary-list hidden aria-hidden="true">
       {visible_summary_html}
@@ -752,6 +827,43 @@ def summary_label(item: DiffItem) -> str:
     return SUMMARY_LABELS_KO.get(item.summary, item.summary)
 
 
+def finding_title(item: DiffItem) -> str:
+    return item.finding_title or summary_label(item)
+
+
+def expectation_label(item: DiffItem) -> str:
+    return EXPECTATION_LABELS_KO.get(item.expectation, "참고")
+
+
+def is_problem_item(item: DiffItem) -> bool:
+    return item.expectation == "unexpected" and item.severity in {"Critical", "Warning"}
+
+
+def problem_item_sort_key(item: DiffItem) -> tuple[int, int, int, str, str]:
+    return (
+        EXPECTATION_SORT_ORDER.get(item.expectation, 2),
+        SEVERITY_SORT_ORDER.get(item.severity, 9),
+        item.priority,
+        item.device_name,
+        item.command_id,
+    )
+
+
+def problem_row_sort_key(row: dict[str, str]) -> tuple[int, int, int, str, str]:
+    expectation_order = {"문제": 0, "예상된 변화": 1, "참고": 2}
+    try:
+        priority = int(row.get("priority", "50"))
+    except ValueError:
+        priority = 50
+    return (
+        expectation_order.get(row.get("expectation", "참고"), 2),
+        SEVERITY_SORT_ORDER.get(row.get("severity", ""), 9),
+        priority,
+        row.get("device", ""),
+        row.get("command_id", ""),
+    )
+
+
 def change_type_label(kind: str) -> str:
     return CHANGE_TYPE_LABELS_KO.get(kind, kind)
 
@@ -774,9 +886,47 @@ def snapshot_display_name(snapshot_dir: Path) -> str:
     return name
 
 
+def render_problem_summary(problem_items: list[DiffItem]) -> str:
+    if not problem_items:
+        return (
+            "<section class='problem-summary' aria-label='먼저 확인할 문제'>"
+            "<h2>먼저 확인할 문제</h2>"
+            "<p class='meta'>예상되지 않은 긴급/주의 문제가 없습니다.</p>"
+            "</section>"
+        )
+
+    cards = "".join(render_problem_card(item) for item in problem_items)
+    return (
+        "<section class='problem-summary' aria-label='먼저 확인할 문제'>"
+        "<h2>먼저 확인할 문제</h2>"
+        "<p class='meta'>예상되지 않은 긴급/주의 항목만 먼저 표시합니다. 전체 변경 라인은 아래 상태 필터에서 확인할 수 있습니다.</p>"
+        f"<div class='problem-grid'>{cards}</div>"
+        "</section>"
+    )
+
+
+def render_problem_card(item: DiffItem) -> str:
+    severity_label = severity_to_korean(item.severity)
+    title = redact_sensitive_text(finding_title(item))
+    evidence = redact_sensitive_text(item.evidence or item.change_preview or summary_label(item))
+    action_hint = redact_sensitive_text(item.action_hint or "-")
+    return (
+        "<article class='problem-card'>"
+        "<div class='problem-card-head'>"
+        f"<span class='badge' style='background:{SEVERITY_COLORS.get(item.severity, '#667085')}'>{escape(severity_label)}</span>"
+        f"<span class='meta'>{escape(item.device_name)} / {escape(item.command_id)}</span>"
+        "</div>"
+        f"<h3>{escape(title)}</h3>"
+        f"<div class='problem-field'><span class='summary-label'>판단 근거</span><span class='summary-value'>{escape(evidence)}</span></div>"
+        f"<div class='problem-field'><span class='summary-label'>권장 조치</span><span class='summary-value'>{escape(action_hint)}</span></div>"
+        "</article>"
+    )
+
+
 def render_diff_block(item: DiffItem, detail_id: str, severity_label: str, status_label: str, item_summary: str) -> str:
     default_hidden_attr = " hidden aria-hidden='true'"
     body = (
+        f"{render_interpretation(item)}"
         f"<p>{escape(item_summary)}</p>"
         f"{render_change_table(item)}"
         "<details class='raw-diff'>"
@@ -814,6 +964,23 @@ def render_detail_head(item: DiffItem, severity_label: str, status_label: str) -
         f"<div class='detail-meta'>상태: {escape(status_label)} | 분류: {escape(item.category)} | 변경 수: {item.change_count}</div>"
         "</div>"
         "</div>"
+    )
+
+
+def render_interpretation(item: DiffItem) -> str:
+    title = redact_sensitive_text(finding_title(item))
+    impact_reason = redact_sensitive_text(item.impact_reason or "기준과 비교 시점의 상태가 달라졌습니다.")
+    evidence = redact_sensitive_text(item.evidence or item.change_preview or summary_label(item))
+    action_hint = redact_sensitive_text(item.action_hint or "-")
+    return (
+        "<div class='summary-field'><span class='summary-label'>문제 제목</span><span class='summary-value'>"
+        f"{escape(title)}</span></div>"
+        "<div class='summary-field'><span class='summary-label'>영향 이유</span><span class='summary-value'>"
+        f"{escape(impact_reason)}</span></div>"
+        "<div class='summary-field'><span class='summary-label'>판단 근거</span><span class='summary-value'>"
+        f"{escape(evidence)}</span></div>"
+        "<div class='summary-field'><span class='summary-label'>권장 조치</span><span class='summary-value'>"
+        f"{escape(action_hint)}</span></div>"
     )
 
 
