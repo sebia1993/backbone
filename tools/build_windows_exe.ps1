@@ -220,6 +220,7 @@ try {
     }
     Copy-DirectoryContent -Source (Join-Path $ProjectRoot "docs") -Destination (Join-Path $PayloadRoot "docs")
     Copy-Item -LiteralPath (Join-Path $ProjectRoot "README.md") -Destination (Join-Path $PayloadRoot "README.md") -Force
+    Copy-Item -LiteralPath (Join-Path $ProjectRoot "RELEASE_NOTES.md") -Destination (Join-Path $PayloadRoot "RELEASE_NOTES.md") -Force
     Copy-Item -LiteralPath (Join-Path $ProjectRoot "CHANGELOG.md") -Destination (Join-Path $PayloadRoot "CHANGELOG.md") -Force
 
     $packageInfoText = @"
@@ -232,6 +233,7 @@ try {
 - 설정 예시 파일
 - 운영자/개발자 가이드
 - 진단 모드 가이드와 오류 코드 카탈로그
+- 릴리스 노트 정책
 - 버전 변경내역과 CHANGELOG
 
 제외 항목:

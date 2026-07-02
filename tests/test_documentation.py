@@ -13,7 +13,7 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 class DocumentationPortabilityTests(unittest.TestCase):
     def _documentation_paths(self) -> list[Path]:
-        paths = [PROJECT_DIR / "README.md", PROJECT_DIR / "CHANGELOG.md"]
+        paths = [PROJECT_DIR / "README.md", PROJECT_DIR / "RELEASE_NOTES.md", PROJECT_DIR / "CHANGELOG.md"]
         paths.extend(sorted((PROJECT_DIR / "docs").glob("*.md")))
         paths.extend(sorted((PROJECT_DIR / "docs").glob("*.html")))
         return paths
@@ -145,6 +145,10 @@ class DocumentationPortabilityTests(unittest.TestCase):
                 f"버전: `{version}`",
                 f"backbone_state_tracker_{version}_YYYYMMDD_windows_exe.zip",
             ),
+            "RELEASE_NOTES.md": (
+                f"현재 앱 버전: `{version}`",
+                f"backbone_state_tracker_{version}_YYYYMMDD_windows_exe.zip",
+            ),
             "CHANGELOG.md": (f"## {version} - {APP_RELEASE_DATE}",),
             "docs/COMMAND_GUIDE.md": (f"문서 버전: {version}",),
             "docs/COMMAND_GUIDE.html": (
@@ -185,6 +189,48 @@ class DocumentationPortabilityTests(unittest.TestCase):
                 f"문서 버전: {version}",
                 f"<h3>{version} - {APP_RELEASE_DATE}</h3>",
                 f"dist\\backbone_state_tracker_{version}_{date_stamp}_source.zip",
+            ),
+        }
+
+        missing: list[str] = []
+        for relative_path, required_fragments in expectations.items():
+            text = (PROJECT_DIR / relative_path).read_text(encoding="utf-8")
+            for fragment in required_fragments:
+                if fragment not in text:
+                    missing.append(f"{relative_path} missing {fragment}")
+
+        self.assertEqual([], missing)
+
+    def test_readme_release_document_update_policy_is_tracked(self) -> None:
+        expectations = {
+            "AGENTS.md": (
+                "After code changes, decide whether `README.md`, `RELEASE_NOTES.md`, or",
+                "Before any push, pull request, or release",
+                "The current automatic public Release assets are the Windows",
+            ),
+            "README.md": (
+                "README / Release 문서 점검 규칙",
+                "Git에 커밋하는 파일과 GitHub Release에 올리는 파일은 다릅니다.",
+                "macOS에서 바로 Windows EXE가 만들어진다고 설명하지 않습니다.",
+            ),
+            "RELEASE_NOTES.md": (
+                "이 파일은 GitHub Release notes를 수동으로 작성하는 파일이 아닙니다.",
+                "자동 GitHub Release notes 형식",
+                "Git 커밋 파일과 Release asset 구분",
+            ),
+            "CHANGELOG.md": (
+                "README/Release documentation update rule",
+                "RELEASE_NOTES.md",
+            ),
+            "docs/RELEASE_CHECKLIST.md": (
+                "README / Release 문서 최신화 확인",
+                "`RELEASE_NOTES.md`의 자동 Release notes 형식",
+                "macOS에서 직접 Windows EXE를 만든다고 설명하지 않습니다.",
+            ),
+            "docs/RELEASE_CHECKLIST.html": (
+                "README / Release 문서 최신화 확인",
+                "<code>RELEASE_NOTES.md</code>의 자동 Release notes 형식",
+                "macOS에서 직접 Windows EXE를 만든다고 설명하지 않습니다.",
             ),
         }
 

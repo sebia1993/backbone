@@ -24,7 +24,7 @@ backbone_state_tracker_v0.8.57_YYYYMMDD_verify_release_package.ps1</code></pre>
 
   <h2>2. ZIP 내부 필수 확인</h2>
   <ul>
-    <li><code>PACKAGE_INFO.txt</code>, <code>README.md</code>, <code>CHANGELOG.md</code></li>
+    <li><code>PACKAGE_INFO.txt</code>, <code>README.md</code>, <code>RELEASE_NOTES.md</code>, <code>CHANGELOG.md</code></li>
     <li><code>config/commands.yaml</code>, <code>config/devices.example.yaml</code></li>
     <li>공유 가능한 <code>config/*</code> 파일은 포함하고 로컬 대상 장비 정보인 <code>config/devices.yaml</code>은 제외</li>
     <li>사용자/명령어/개발자/버전/체크리스트 문서의 MD와 HTML</li>
@@ -67,7 +67,17 @@ powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.57_YYYYMM
     <li>사용자 가이드의 <code>docs/images/settings-collection.png</code>, <code>docs/images/compare-results.png</code>, <code>docs/images/work-log.png</code>가 현재 v0.8.57 화면과 일치하는지 확인합니다.</li>
   </ul>
 
-  <h2>7. 메일 업로드 차단 시</h2>
+  <h2>7. README / Release 문서 최신화 확인</h2>
+  <ul>
+    <li><code>README.md</code>의 설치, 실행, 테스트, 빌드, 사용 방법이 현재 파일과 맞는지 확인합니다.</li>
+    <li><code>RELEASE_NOTES.md</code>의 자동 Release notes 형식과 GitHub Release asset 설명이 현재 workflow와 맞는지 확인합니다.</li>
+    <li><code>CHANGELOG.md</code>에 사용자에게 보이는 변경사항이 빠지지 않았는지 확인합니다.</li>
+    <li>Git에 커밋할 파일과 GitHub Release에 업로드할 ZIP/SHA256 asset이 구분되어 있는지 확인합니다.</li>
+    <li>내부 IP, 실제 장비명, 계정, 비밀번호, 실제 로그, 고객 정보가 문서에 없는지 확인합니다.</li>
+    <li>Windows EXE ZIP은 GitHub Actions Windows runner 또는 Windows PC에서 검증해야 하며, macOS에서 직접 Windows EXE를 만든다고 설명하지 않습니다.</li>
+  </ul>
+
+  <h2>8. 메일 업로드 차단 시</h2>
   <p>일부 메일 시스템은 <code>.exe</code>, <code>.py</code>, <code>.ps1</code>을 포함한 ZIP을 차단할 수 있습니다. 이 경우 ZIP을 메일에 첨부하지 말고 승인된 사내 파일 반입 절차를 사용합니다.</p>
 </body>
 </html>

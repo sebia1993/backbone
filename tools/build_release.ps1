@@ -31,7 +31,7 @@ function Invoke-Validation {
         Push-Location $ProjectRoot
         try {
             python -m unittest discover -s tests
-            python -c "from backbone_state_tracker.core.gui import BackboneStateTrackerApp; app=BackboneStateTrackerApp(); app.update(); print(app.title()); app.destroy()"
+            python app.py --smoke-check
         } finally {
             Pop-Location
         }
@@ -161,6 +161,7 @@ try {
 - 소스 코드
 - 설정 예시 파일
 - 운영자/개발자 가이드
+- 릴리스 노트 정책
 - 단위 테스트
 - 릴리스 패키징 스크립트
 

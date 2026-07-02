@@ -206,6 +206,7 @@ if (-not (Test-Path -LiteralPath $sidecarPath)) {
 $commonRequired = @(
     "backbone_state_tracker/PACKAGE_INFO.txt",
     "backbone_state_tracker/README.md",
+    "backbone_state_tracker/RELEASE_NOTES.md",
     "backbone_state_tracker/CHANGELOG.md",
     "backbone_state_tracker/config/analysis_rules.yaml",
     "backbone_state_tracker/config/commands.yaml",

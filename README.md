@@ -54,6 +54,7 @@ python app.py --explain-code BST-CON-301
 - `config/commands.yaml`: 읽기 전용 점검 명령 목록입니다.
 - `config/mock_profiles.yaml`: 실제 장비 없이 검증하는 모의 서버 합성 프로파일입니다.
 - `outputs/snapshots/`: 수집 스냅샷과 비교 결과가 생성되는 로컬 출력 폴더입니다.
+- `RELEASE_NOTES.md`: GitHub Release notes 작성/점검 규칙입니다. 실제 공개 Release body는 GitHub Actions가 자동 생성합니다.
 - `docs/USER_GUIDE.md`: 운영자용 사용자 가이드입니다.
 - `docs/COMMAND_GUIDE.md`: 명령어별 의미와 확인 포인트입니다.
 - `docs/DIAGNOSTIC_MODE_GUIDE.md`: 모의 서버와 현장 진단 모드 사용법입니다.
@@ -62,6 +63,24 @@ python app.py --explain-code BST-CON-301
 - `docs/VERSION_HISTORY.md`: 버전별 변경내역입니다.
 - `docs/RELEASE_CHECKLIST.md`: 사내 반입 전 검증 체크리스트입니다.
 - `docs/images/`: 사용자 가이드에 들어가는 화면 이미지입니다.
+
+## README / Release 문서 점검 규칙
+
+코드를 GitHub에 올리거나 Release를 만들기 전에는 문서가 현재 코드와 맞는지 먼저 확인합니다.
+
+1. `README.md`의 설치, 실행, 테스트, 빌드, 릴리스 파일 설명이 실제 스크립트와 맞는지 확인합니다.
+2. 릴리스 대상 변경이면 `README.md`, `RELEASE_NOTES.md`, `CHANGELOG.md`를 함께 확인합니다.
+3. 새 기능, 삭제된 기능, 바뀐 파일명, 실행 파일명, 폴더 구조, 요구사항, 제한사항이 있으면 README를 수정합니다.
+4. 실제 코드에 없는 기능은 문서에 적지 않습니다. 아직 만들지 않은 기능은 `미구현` 또는 `예정`으로 구분합니다.
+5. 예시는 `192.0.2.10`, `mock-backbone-3`, `operator` 같은 샘플 값만 사용합니다.
+6. 내부 IP, 실제 장비명, 계정, 비밀번호, 고객명, 실제 로그는 README, RELEASE_NOTES, CHANGELOG에 넣지 않습니다.
+
+Git에 커밋하는 파일과 GitHub Release에 올리는 파일은 다릅니다.
+
+- Git에 커밋: 소스 코드, 테스트, `README.md`, `RELEASE_NOTES.md`, `CHANGELOG.md`, `docs/`, `config/*.example.yaml`, 릴리스 스크립트
+- Git에 커밋하지 않음: `outputs/`, `dist/`, `build/`, `.venv/`, `config/devices.yaml`, 실제 장비 로그
+- 자동 GitHub Release asset: `backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip`, 같은 이름의 `.sha256` 파일
+- Windows EXE ZIP은 GitHub Actions Windows runner 또는 Windows PC에서 만듭니다. macOS에서 바로 Windows EXE가 만들어진다고 설명하지 않습니다.
 
 ## 테스트
 

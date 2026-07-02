@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Added a tracked README/Release documentation update rule so README, RELEASE_NOTES, and CHANGELOG are checked before GitHub push or Release work.
+- Added `RELEASE_NOTES.md` as the repository checklist for automated GitHub Release notes format, release assets, and sensitive-information exclusions.
+- Clarified that Windows EXE ZIP validation belongs to GitHub Actions Windows runner or a Windows workstation, not local macOS packaging.
+
 ## v0.8.57 - 2026-06-15
 
 - 실행 화면의 앱 표시명, 진단 리포트 라벨, 진단 티켓 문구, 오류 코드 설명을 한글화했습니다.

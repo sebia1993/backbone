@@ -19,6 +19,7 @@ backbone_state_tracker_v0.8.57_YYYYMMDD_verify_release_package.ps1
 
 - `PACKAGE_INFO.txt`
 - `README.md`
+- `RELEASE_NOTES.md`
 - `CHANGELOG.md`
 - `config/commands.yaml`
 - `config/devices.example.yaml`
@@ -93,6 +94,15 @@ powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.57_YYYYMM
 - `작업 로그` 화면이 어두운 고정폭 로그 표면으로 표시되고 시간/오류/리포트 경로를 읽기 쉬운지 확인합니다.
 - 사용자 가이드의 `docs/images/settings-collection.png`, `docs/images/compare-results.png`, `docs/images/work-log.png`가 현재 v0.8.57 화면과 일치하는지 확인합니다.
 
-## 7. 메일 업로드 차단 시
+## 7. README / Release 문서 최신화 확인
+
+- `README.md`의 설치, 실행, 테스트, 빌드, 사용 방법이 현재 파일과 맞는지 확인합니다.
+- `RELEASE_NOTES.md`의 자동 Release notes 형식과 GitHub Release asset 설명이 현재 workflow와 맞는지 확인합니다.
+- `CHANGELOG.md`에 사용자에게 보이는 변경사항이 빠지지 않았는지 확인합니다.
+- Git에 커밋할 파일과 GitHub Release에 업로드할 ZIP/SHA256 asset이 구분되어 있는지 확인합니다.
+- 내부 IP, 실제 장비명, 계정, 비밀번호, 실제 로그, 고객 정보가 문서에 없는지 확인합니다.
+- Windows EXE ZIP은 GitHub Actions Windows runner 또는 Windows PC에서 검증해야 하며, macOS에서 직접 Windows EXE를 만든다고 설명하지 않습니다.
+
+## 8. 메일 업로드 차단 시
 
 일부 메일 시스템은 `.exe`, `.py`, `.ps1`을 포함한 ZIP을 차단할 수 있습니다. 이 경우 ZIP을 메일에 첨부하지 말고 승인된 사내 파일 반입 절차를 사용합니다.

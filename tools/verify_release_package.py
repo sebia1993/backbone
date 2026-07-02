@@ -29,6 +29,7 @@ WINDOWS_DRIVE_PREFIX = re.compile(r"^[A-Za-z]:/")
 COMMON_REQUIRED = {
     "backbone_state_tracker/PACKAGE_INFO.txt",
     "backbone_state_tracker/README.md",
+    "backbone_state_tracker/RELEASE_NOTES.md",
     "backbone_state_tracker/CHANGELOG.md",
     "backbone_state_tracker/config/analysis_rules.yaml",
     "backbone_state_tracker/config/commands.yaml",

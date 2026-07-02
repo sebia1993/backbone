@@ -52,6 +52,7 @@ def _common_entries() -> dict[str, str]:
     return {
         "backbone_state_tracker/PACKAGE_INFO.txt": "package",
         "backbone_state_tracker/README.md": "readme",
+        "backbone_state_tracker/RELEASE_NOTES.md": "release notes policy",
         "backbone_state_tracker/CHANGELOG.md": "changelog",
         "backbone_state_tracker/config/analysis_rules.yaml": "analysis rules",
         "backbone_state_tracker/config/commands.yaml": "commands",
