@@ -60,8 +60,10 @@ does not prove Windows EXE packaging by itself.
 
 ## README / Release Document Rules
 
-- If behavior, install/run/build commands, release filenames, executable names,
-  folder structure, requirements, or troubleshooting steps change, update
+- If features are added, changed, or removed, update `README.md` in the same
+  change when the user-facing behavior changes.
+- If install, run, build, usage, release filenames, executable names, folder
+  structure, requirements, limitations, or troubleshooting steps change, update
   `README.md` in the same change.
 - If a change is release-facing, check `README.md`, `RELEASE_NOTES.md`, and
   `CHANGELOG.md` together.
@@ -75,6 +77,9 @@ does not prove Windows EXE packaging by itself.
   EXE ZIP and its `.sha256` sidecar.
 - Do not say macOS creates a Windows EXE directly. Windows EXE packaging is
   validated by the Windows runner or a Windows workstation.
+- Write README steps for users who are not comfortable with GitHub or
+  development tooling yet. Prefer numbered, copyable steps over assumed
+  background knowledge.
 
 ## Safety Rules
 

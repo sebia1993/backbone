@@ -205,8 +205,10 @@ class DocumentationPortabilityTests(unittest.TestCase):
         expectations = {
             "AGENTS.md": (
                 "After code changes, decide whether `README.md`, `RELEASE_NOTES.md`, or",
+                "If features are added, changed, or removed, update `README.md`",
                 "Before any push, pull request, or release",
                 "The current automatic public Release assets are the Windows",
+                "Write README steps for users who are not comfortable with GitHub",
             ),
             "README.md": (
                 "README / Release 문서 점검 규칙",
