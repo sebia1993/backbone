@@ -143,11 +143,12 @@ class DocumentationPortabilityTests(unittest.TestCase):
         expectations = {
             "README.md": (
                 f"버전: `{version}`",
-                f"backbone_state_tracker_{version}_YYYYMMDD_windows_exe.zip",
+                "backbone_state_tracker_<tag>_windows.zip",
+                "backbone_state_tracker_v2026.07.08-104830_windows.zip",
             ),
             "RELEASE_NOTES.md": (
                 f"현재 앱 버전: `{version}`",
-                f"backbone_state_tracker_{version}_YYYYMMDD_windows_exe.zip",
+                "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
             ),
             "CHANGELOG.md": (f"## {version} - {APP_RELEASE_DATE}",),
             "docs/COMMAND_GUIDE.md": (f"문서 버전: {version}",),
@@ -162,7 +163,7 @@ class DocumentationPortabilityTests(unittest.TestCase):
             ),
             "docs/USER_GUIDE.md": (
                 f"문서 버전: {version}",
-                f"backbone_state_tracker_{version}_YYYYMMDD_windows_exe.zip",
+                "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
             ),
             "docs/USER_GUIDE.html": (
                 f"사용자 가이드 {version}",
@@ -170,25 +171,24 @@ class DocumentationPortabilityTests(unittest.TestCase):
             ),
             "docs/RELEASE_CHECKLIST.md": (
                 f"문서 버전: {version}",
-                f"backbone_state_tracker_{version}_YYYYMMDD_source.zip",
-                f"backbone_state_tracker_{version}_YYYYMMDD_windows_exe.zip",
+                "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
+                "README_START_HERE_KO.txt",
             ),
             "docs/RELEASE_CHECKLIST.html": (
                 f"릴리스 반입 체크리스트 {version}",
                 f"문서 버전: {version}",
-                f"backbone_state_tracker_{version}_YYYYMMDD_source.zip",
+                "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
             ),
             "docs/VERSION_HISTORY.md": (
                 f"문서 버전: {version}",
                 f"### {version} - {APP_RELEASE_DATE}",
-                f"dist\\backbone_state_tracker_{version}_{date_stamp}_source.zip",
-                f"dist\\backbone_state_tracker_{version}_{date_stamp}_windows_exe.zip",
+                "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
             ),
             "docs/VERSION_HISTORY.html": (
                 f"버전별 변경내역 {version}",
                 f"문서 버전: {version}",
                 f"<h3>{version} - {APP_RELEASE_DATE}</h3>",
-                f"dist\\backbone_state_tracker_{version}_{date_stamp}_source.zip",
+                "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
             ),
         }
 
@@ -207,12 +207,13 @@ class DocumentationPortabilityTests(unittest.TestCase):
                 "After code changes, decide whether `README.md`, `RELEASE_NOTES.md`, or",
                 "If features are added, changed, or removed, update `README.md`",
                 "Before any push, pull request, or release",
-                "The current automatic public Release assets are the Windows",
+                "The current automatic public Release asset is one Windows",
                 "Write README steps for users who are not comfortable with GitHub",
             ),
             "README.md": (
                 "README / Release 문서 점검 규칙",
                 "Git에 커밋하는 파일과 GitHub Release에 올리는 파일은 다릅니다.",
+                "GitHub 자동 `Source code (zip)` / `Source code (tar.gz)`는 실행용 파일이 아닙니다.",
                 "macOS에서 바로 Windows EXE가 만들어진다고 설명하지 않습니다.",
             ),
             "RELEASE_NOTES.md": (
@@ -227,11 +228,13 @@ class DocumentationPortabilityTests(unittest.TestCase):
             "docs/RELEASE_CHECKLIST.md": (
                 "README / Release 문서 최신화 확인",
                 "`RELEASE_NOTES.md`의 자동 Release notes 형식",
+                "`Source code (zip)` / `Source code (tar.gz)`가 실행용 파일이 아니라고 안내",
                 "macOS에서 직접 Windows EXE를 만든다고 설명하지 않습니다.",
             ),
             "docs/RELEASE_CHECKLIST.html": (
                 "README / Release 문서 최신화 확인",
                 "<code>RELEASE_NOTES.md</code>의 자동 Release notes 형식",
+                "<code>Source code (zip)</code> / <code>Source code (tar.gz)</code>가 실행용 파일이 아니라고 안내",
                 "macOS에서 직접 Windows EXE를 만든다고 설명하지 않습니다.",
             ),
         }
@@ -250,18 +253,23 @@ class DocumentationPortabilityTests(unittest.TestCase):
 
         required_fragments = [
             "${{ steps.release_meta.outputs.tag }} 릴리스입니다.",
-            "주요 변경사항:",
+            "변경내용:",
             'git log --pretty=format:"- %s" $commitRange',
             "검증:",
-            "- Windows EXE ZIP 빌드 통과",
-            "- Windows EXE release package verifier 통과",
+            "- Windows 통합 ZIP 빌드 통과",
+            "- Windows 통합 ZIP 구조 verifier 통과",
+            "빌드:",
             "첨부파일:",
-            "- Windows EXE ZIP:",
-            "- SHA256 sidecar:",
+            "- 통합 Windows ZIP:",
+            "실행 방법:",
+            "gui\\BackboneStateTracker.exe",
+            "web\\start_webapp.cmd",
+            "Source code (zip)",
+            "Source code (tar.gz)",
             "배포 메타데이터:",
-            "- 브랜치:",
+            "- 브랜치명:",
             "- 기준 커밋 SHA:",
-            "- 산출물 파일명:",
+            "- 통합 ZIP 파일명:",
             "- SHA256 checksum:",
             "- 변경 커밋 목록 ($rangeLabel):",
             'git log --pretty=format:"- %h %s" $commitRange',
@@ -270,3 +278,53 @@ class DocumentationPortabilityTests(unittest.TestCase):
         missing = [fragment for fragment in required_fragments if fragment not in workflow]
 
         self.assertEqual([], missing)
+
+    def test_pr_workflow_builds_but_does_not_create_release(self) -> None:
+        workflow = (PROJECT_DIR / ".github" / "workflows" / "pr-build.yml").read_text(encoding="utf-8")
+
+        self.assertIn("pull_request:", workflow)
+        self.assertIn("contents: read", workflow)
+        self.assertIn("--type windows", workflow)
+        self.assertIn("build_windows_exe.ps1 -SkipTests -ReleaseTag", workflow)
+        self.assertNotIn("gh release create", workflow)
+        self.assertNotIn("contents: write", workflow)
+
+    def test_release_workflow_is_main_push_only_and_uploads_one_direct_asset(self) -> None:
+        workflow = (PROJECT_DIR / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+
+        self.assertIn("push:", workflow)
+        self.assertIn("branches:", workflow)
+        self.assertIn("- main", workflow)
+        self.assertIn("permissions:", workflow)
+        self.assertIn("contents: write", workflow)
+        self.assertIn("if: github.ref == 'refs/heads/main'", workflow)
+        self.assertIn("gh release create", workflow)
+        self.assertEqual(1, workflow.count("#${{ steps.artifact.outputs.artifact_name }}"))
+        self.assertNotIn("checksum_path", workflow)
+        self.assertNotIn("checksum_name", workflow)
+        self.assertNotIn(".sha256", workflow)
+
+    def test_release_docs_do_not_restore_cli_execution_guidance(self) -> None:
+        checked_paths = [
+            PROJECT_DIR / "README.md",
+            PROJECT_DIR / "RELEASE_NOTES.md",
+            PROJECT_DIR / "docs" / "RELEASE_CHECKLIST.md",
+            PROJECT_DIR / "docs" / "RELEASE_CHECKLIST.html",
+        ]
+        forbidden = [
+            "--diagnose",
+            "--mock-server",
+            "--explain-code",
+            "BackboneStateTracker.exe --",
+            "SHA256 sidecar",
+            "_windows_exe.zip",
+        ]
+
+        offenders: list[str] = []
+        for path in checked_paths:
+            text = path.read_text(encoding="utf-8")
+            for fragment in forbidden:
+                if fragment in text:
+                    offenders.append(f"{path.relative_to(PROJECT_DIR)} contains {fragment}")
+
+        self.assertEqual([], offenders)

@@ -7,34 +7,24 @@
 ## 1. 수령 파일
 
 ```text
-backbone_state_tracker_v0.8.57_YYYYMMDD_source.zip
-backbone_state_tracker_v0.8.57_YYYYMMDD_source.zip.sha256.txt
-backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip
-backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip.sha256.txt
-backbone_state_tracker_v0.8.57_YYYYMMDD_release_manifest.txt
-backbone_state_tracker_v0.8.57_YYYYMMDD_verify_release_package.ps1
+backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip
 ```
+
+GitHub가 자동으로 표시하는 `Source code (zip)` / `Source code (tar.gz)`는 소스 아카이브이며 일반 사용자가 실행할 파일이 아닙니다. SHA256 checksum은 Release notes 본문에서 확인합니다.
 
 ## 2. ZIP 내부 필수 확인
 
+- `README_START_HERE_KO.txt`
 - `PACKAGE_INFO.txt`
-- `README.md`
-- `RELEASE_NOTES.md`
-- `CHANGELOG.md`
-- `config/commands.yaml`
-- `config/devices.example.yaml`
-- `docs/USER_GUIDE.md`와 `docs/USER_GUIDE.html`
-- `docs/COMMAND_GUIDE.md`와 `docs/COMMAND_GUIDE.html`
-- `docs/DEVELOPER_GUIDE_BEGINNER.md`와 `docs/DEVELOPER_GUIDE_BEGINNER.html`
-- `docs/VERSION_HISTORY.md`와 `docs/VERSION_HISTORY.html`
-- `docs/RELEASE_CHECKLIST.md`와 `docs/RELEASE_CHECKLIST.html`
-- `docs/images/settings-collection.png`
-- `docs/images/compare-results.png`
-- `docs/images/work-log.png`
-- Source ZIP인 경우 `tests/*.py` 회귀 테스트 전체
-- Source ZIP인 경우 `core/*.py` 런타임 모듈 전체와 `requirements.txt`
-- Source ZIP인 경우 `tools/*.py`와 `tools/*.ps1` 릴리스 빌드/검증 스크립트 전체
-- Windows EXE ZIP인 경우 `BackboneStateTracker.exe`, `RUN_FIRST.txt`
+- `gui/BackboneStateTracker.exe`
+- `gui/README_GUI_KO.txt`
+- `gui/config/commands.yaml`
+- `gui/config/devices.example.yaml`
+- `web/start_webapp.cmd`
+- `web/runtime/BackboneWebApp.exe`
+- `web/README_WEB_KO.txt`
+- `web/config/commands.yaml`
+- `web/config/devices.example.yaml`
 
 ## 3. 포함되면 안 되는 항목
 
@@ -50,27 +40,29 @@ backbone_state_tracker_v0.8.57_YYYYMMDD_verify_release_package.ps1
 - `__pycache__/`
 - `.pyc`
 - `.spec`
+- 루트의 `BackboneStateTracker.exe`
+- `RUN_FIRST.txt`
+- CLI 실행 파일 또는 CLI 전용 안내 파일
+- 별도 `.sha256` 파일
+- 소스 `app.py`, `core/`, `tests/`, `tools/`, `docs/`
 
 ## 4. 해시와 manifest 검증
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.57_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip -RequireManifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip --type windows --require-manifest
 ```
 
 검증기는 다음을 확인합니다.
 
-- ZIP 파일명과 sidecar, manifest의 버전/날짜 일치
+- 통합 ZIP 존재 여부
 - ZIP 크기와 SHA256 일치
 - ZIP 내부 경로가 `backbone_state_tracker/` 루트 아래에 있는지
-- 필수 파일 포함 여부
-- 현재 공유 가능한 `config/*` 파일 포함 여부. 단, 로컬 대상 장비 정보인 `config/devices.yaml`은 제외
-- 현재 `docs/*.md`, `docs/*.html`, `docs/images/*` 파일 포함 여부
-- Source ZIP의 전체 회귀 테스트 파일 포함 여부
-- Source ZIP의 전체 런타임 core 모듈과 dependency 파일 포함 여부
-- Source ZIP의 릴리스 빌드/검증 도구 스크립트 포함 여부
-- Windows EXE ZIP의 `BackboneStateTracker.exe`와 `RUN_FIRST.txt` 포함 여부
+- `README_START_HERE_KO.txt`, `gui/`, `web/` 필수 파일 포함 여부
+- GUI 실행 파일 포함 여부
+- 웹앱 실행 스크립트와 내장 런타임 포함 여부
+- 공유 가능한 `gui/config/*`, `web/config/*` 파일 포함 여부. 단, 로컬 대상 장비 정보인 `devices.yaml`은 제외
+- CLI 실행 파일과 CLI 전용 안내 파일 제외 여부
 - `outputs/`, `raw/`, `dist/`, `build/`, `.venv/`, `venv/`, `.pytest_cache/` 같은 로컬 산출물/환경 폴더 포함 여부
 - 금지 경로 포함 여부
 - ZIP 내부 중복 엔트리 여부
@@ -78,12 +70,15 @@ powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.57_YYYYMM
 
 ## 5. 실행 확인
 
-- EXE ZIP을 별도 폴더에 해제합니다.
-- `RUN_FIRST.txt`를 확인합니다.
-- `BackboneStateTracker.exe`를 실행합니다.
+- 통합 ZIP을 별도 폴더에 해제합니다.
+- `README_START_HERE_KO.txt`를 확인합니다.
+- GUI는 `gui\BackboneStateTracker.exe`를 실행합니다.
 - 첫 화면이 `장비 설정`인지 확인합니다.
 - 좌측 메뉴가 `장비 설정`, `비교 결과`, `작업 로그` 순서인지 확인합니다.
 - `샘플 검증 생성`으로 실제 장비 접속 없이 리포트 생성이 되는지 확인합니다.
+- 웹앱은 `web\start_webapp.cmd`를 실행합니다.
+- 브라우저에서 `http://127.0.0.1:8765/`가 열리는지 확인합니다.
+- 포트 변경이 필요하면 `web\start_webapp.cmd --port 8777` 형식으로 실행합니다.
 
 ## 6. UI 마감 확인
 
@@ -96,12 +91,14 @@ powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.57_YYYYMM
 
 ## 7. README / Release 문서 최신화 확인
 
-- `README.md`의 설치, 실행, 테스트, 빌드, 사용 방법이 현재 파일과 맞는지 확인합니다.
+- `README.md`의 다운로드, GUI 실행, 웹앱 실행, 테스트, 빌드, 사용 방법이 현재 파일과 맞는지 확인합니다.
 - `RELEASE_NOTES.md`의 자동 Release notes 형식과 GitHub Release asset 설명이 현재 workflow와 맞는지 확인합니다.
 - `CHANGELOG.md`에 사용자에게 보이는 변경사항이 빠지지 않았는지 확인합니다.
-- Git에 커밋할 파일과 GitHub Release에 업로드할 ZIP/SHA256 asset이 구분되어 있는지 확인합니다.
+- Git에 커밋할 파일과 GitHub Release에 직접 업로드할 통합 ZIP 1개가 구분되어 있는지 확인합니다.
+- Release notes에 `Source code (zip)` / `Source code (tar.gz)`가 실행용 파일이 아니라고 안내되는지 확인합니다.
+- CLI 실행 방법이 README, Release notes, ZIP 안내서에 남아 있지 않은지 확인합니다.
 - 내부 IP, 실제 장비명, 계정, 비밀번호, 실제 로그, 고객 정보가 문서에 없는지 확인합니다.
-- Windows EXE ZIP은 GitHub Actions Windows runner 또는 Windows PC에서 검증해야 하며, macOS에서 직접 Windows EXE를 만든다고 설명하지 않습니다.
+- Windows 통합 ZIP은 GitHub Actions Windows runner 또는 Windows PC에서 검증해야 하며, macOS에서 직접 Windows EXE를 만든다고 설명하지 않습니다.
 
 ## 8. 메일 업로드 차단 시
 

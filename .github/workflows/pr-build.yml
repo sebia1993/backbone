@@ -21,7 +21,7 @@ defaults:
 
 jobs:
   build:
-    name: 테스트 및 Windows 패키지 빌드
+    name: 테스트 및 Windows 통합 패키지 빌드
     runs-on: windows-latest
 
     steps:
@@ -42,31 +42,36 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Create package tag
+        id: package_meta
+        run: |
+          $kstZone = [System.TimeZoneInfo]::FindSystemTimeZoneById("Korea Standard Time")
+          $kstNow = [System.TimeZoneInfo]::ConvertTime([System.DateTimeOffset]::UtcNow, $kstZone)
+          "tag=$($kstNow.ToString("'v'yyyy.MM.dd-HHmmss"))" >> $env:GITHUB_OUTPUT
+
       - name: Run unit tests
         run: python -m unittest discover -s tests
 
-      - name: Run source smoke check
+      - name: Run GUI source smoke check
         run: python app.py --smoke-check
 
-      - name: Build Windows EXE ZIP
-        run: pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests
+      - name: Run webapp source smoke check
+        run: python webapp_launcher.py --smoke
+
+      - name: Build Windows integrated ZIP
+        run: pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests -ReleaseTag "${{ steps.package_meta.outputs.tag }}"
 
       - name: Locate built package
         id: package
         run: |
-          $zip = Get-ChildItem -LiteralPath dist -Filter "*_windows_exe.zip" -File |
-            Sort-Object LastWriteTime -Descending |
-            Select-Object -First 1
+          $expectedName = "backbone_state_tracker_${{ steps.package_meta.outputs.tag }}_windows.zip"
+          $zip = Get-ChildItem -LiteralPath dist -Filter $expectedName -File | Select-Object -First 1
           if (-not $zip) {
-            throw "Windows EXE ZIP이 생성되지 않았습니다."
-          }
-
-          $sidecarPath = "$($zip.FullName).sha256.txt"
-          if (-not (Test-Path -LiteralPath $sidecarPath)) {
-            throw "Checksum sidecar가 생성되지 않았습니다: $sidecarPath"
+            throw "통합 Windows ZIP이 생성되지 않았습니다: $expectedName"
           }
 
           "zip_path=$($zip.FullName)" >> $env:GITHUB_OUTPUT
+          "checksum=$((Get-FileHash -Algorithm SHA256 -LiteralPath $zip.FullName).Hash.ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
       - name: Verify package explicitly
-        run: python .\tools\verify_release_package.py "${{ steps.package.outputs.zip_path }}" --type windows_exe --require-manifest
+        run: python .\tools\verify_release_package.py "${{ steps.package.outputs.zip_path }}" --type windows --require-manifest --expected-sha256 "${{ steps.package.outputs.checksum }}"

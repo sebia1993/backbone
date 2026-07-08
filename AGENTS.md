@@ -73,8 +73,9 @@ does not prove Windows EXE packaging by itself.
   passwords, customer data, or raw operational logs in README, release notes, or
   changelog entries.
 - Separate files that must be committed to Git from files uploaded as GitHub
-  Release assets. The current automatic public Release assets are the Windows
-  EXE ZIP and its `.sha256` sidecar.
+  Release assets. The current automatic public Release asset is one Windows
+  integrated ZIP containing the GUI and webapp user runtimes. The SHA256
+  checksum belongs in the Release notes body, not as a separate uploaded asset.
 - Do not say macOS creates a Windows EXE directly. Windows EXE packaging is
   validated by the Windows runner or a Windows workstation.
 - Write README steps for users who are not comfortable with GitHub or

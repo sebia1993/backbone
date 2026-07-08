@@ -11,6 +11,7 @@ from backbone_state_tracker.tools.verify_release_package import (
     COMMON_REQUIRED,
     FORBIDDEN_PATTERNS,
     SOURCE_REQUIRED,
+    WINDOWS_REQUIRED,
     WINDOWS_EXE_REQUIRED,
     verify_release_package,
 )
@@ -86,6 +87,7 @@ def _source_entries() -> dict[str, str]:
         {
             "backbone_state_tracker/__init__.py": "package init",
             "backbone_state_tracker/app.py": "app",
+            "backbone_state_tracker/webapp_launcher.py": "webapp launcher",
             "backbone_state_tracker/requirements.txt": "requirements",
             "backbone_state_tracker/core/__init__.py": "core init",
             "backbone_state_tracker/core/analysis_rules.py": "analysis rules",
@@ -114,6 +116,7 @@ def _source_entries() -> dict[str, str]:
             "backbone_state_tracker/core/reporter.py": "reporter",
             "backbone_state_tracker/core/snapshot.py": "snapshot",
             "backbone_state_tracker/core/version.py": "version",
+            "backbone_state_tracker/core/webapp.py": "webapp",
             "backbone_state_tracker/core/workflow.py": "workflow",
             "backbone_state_tracker/tools/build_release.ps1": "source build",
             "backbone_state_tracker/tools/build_windows_exe.ps1": "exe build",
@@ -138,21 +141,31 @@ def _source_entries() -> dict[str, str]:
             "backbone_state_tracker/tests/test_release_package_verifier.py": "verifier tests",
             "backbone_state_tracker/tests/test_reporter.py": "reporter tests",
             "backbone_state_tracker/tests/test_snapshot.py": "snapshot tests",
+            "backbone_state_tracker/tests/test_webapp.py": "webapp tests",
             "backbone_state_tracker/tests/test_workflow.py": "workflow tests",
         }
     )
     return entries
 
 
-def _windows_exe_entries() -> dict[str, str | bytes]:
-    entries: dict[str, str | bytes] = _common_entries()
-    entries.update(
-        {
-            "backbone_state_tracker/BackboneStateTracker.exe": b"fake executable payload",
-            "backbone_state_tracker/RUN_FIRST.txt": "run first instructions",
-        }
-    )
-    return entries
+def _windows_entries() -> dict[str, str | bytes]:
+    return {
+        "backbone_state_tracker/PACKAGE_INFO.txt": "package",
+        "backbone_state_tracker/README_START_HERE_KO.txt": "start here",
+        "backbone_state_tracker/gui/BackboneStateTracker.exe": b"fake gui executable payload",
+        "backbone_state_tracker/gui/README_GUI_KO.txt": "gui guide",
+        "backbone_state_tracker/gui/config/analysis_rules.yaml": "analysis rules",
+        "backbone_state_tracker/gui/config/commands.yaml": "commands",
+        "backbone_state_tracker/gui/config/devices.example.yaml": "devices example",
+        "backbone_state_tracker/gui/config/mock_profiles.yaml": "mock profiles",
+        "backbone_state_tracker/web/README_WEB_KO.txt": "web guide",
+        "backbone_state_tracker/web/start_webapp.cmd": "start webapp",
+        "backbone_state_tracker/web/runtime/BackboneWebApp.exe": b"fake webapp executable payload",
+        "backbone_state_tracker/web/config/analysis_rules.yaml": "analysis rules",
+        "backbone_state_tracker/web/config/commands.yaml": "commands",
+        "backbone_state_tracker/web/config/devices.example.yaml": "devices example",
+        "backbone_state_tracker/web/config/mock_profiles.yaml": "mock profiles",
+    }
 
 
 def _core_entries(entries: set[str] | dict[str, str]) -> set[str]:
@@ -160,7 +173,7 @@ def _core_entries(entries: set[str] | dict[str, str]) -> set[str]:
 
 
 def _config_entries(entries: set[str] | dict[str, str]) -> set[str]:
-    return {entry for entry in entries if entry.startswith(CONFIG_ENTRY_PREFIX)}
+    return {entry for entry in entries if entry.startswith(CONFIG_ENTRY_PREFIX) or "/config/" in entry}
 
 
 def _doc_entries(entries: set[str] | dict[str, str]) -> set[str]:
@@ -185,11 +198,20 @@ class ReleasePackageVerifierTests(unittest.TestCase):
         }
         powershell_text = (PROJECT_DIR / "tools" / "verify_release_package.ps1").read_text(encoding="utf-8")
 
+        windows_expected = {
+            entry
+            for base in ("backbone_state_tracker/gui/config", "backbone_state_tracker/web/config")
+            for entry in (f"{base}/{path.name}" for path in sorted(PROJECT_DIR.joinpath("config").glob("*")))
+            if Path(entry).name not in excluded
+        }
+
         self.assertEqual(expected, _config_entries(COMMON_REQUIRED))
         self.assertEqual(expected, _config_entries(SOURCE_REQUIRED))
-        self.assertEqual(expected, _config_entries(WINDOWS_EXE_REQUIRED))
+        self.assertEqual(windows_expected, _config_entries(WINDOWS_REQUIRED))
+        self.assertEqual(windows_expected, _config_entries(WINDOWS_EXE_REQUIRED))
         self.assertEqual(expected, _config_entries(_common_entries()))
         self.assertEqual(expected, _config_entries(_source_entries()))
+        self.assertEqual(windows_expected, _config_entries(_windows_entries()))
         self.assertEqual(expected, set(CONFIG_ENTRY_PATTERN.findall(powershell_text)))
 
     def test_common_required_doc_entries_match_current_docs(self) -> None:
@@ -207,9 +229,11 @@ class ReleasePackageVerifierTests(unittest.TestCase):
 
         self.assertEqual(expected, _doc_entries(COMMON_REQUIRED))
         self.assertEqual(expected, _doc_entries(SOURCE_REQUIRED))
-        self.assertEqual(expected, _doc_entries(WINDOWS_EXE_REQUIRED))
+        self.assertEqual(set(), _doc_entries(WINDOWS_REQUIRED))
+        self.assertEqual(set(), _doc_entries(WINDOWS_EXE_REQUIRED))
         self.assertEqual(expected, _doc_entries(_common_entries()))
         self.assertEqual(expected, _doc_entries(_source_entries()))
+        self.assertEqual(set(), _doc_entries(_windows_entries()))
         self.assertEqual(expected, set(DOC_ENTRY_PATTERN.findall(powershell_text)))
 
     def test_source_required_core_entries_match_current_core_files(self) -> None:
@@ -262,11 +286,12 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             self.assertTrue(result.ok, result.errors)
             self.assertEqual(result.package_type, "source")
 
-    def test_valid_windows_exe_package_passes(self) -> None:
+    def test_valid_windows_package_passes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             dist = Path(tmp)
-            package = dist / "backbone_state_tracker_v0.8.1_20260611_windows_exe.zip"
-            _write_zip(package, _windows_exe_entries())
+            release_tag = "v2026.07.08-104830"
+            package = dist / f"backbone_state_tracker_{release_tag}_windows.zip"
+            _write_zip(package, _windows_entries())
             write_package_checksum(package, "0.8.1", generated_at="2026-06-11T10:00:00+09:00")
             write_release_manifest(
                 "backbone_state_tracker",
@@ -274,12 +299,37 @@ class ReleasePackageVerifierTests(unittest.TestCase):
                 "20260611",
                 dist,
                 generated_at="2026-06-11T10:01:00+09:00",
+                release_tag=release_tag,
             )
 
             result = verify_release_package(package, require_manifest=True)
 
             self.assertTrue(result.ok, result.errors)
-            self.assertEqual(result.package_type, "windows_exe")
+            self.assertEqual(result.package_type, "windows")
+
+    def test_windows_package_can_verify_with_expected_sha_without_sidecar(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            release_tag = "v2026.07.08-104831"
+            package = dist / f"backbone_state_tracker_{release_tag}_windows.zip"
+            _write_zip(package, _windows_entries())
+            write_release_manifest(
+                "backbone_state_tracker",
+                "0.8.1",
+                "20260708",
+                dist,
+                generated_at="2026-07-08T10:48:31+09:00",
+                release_tag=release_tag,
+            )
+
+            result = verify_release_package(
+                package,
+                require_manifest=True,
+                expected_sha256=file_sha256(package),
+            )
+
+            self.assertTrue(result.ok, result.errors)
+            self.assertTrue(any("--expected-sha256" in warning for warning in result.warnings))
 
     def test_hash_mismatch_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -510,9 +560,9 @@ class ReleasePackageVerifierTests(unittest.TestCase):
     def test_missing_windows_executable_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             dist = Path(tmp)
-            package = dist / "backbone_state_tracker_v0.8.21_20260612_windows_exe.zip"
-            entries = _windows_exe_entries()
-            del entries["backbone_state_tracker/BackboneStateTracker.exe"]
+            package = dist / "backbone_state_tracker_v2026.07.08-104830_windows.zip"
+            entries = _windows_entries()
+            del entries["backbone_state_tracker/gui/BackboneStateTracker.exe"]
             _write_zip(package, entries)
             write_package_checksum(package, "0.8.21", generated_at="2026-06-12T10:00:00+09:00")
 
@@ -520,22 +570,40 @@ class ReleasePackageVerifierTests(unittest.TestCase):
 
             self.assertFalse(result.ok)
             self.assertTrue(
-                any("backbone_state_tracker/BackboneStateTracker.exe" in error for error in result.errors)
+                any("backbone_state_tracker/gui/BackboneStateTracker.exe" in error for error in result.errors)
             )
 
-    def test_missing_run_first_file_fails(self) -> None:
+    def test_missing_webapp_launcher_script_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             dist = Path(tmp)
-            package = dist / "backbone_state_tracker_v0.8.22_20260612_windows_exe.zip"
-            entries = _windows_exe_entries()
-            del entries["backbone_state_tracker/RUN_FIRST.txt"]
+            package = dist / "backbone_state_tracker_v2026.07.08-104831_windows.zip"
+            entries = _windows_entries()
+            del entries["backbone_state_tracker/web/start_webapp.cmd"]
             _write_zip(package, entries)
             write_package_checksum(package, "0.8.22", generated_at="2026-06-12T10:00:00+09:00")
 
             result = verify_release_package(package)
 
             self.assertFalse(result.ok)
-            self.assertTrue(any("backbone_state_tracker/RUN_FIRST.txt" in error for error in result.errors))
+            self.assertTrue(any("backbone_state_tracker/web/start_webapp.cmd" in error for error in result.errors))
+
+    def test_windows_package_rejects_cli_and_source_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v2026.07.08-104832_windows.zip"
+            entries = _windows_entries()
+            entries["backbone_state_tracker/BackboneStateTracker.exe"] = b"legacy root exe"
+            entries["backbone_state_tracker/RUN_FIRST.txt"] = "legacy cli guide"
+            entries["backbone_state_tracker/app.py"] = "source cli entry"
+            entries["backbone_state_tracker/tools/cli_helper.ps1"] = "tool"
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.8.22", generated_at="2026-06-12T10:00:00+09:00")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("Forbidden Windows release ZIP entry" in error for error in result.errors))
+            self.assertTrue(any("Unexpected Windows release ZIP entry" in error for error in result.errors))
 
     def test_missing_runtime_regression_test_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -614,7 +682,7 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             sidecar.write_text(
                 sidecar.read_text(encoding="utf-8").replace(
                     f"SHA256 ({package.name})",
-                    "SHA256 (backbone_state_tracker_v0.8.10_20260612_windows_exe.zip)",
+                    "SHA256 (backbone_state_tracker_v2026.07.08-104830_windows.zip)",
                 ),
                 encoding="utf-8",
             )

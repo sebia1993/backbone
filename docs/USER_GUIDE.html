@@ -94,8 +94,9 @@
 
   <h2>7. 배포 ZIP 확인</h2>
   <p>샘플 검증 스냅샷은 실제 작업 전 기준으로 사용되지 않습니다. 샘플만 있는 상태에서 첫 실제 수집을 시작하면 <code>작업 전</code> 기준으로 저장됩니다. 샘플 스냅샷이 프로그램 상단 <code>기준</code>/<code>비교 대상</code> 또는 HTML 리포트 상단 <code>기준</code>/<code>비교</code>에 표시될 때는 <code>샘플:</code> 접두어가 붙습니다.</p>
-  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip --require-manifest
-powershell -ExecutionPolicy Bypass -File .\backbone_state_tracker_v0.8.57_YYYYMMDD_verify_release_package.ps1 -Package .\backbone_state_tracker_v0.8.57_YYYYMMDD_windows_exe.zip -RequireManifest</code></pre>
+  <p>Windows 통합 ZIP 예시:</p>
+  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip --type windows --require-manifest</code></pre>
+  <p>GitHub Release에서는 <code>backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip</code> 하나만 다운로드하면 됩니다. <code>Source code (zip)</code> / <code>Source code (tar.gz)</code>는 실행용 파일이 아닙니다.</p>
 </body>
 </html>

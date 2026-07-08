@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added a local webapp runtime path that can be packaged and started from `web/start_webapp.cmd` with a smoke check.
+- Changed the public GitHub Release contract to upload one Windows integrated ZIP containing only `gui/` and `web/` user runtimes.
+- Excluded CLI executables, CLI-specific guidance, and `.sha256` sidecar assets from the final user-facing Release ZIP/upload flow while keeping SHA256 in Release notes.
 - Added a tracked README/Release documentation update rule so README, RELEASE_NOTES, and CHANGELOG are checked before GitHub push or Release work.
 - Added `RELEASE_NOTES.md` as the repository checklist for automated GitHub Release notes format, release assets, and sensitive-information exclusions.
 - Clarified that Windows EXE ZIP validation belongs to GitHub Actions Windows runner or a Windows workstation, not local macOS packaging.

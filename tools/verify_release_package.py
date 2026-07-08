@@ -22,6 +22,9 @@ MANIFEST_SHA_LINE = re.compile(r"^  SHA256: (?P<sha256>[0-9a-f]{64})$")
 PACKAGE_PREFIX = re.compile(
     r"^(?P<prefix>.+_v(?P<version>\d+\.\d+\.\d+)_(?P<date>\d{8}))_(source|windows_exe)\.zip$"
 )
+TAGGED_WINDOWS_PACKAGE_PREFIX = re.compile(
+    r"^(?P<prefix>.+_(?P<tag>v\d{4}\.\d{2}\.\d{2}-\d{6}(?:-\d+)?))_windows\.zip$"
+)
 PACKAGE_ROOT = "backbone_state_tracker/"
 PACKAGE_ROOT_NAME = "backbone_state_tracker"
 WINDOWS_DRIVE_PREFIX = re.compile(r"^[A-Za-z]:/")
@@ -59,6 +62,7 @@ COMMON_REQUIRED = {
 SOURCE_REQUIRED = COMMON_REQUIRED | {
     "backbone_state_tracker/__init__.py",
     "backbone_state_tracker/app.py",
+    "backbone_state_tracker/webapp_launcher.py",
     "backbone_state_tracker/requirements.txt",
     "backbone_state_tracker/core/__init__.py",
     "backbone_state_tracker/core/analysis_rules.py",
@@ -87,6 +91,7 @@ SOURCE_REQUIRED = COMMON_REQUIRED | {
     "backbone_state_tracker/core/reporter.py",
     "backbone_state_tracker/core/snapshot.py",
     "backbone_state_tracker/core/version.py",
+    "backbone_state_tracker/core/webapp.py",
     "backbone_state_tracker/core/workflow.py",
     "backbone_state_tracker/tools/build_release.ps1",
     "backbone_state_tracker/tools/build_windows_exe.ps1",
@@ -111,13 +116,62 @@ SOURCE_REQUIRED = COMMON_REQUIRED | {
     "backbone_state_tracker/tests/test_release_package_verifier.py",
     "backbone_state_tracker/tests/test_reporter.py",
     "backbone_state_tracker/tests/test_snapshot.py",
+    "backbone_state_tracker/tests/test_webapp.py",
     "backbone_state_tracker/tests/test_workflow.py",
 }
 
-WINDOWS_EXE_REQUIRED = COMMON_REQUIRED | {
+WINDOWS_REQUIRED = {
+    "backbone_state_tracker/PACKAGE_INFO.txt",
+    "backbone_state_tracker/README_START_HERE_KO.txt",
+    "backbone_state_tracker/gui/BackboneStateTracker.exe",
+    "backbone_state_tracker/gui/README_GUI_KO.txt",
+    "backbone_state_tracker/gui/config/analysis_rules.yaml",
+    "backbone_state_tracker/gui/config/commands.yaml",
+    "backbone_state_tracker/gui/config/devices.example.yaml",
+    "backbone_state_tracker/gui/config/mock_profiles.yaml",
+    "backbone_state_tracker/web/README_WEB_KO.txt",
+    "backbone_state_tracker/web/start_webapp.cmd",
+    "backbone_state_tracker/web/runtime/BackboneWebApp.exe",
+    "backbone_state_tracker/web/config/analysis_rules.yaml",
+    "backbone_state_tracker/web/config/commands.yaml",
+    "backbone_state_tracker/web/config/devices.example.yaml",
+    "backbone_state_tracker/web/config/mock_profiles.yaml",
+}
+
+WINDOWS_EXE_REQUIRED = WINDOWS_REQUIRED
+
+WINDOWS_ALLOWED_PREFIXES = (
+    "backbone_state_tracker/gui/",
+    "backbone_state_tracker/web/",
+)
+
+WINDOWS_ALLOWED_FILES = {
+    "backbone_state_tracker/PACKAGE_INFO.txt",
+    "backbone_state_tracker/README_START_HERE_KO.txt",
+}
+
+WINDOWS_FORBIDDEN_ENTRIES = {
     "backbone_state_tracker/BackboneStateTracker.exe",
     "backbone_state_tracker/RUN_FIRST.txt",
+    "backbone_state_tracker/README.md",
+    "backbone_state_tracker/RELEASE_NOTES.md",
+    "backbone_state_tracker/CHANGELOG.md",
+    "backbone_state_tracker/app.py",
+    "backbone_state_tracker/webapp_launcher.py",
 }
+
+WINDOWS_FORBIDDEN_PATTERNS = [
+    re.compile(pattern)
+    for pattern in (
+        r"/tests/",
+        r"/tools/",
+        r"/core/",
+        r"/docs/",
+        r"/__init__\.py$",
+        r"\.sha256(?:\.txt)?$",
+        r"(?:^|/)cli[^/]*\.(?:exe|cmd|bat|ps1)$",
+    )
+]
 
 FORBIDDEN_PATTERNS = [
     re.compile(pattern)
@@ -154,6 +208,8 @@ def infer_package_type(package_path: Path) -> str:
     name = package_path.name.lower()
     if name.endswith("_source.zip"):
         return "source"
+    if name.endswith("_windows.zip"):
+        return "windows"
     if name.endswith("_windows_exe.zip"):
         return "windows_exe"
     return "unknown"
@@ -273,22 +329,50 @@ def zip_entry_safety_errors(names: set[str]) -> list[str]:
 def required_entries_for(package_type: str) -> set[str]:
     if package_type == "source":
         return SOURCE_REQUIRED
-    if package_type == "windows_exe":
-        return WINDOWS_EXE_REQUIRED
+    if package_type in {"windows", "windows_exe"}:
+        return WINDOWS_REQUIRED
     return COMMON_REQUIRED
+
+
+def windows_release_contract_errors(names: set[str], package_type: str) -> list[str]:
+    if package_type not in {"windows", "windows_exe"}:
+        return []
+
+    errors: list[str] = []
+    for name in sorted(names):
+        stripped = name.rstrip("/")
+        if not stripped or stripped == PACKAGE_ROOT_NAME:
+            continue
+        if stripped in WINDOWS_FORBIDDEN_ENTRIES:
+            errors.append(f"Forbidden Windows release ZIP entry found: {stripped}")
+            continue
+        if stripped in WINDOWS_ALLOWED_FILES:
+            continue
+        if any(stripped.startswith(prefix) for prefix in WINDOWS_ALLOWED_PREFIXES):
+            for pattern in WINDOWS_FORBIDDEN_PATTERNS:
+                if pattern.search(stripped):
+                    errors.append(f"Forbidden Windows release ZIP entry found: {stripped}")
+                    break
+            continue
+        errors.append(f"Unexpected Windows release ZIP entry found: {stripped}")
+    return errors
 
 
 def expected_manifest_path(package_path: Path) -> Path | None:
     match = PACKAGE_PREFIX.match(package_path.name)
-    if not match:
-        return None
-    return package_path.with_name(f"{match.group('prefix')}_release_manifest.txt")
+    if match:
+        return package_path.with_name(f"{match.group('prefix')}_release_manifest.txt")
+    tagged_match = TAGGED_WINDOWS_PACKAGE_PREFIX.match(package_path.name)
+    if tagged_match:
+        return package_path.with_name(f"{tagged_match.group('prefix')}_release_manifest.txt")
+    return None
 
 
 def verify_release_package(
     package_path: Path,
     package_type: str | None = None,
     require_manifest: bool = False,
+    expected_sha256: str | None = None,
 ) -> VerificationResult:
     package_path = Path(package_path)
     resolved_type = package_type or infer_package_type(package_path)
@@ -307,28 +391,48 @@ def verify_release_package(
     expected_version = identity[0] if identity else None
     expected_date = identity[1] if identity else None
 
+    normalized_expected_sha = expected_sha256.lower() if expected_sha256 else None
+    if normalized_expected_sha is not None and not re.fullmatch(r"[0-9a-f]{64}", normalized_expected_sha):
+        errors.append(f"Invalid expected SHA256 value: {expected_sha256}")
+
     sidecar_path = package_path.with_name(f"{package_path.name}.sha256.txt")
-    sidecar_package_name, expected_sha, expected_size, sidecar_version, sidecar_date, sidecar_errors = parse_checksum_sidecar(
-        sidecar_path
-    )
-    errors.extend(sidecar_errors)
-    if sidecar_package_name is not None and sidecar_package_name != package_path.name:
-        errors.append(
-            f"Checksum sidecar package mismatch: expected {package_path.name}, sidecar {sidecar_package_name}"
-        )
-    if expected_version is not None and sidecar_version is not None and sidecar_version != expected_version:
-        errors.append(
-            f"Checksum sidecar version mismatch for {package_path.name}: "
-            f"expected {expected_version}, sidecar {sidecar_version}"
-        )
-    if expected_date is not None and sidecar_date is not None and sidecar_date != expected_date:
-        errors.append(
-            f"Checksum sidecar date mismatch for {package_path.name}: "
-            f"expected {expected_date}, sidecar {sidecar_date}"
-        )
+    expected_sha: str | None = None
+    expected_size: int | None = None
+    if sidecar_path.is_file():
+        (
+            sidecar_package_name,
+            expected_sha,
+            expected_size,
+            sidecar_version,
+            sidecar_date,
+            sidecar_errors,
+        ) = parse_checksum_sidecar(sidecar_path)
+        errors.extend(sidecar_errors)
+        if sidecar_package_name is not None and sidecar_package_name != package_path.name:
+            errors.append(
+                f"Checksum sidecar package mismatch: expected {package_path.name}, sidecar {sidecar_package_name}"
+            )
+        if expected_version is not None and sidecar_version is not None and sidecar_version != expected_version:
+            errors.append(
+                f"Checksum sidecar version mismatch for {package_path.name}: "
+                f"expected {expected_version}, sidecar {sidecar_version}"
+            )
+        if expected_date is not None and sidecar_date is not None and sidecar_date != expected_date:
+            errors.append(
+                f"Checksum sidecar date mismatch for {package_path.name}: "
+                f"expected {expected_date}, sidecar {sidecar_date}"
+            )
+    elif normalized_expected_sha is None:
+        errors.append(f"Missing checksum sidecar: {sidecar_path.name}")
+    else:
+        warnings.append(f"Checksum sidecar not present; using --expected-sha256 for {package_path.name}")
 
     actual_sha = file_sha256(package_path)
     actual_size = package_path.stat().st_size
+    if normalized_expected_sha is not None and actual_sha != normalized_expected_sha:
+        errors.append(
+            f"SHA256 mismatch for {package_path.name}: expected {normalized_expected_sha}, actual {actual_sha}"
+        )
     if expected_sha is not None and actual_sha != expected_sha:
         errors.append(f"SHA256 mismatch for {package_path.name}: expected {expected_sha}, actual {actual_sha}")
     if expected_size is not None and actual_size != expected_size:
@@ -342,6 +446,7 @@ def verify_release_package(
         required_entries = required_entries_for(resolved_type)
         missing = sorted(required_entries - names)
         errors.extend(f"Missing required ZIP entry: {entry}" for entry in missing)
+        errors.extend(windows_release_contract_errors(names, resolved_type))
 
         for name in sorted(names):
             for pattern in FORBIDDEN_PATTERNS:
@@ -420,14 +525,16 @@ def verify_release_package(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="백본 상태 추적기 릴리스 ZIP을 검증합니다.")
     parser.add_argument("package", type=Path)
-    parser.add_argument("--type", choices=("source", "windows_exe", "unknown"), default=None)
+    parser.add_argument("--type", choices=("source", "windows", "windows_exe", "unknown"), default=None)
     parser.add_argument("--require-manifest", action="store_true")
+    parser.add_argument("--expected-sha256")
     args = parser.parse_args(argv)
 
     result = verify_release_package(
         args.package,
         package_type=args.type,
         require_manifest=args.require_manifest,
+        expected_sha256=args.expected_sha256,
     )
     print(f"패키지: {result.package_path}")
     print(f"유형: {result.package_type}")

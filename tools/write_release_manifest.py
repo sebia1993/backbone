@@ -10,6 +10,9 @@ from typing import Iterable
 
 CHUNK_SIZE = 1024 * 1024
 PACKAGE_IDENTITY = re.compile(r"^.+_v\d+\.\d+\.\d+_(?P<date>\d{8})_(source|windows_exe)\.zip$")
+TAGGED_WINDOWS_PACKAGE_IDENTITY = re.compile(
+    r"^.+_v(?P<year>\d{4})\.(?P<month>\d{2})\.(?P<day>\d{2})-\d{6}(?:-\d+)?_windows\.zip$"
+)
 
 
 def _version_label(version: str) -> str:
@@ -39,9 +42,12 @@ def package_record(path: Path) -> dict[str, str | int]:
 
 def package_date_stamp(path: Path) -> str | None:
     match = PACKAGE_IDENTITY.match(Path(path).name)
-    if not match:
-        return None
-    return match.group("date")
+    if match:
+        return match.group("date")
+    tagged_match = TAGGED_WINDOWS_PACKAGE_IDENTITY.match(Path(path).name)
+    if tagged_match:
+        return f"{tagged_match.group('year')}{tagged_match.group('month')}{tagged_match.group('day')}"
+    return None
 
 
 def write_package_checksum(
@@ -70,8 +76,14 @@ def write_package_checksum(
     return sidecar_path
 
 
-def find_release_packages(project_name: str, version: str, date_stamp: str, dist_dir: Path) -> list[Path]:
-    prefix = f"{project_name}_{_version_label(version)}_{date_stamp}_"
+def find_release_packages(
+    project_name: str,
+    version: str,
+    date_stamp: str,
+    dist_dir: Path,
+    release_tag: str | None = None,
+) -> list[Path]:
+    prefix = f"{project_name}_{release_tag}_" if release_tag else f"{project_name}_{_version_label(version)}_{date_stamp}_"
     return sorted(path for path in dist_dir.glob(f"{prefix}*.zip") if path.is_file())
 
 
@@ -82,10 +94,11 @@ def write_release_manifest(
     dist_dir: Path,
     package_paths: Iterable[Path] | None = None,
     generated_at: str | None = None,
+    release_tag: str | None = None,
 ) -> Path:
     dist_dir = Path(dist_dir)
     if package_paths is None:
-        packages = find_release_packages(project_name, version, date_stamp, dist_dir)
+        packages = find_release_packages(project_name, version, date_stamp, dist_dir, release_tag=release_tag)
     else:
         packages = sorted(Path(path) for path in package_paths)
 
@@ -93,7 +106,8 @@ def write_release_manifest(
     if missing:
         raise FileNotFoundError("Missing package files: " + ", ".join(missing))
 
-    manifest_name = f"{project_name}_{_version_label(version)}_{date_stamp}_release_manifest.txt"
+    manifest_id = release_tag or f"{_version_label(version)}_{date_stamp}"
+    manifest_name = f"{project_name}_{manifest_id}_release_manifest.txt"
     manifest_path = dist_dir / manifest_name
     generated = generated_at or _now_text()
 
@@ -139,6 +153,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--date-stamp", required=True)
     parser.add_argument("--dist-dir", required=True, type=Path)
     parser.add_argument("--package", required=True, type=Path)
+    parser.add_argument("--release-tag")
     args = parser.parse_args(argv)
 
     checksum_path = write_package_checksum(args.package, args.version)
@@ -147,6 +162,7 @@ def main(argv: list[str] | None = None) -> int:
         args.version,
         args.date_stamp,
         args.dist_dir,
+        release_tag=args.release_tag,
     )
     print(f"Checksum 파일: {checksum_path}")
     print(f"릴리스 매니페스트: {manifest_path}")

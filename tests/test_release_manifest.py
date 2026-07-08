@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from backbone_state_tracker.tools.write_release_manifest import (
+    package_date_stamp,
     write_package_checksum,
     write_release_manifest,
 )
@@ -60,6 +61,32 @@ class ReleaseManifestTests(unittest.TestCase):
             self.assertNotIn(f"- Package: {sidecar.name}", content)
             self.assertIn(hashlib.sha256(b"source").hexdigest(), content)
             self.assertIn(hashlib.sha256(b"exe").hexdigest(), content)
+
+    def test_tagged_windows_package_manifest_uses_release_tag(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            release_tag = "v2026.07.08-104830"
+            package = dist / f"backbone_state_tracker_{release_tag}_windows.zip"
+            package.write_bytes(b"windows")
+
+            sidecar = write_package_checksum(
+                package,
+                "0.8.57",
+                generated_at="2026-07-08T10:48:30+09:00",
+            )
+            manifest = write_release_manifest(
+                "backbone_state_tracker",
+                "0.8.57",
+                "20260708",
+                dist,
+                generated_at="2026-07-08T10:48:31+09:00",
+                release_tag=release_tag,
+            )
+
+            self.assertEqual("20260708", package_date_stamp(package))
+            self.assertEqual(f"backbone_state_tracker_{release_tag}_release_manifest.txt", manifest.name)
+            self.assertIn(package.name, manifest.read_text(encoding="utf-8"))
+            self.assertIn("Date stamp = 20260708", sidecar.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

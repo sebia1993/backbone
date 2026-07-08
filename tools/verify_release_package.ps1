@@ -2,7 +2,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Package,
 
-    [ValidateSet("source", "windows_exe", "unknown")]
+    [ValidateSet("source", "windows", "windows_exe", "unknown")]
     [string]$Type = "unknown",
 
     [switch]$RequireManifest
@@ -62,6 +62,9 @@ function Get-PackageType {
     if ($lowerName.EndsWith("_source.zip")) {
         return "source"
     }
+    if ($lowerName.EndsWith("_windows.zip")) {
+        return "windows"
+    }
     if ($lowerName.EndsWith("_windows_exe.zip")) {
         return "windows_exe"
     }
@@ -72,6 +75,9 @@ function Get-ExpectedManifestName {
     param([string]$PackageName)
 
     if ($PackageName -match "^(?<prefix>.+_v\d+\.\d+\.\d+_\d{8})_(source|windows_exe)\.zip$") {
+        return "$($Matches["prefix"])_release_manifest.txt"
+    }
+    if ($PackageName -match "^(?<prefix>.+_v\d{4}\.\d{2}\.\d{2}-\d{6}(?:-\d+)?)_windows\.zip$") {
         return "$($Matches["prefix"])_release_manifest.txt"
     }
     return $null
@@ -235,6 +241,7 @@ $commonRequired = @(
 $sourceRequired = $commonRequired + @(
     "backbone_state_tracker/__init__.py",
     "backbone_state_tracker/app.py",
+    "backbone_state_tracker/webapp_launcher.py",
     "backbone_state_tracker/requirements.txt",
     "backbone_state_tracker/core/__init__.py",
     "backbone_state_tracker/core/analysis_rules.py",
@@ -263,6 +270,7 @@ $sourceRequired = $commonRequired + @(
     "backbone_state_tracker/core/reporter.py",
     "backbone_state_tracker/core/snapshot.py",
     "backbone_state_tracker/core/version.py",
+    "backbone_state_tracker/core/webapp.py",
     "backbone_state_tracker/core/workflow.py",
     "backbone_state_tracker/tools/build_release.ps1",
     "backbone_state_tracker/tools/build_windows_exe.ps1",
@@ -287,15 +295,30 @@ $sourceRequired = $commonRequired + @(
     "backbone_state_tracker/tests/test_release_package_verifier.py",
     "backbone_state_tracker/tests/test_reporter.py",
     "backbone_state_tracker/tests/test_snapshot.py",
+    "backbone_state_tracker/tests/test_webapp.py",
     "backbone_state_tracker/tests/test_workflow.py"
 )
-$exeRequired = $commonRequired + @(
-    "backbone_state_tracker/BackboneStateTracker.exe",
-    "backbone_state_tracker/RUN_FIRST.txt"
+$windowsRequired = @(
+    "backbone_state_tracker/PACKAGE_INFO.txt",
+    "backbone_state_tracker/README_START_HERE_KO.txt",
+    "backbone_state_tracker/gui/BackboneStateTracker.exe",
+    "backbone_state_tracker/gui/README_GUI_KO.txt",
+    "backbone_state_tracker/gui/config/analysis_rules.yaml",
+    "backbone_state_tracker/gui/config/commands.yaml",
+    "backbone_state_tracker/gui/config/devices.example.yaml",
+    "backbone_state_tracker/gui/config/mock_profiles.yaml",
+    "backbone_state_tracker/web/README_WEB_KO.txt",
+    "backbone_state_tracker/web/start_webapp.cmd",
+    "backbone_state_tracker/web/runtime/BackboneWebApp.exe",
+    "backbone_state_tracker/web/config/analysis_rules.yaml",
+    "backbone_state_tracker/web/config/commands.yaml",
+    "backbone_state_tracker/web/config/devices.example.yaml",
+    "backbone_state_tracker/web/config/mock_profiles.yaml"
 )
 $required = switch ($packageType) {
     "source" { $sourceRequired }
-    "windows_exe" { $exeRequired }
+    "windows" { $windowsRequired }
+    "windows_exe" { $windowsRequired }
     default { $commonRequired }
 }
 
@@ -306,6 +329,66 @@ foreach ($entry in $entries) {
         $errors.Add("Duplicate ZIP entry found: $entry")
     } else {
         $entrySet[$entry] = $true
+    }
+}
+
+if ($packageType -eq "windows" -or $packageType -eq "windows_exe") {
+    $windowsAllowedFiles = @(
+        "backbone_state_tracker/PACKAGE_INFO.txt",
+        "backbone_state_tracker/README_START_HERE_KO.txt"
+    )
+    $windowsAllowedPrefixes = @(
+        "backbone_state_tracker/gui/",
+        "backbone_state_tracker/web/"
+    )
+    $windowsForbiddenEntries = @(
+        "backbone_state_tracker/BackboneStateTracker.exe",
+        "backbone_state_tracker/RUN_FIRST.txt",
+        "backbone_state_tracker/README.md",
+        "backbone_state_tracker/RELEASE_NOTES.md",
+        "backbone_state_tracker/CHANGELOG.md",
+        "backbone_state_tracker/app.py",
+        "backbone_state_tracker/webapp_launcher.py"
+    )
+    $windowsForbiddenPatterns = @(
+        "/tests/",
+        "/tools/",
+        "/core/",
+        "/docs/",
+        "/__init__\.py$",
+        "\.sha256(?:\.txt)?$",
+        "(?:^|/)cli[^/]*\.(?:exe|cmd|bat|ps1)$"
+    )
+
+    foreach ($entry in $entries) {
+        $stripped = $entry.TrimEnd("/")
+        if ([string]::IsNullOrWhiteSpace($stripped) -or $stripped -eq "backbone_state_tracker") {
+            continue
+        }
+        if ($windowsForbiddenEntries -contains $stripped) {
+            $errors.Add("Forbidden Windows release ZIP entry found: $stripped")
+            continue
+        }
+        if ($windowsAllowedFiles -contains $stripped) {
+            continue
+        }
+        $hasAllowedPrefix = $false
+        foreach ($prefix in $windowsAllowedPrefixes) {
+            if ($stripped.StartsWith($prefix)) {
+                $hasAllowedPrefix = $true
+                break
+            }
+        }
+        if (-not $hasAllowedPrefix) {
+            $errors.Add("Unexpected Windows release ZIP entry found: $stripped")
+            continue
+        }
+        foreach ($pattern in $windowsForbiddenPatterns) {
+            if ($stripped -match $pattern) {
+                $errors.Add("Forbidden Windows release ZIP entry found: $stripped")
+                break
+            }
+        }
     }
 }
 foreach ($entryError in (Get-ZipEntrySafetyErrors -Entries @($entrySet.Keys))) {

@@ -222,25 +222,24 @@
 - GUI 한글 렌더링 품질을 위해 기본 UI/로그 폰트를 `Malgun Gothic`으로 정리했습니다.
 - 공유 ZIP과 릴리스 ZIP 검증 대상에 `docs/images/` 화면 캡처를 포함했습니다.
 
-## 3. v0.8.57 산출물 이름
+## 3. 현재 GitHub Release 산출물 이름
 
 ```text
-dist\backbone_state_tracker_v0.8.57_20260615_source.zip
-dist\backbone_state_tracker_v0.8.57_20260615_source.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.57_20260615_windows_exe.zip
-dist\backbone_state_tracker_v0.8.57_20260615_windows_exe.zip.sha256.txt
-dist\backbone_state_tracker_v0.8.57_20260615_release_manifest.txt
-dist\backbone_state_tracker_v0.8.57_20260615_verify_release_package.ps1
+backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip
 ```
+
+GitHub Release에 직접 업로드하는 사용자 다운로드 파일은 통합 Windows ZIP 1개입니다. `Source code (zip)` / `Source code (tar.gz)`는 GitHub가 자동으로 표시하는 소스 아카이브이며 실행용 파일이 아닙니다. SHA256 checksum은 Release notes 본문에 기록됩니다.
 
 ## 4. 릴리스 검증 기준
 
-- ZIP 파일명, checksum sidecar, release manifest의 버전과 날짜가 일치해야 합니다.
+- 통합 ZIP 파일명과 release manifest의 태그가 일치해야 합니다.
+- ZIP SHA256 checksum이 Release notes 본문 값과 일치해야 합니다.
 - ZIP 내부는 `backbone_state_tracker/` 루트 아래에 있어야 합니다.
 - `config/devices.yaml`, `outputs/`, `raw/`, `dist/`, `build/`, `.venv/`, `venv/`, `.pytest_cache/`, `.git`, `__pycache__`는 포함하지 않습니다.
-- MD/HTML 문서와 `docs/images/` 화면 캡처가 포함되어야 합니다.
-- 현재 `docs/*.md`, `docs/*.html`, `docs/images/*` 파일 목록과 verifier 필수 목록이 일치해야 합니다.
+- 사용자용 통합 ZIP에는 `README_START_HERE_KO.txt`, `gui/`, `web/`가 포함되어야 합니다.
+- GUI 실행 파일과 웹앱 실행 스크립트, 웹앱 내장 런타임이 포함되어야 합니다.
+- CLI 실행 파일, CLI 전용 안내, 별도 `.sha256` asset은 사용자용 통합 ZIP/Release 업로드에서 제외해야 합니다.
 - Source ZIP에는 현재 `tests/*.py` 회귀 테스트 파일 전체가 포함되어야 합니다.
 - Source ZIP에는 현재 `core/*.py` 런타임 모듈 전체와 `requirements.txt`가 포함되어야 합니다.
 - Source ZIP에는 현재 `tools/*.py`와 `tools/*.ps1` 릴리스 도구 전체가 포함되어야 합니다.
-- 소스 ZIP과 Windows EXE ZIP 모두 Python/PowerShell 검증기를 통과해야 합니다.
+- 사용자용 Windows 통합 ZIP은 Python/PowerShell 검증기를 통과해야 합니다.
