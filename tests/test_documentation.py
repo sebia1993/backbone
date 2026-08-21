@@ -174,7 +174,7 @@ class DocumentationPortabilityTests(unittest.TestCase):
                 "README_START_HERE_KO.txt",
             ),
             "docs/RELEASE_CHECKLIST.html": (
-                f"릴리스 반입 체크리스트 {version}",
+                f"운영 환경 배포 체크리스트 {version}",
                 f"문서 버전: {version}",
                 "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
             ),
@@ -231,6 +231,7 @@ class DocumentationPortabilityTests(unittest.TestCase):
             ),
             "docs/RELEASE_CHECKLIST.html": (
                 "README / Release 문서 최신화 확인",
+                "<code>RELEASE_NOTES.md</code>의 수동 Release notes 형식",
                 "<code>Source code (zip)</code> / <code>Source code (tar.gz)</code>가 실행용 파일이 아니라고 안내",
                 "macOS에서 직접 Windows EXE를 만든다고 설명하지 않습니다.",
             ),
