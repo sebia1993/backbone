@@ -1,143 +1,237 @@
-# 백본 상태 추적기
+# 백본 변경 전·후 상태 검증
 
-버전: `v0.8.57`
+[![PR 빌드 검증](https://github.com/sebia1993/backbone/actions/workflows/pr-build.yml/badge.svg?branch=main)](https://github.com/sebia1993/backbone/actions/workflows/pr-build.yml)
 
-HPE Aruba 계열 백본 3/4호기 상태를 읽기 전용 명령으로 수집하고, 작업 전후 스냅샷을 비교해 장애 징후와 변경점을 추적하는 Windows GUI/웹앱 도구입니다.
+**HPE/Aruba 계열 백본 장비의 상태를 읽기 전용 명령으로 수집하고, 작업 전 기준 스냅샷과 작업 후 스냅샷을 비교해 링크·라우팅·이중화·하드웨어·리소스 변화를 분류하는 Windows 네트워크 운영 검증 도구입니다.**
 
-집에서 개발한 뒤 회사 내부망 PC에 반입해 실행하는 상황을 전제로 합니다. 실제 장비 로그, 내부 IP, 호스트명, 계정 정보는 외부로 반출하지 않고, 필요한 경우 모의 서버와 안전 진단 리포트로 검증합니다.
+단순히 `show` 명령 결과를 저장하는 데서 끝나지 않고, **작업 전후에 무엇이 달라졌는지, 그 변화가 계획된 것인지, 추가 확인이 필요한 위험 신호인지**를 운영자가 빠르게 판단할 수 있도록 설계했습니다.
 
-## 주요 기능
+> 실제 운영망의 IP, Hostname, 계정, 원본 로그와 장비 출력은 공개 저장소에 포함하지 않습니다. 문서와 샘플은 비식별 값만 사용합니다.
 
-- 백본 장비에 SSH로 접속해 `config/commands.yaml`의 읽기 전용 점검 명령만 실행합니다.
-- `show vrrp`를 포함해 VRRP master/backup 상태, 인터페이스, LACP, OSPF, CPU, 메모리, 전원 상태를 점검합니다.
-- 첫 수집 결과를 기준 스냅샷으로 저장하고, 이후 수집 결과와 자동 비교합니다.
-- 비교 결과를 `긴급`, `주의`, `정보`, `변경없음` 상태로 분류합니다.
-- 장비 접속 실패는 여러 명령 실패로 흩어지지 않고 `device_connectivity` 항목 하나로 표시합니다.
-- 실제 장비 없이 샘플 스냅샷과 비교 리포트를 생성해 화면 동작을 확인할 수 있습니다.
-- GitHub Release의 Windows 통합 ZIP에서는 GUI와 로컬 웹앱을 함께 제공합니다.
-- 진단 리포트는 원본 장비 로그 없이 단계별 상태와 `BST-*` 오류 코드만 남깁니다.
-- 장비명, 호스트명, IP, password, token, SNMP community 등 민감정보를 자동 마스킹합니다.
-- Windows 11에서 Python 설치 없이 실행 가능한 통합 ZIP을 생성합니다.
-- 사용자 가이드, 점검 명령어 가이드, 초급 개발자 가이드, 버전 변경내역을 MD/HTML로 제공합니다.
+## 한눈에 보기
+
+| 항목 | 내용 |
+|---|---|
+| 목적 | 백본 변경 작업 전·후 상태 검증 |
+| 수집 방식 | SSH/Telnet 경계, 읽기 전용 명령 |
+| 주요 영역 | Interface, LACP, VLAN, STP, OSPF, VRRP, CPU, Memory, Power/Fan/Alarm, Log |
+| 비교 방식 | 기준 스냅샷과 대상 스냅샷의 구조화 비교 |
+| 결과 분류 | 긴급 / 주의 / 정보 / 변경없음 |
+| 계획 변경 | 작업 단계별 `expected_changes`로 별도 표시 가능 |
+| 접속 실패 | 명령별 실패로 증폭하지 않고 장비 연결 상태 하나로 정리 |
+| 결과물 | Snapshot, 비교 결과, HTML 보고서, 안전 진단 보고서 |
+| 실행 방식 | Windows GUI / 로컬 웹앱 |
+| 장비 변경 | **없음 — 설정 모드와 구성 변경 명령을 사용하지 않음** |
+| 배포 | Windows 통합 ZIP, 최종 사용자 PC에 Python 설치 불필요 |
+
+## 해결하려 한 운영 문제
+
+백본 작업에서는 작업 자체보다 **작업 후 정상 복구를 빠짐없이 확인하는 과정**이 중요합니다. 여러 장비에서 수십 개의 상태 명령을 수동으로 다시 실행하고 작업 전 결과와 비교하면 다음 문제가 생깁니다.
+
+- Interface Down이나 LACP 멤버 감소를 사람이 화면으로 놓칠 수 있음
+- OSPF Neighbor가 `Full`에서 벗어난 상태를 뒤늦게 발견할 수 있음
+- VRRP Master/Backup 역할 이동이 계획된 절체인지 비정상 변화인지 구분이 필요함
+- CPU/Memory가 임계값을 넘었는지 작업 전후 숫자를 직접 비교해야 함
+- Power/Fan/Alarm과 최근 로그를 별도 명령으로 확인해야 함
+- 장비 자체에 접속하지 못한 경우 모든 명령 실패가 반복 표시되어 실제 원인이 흐려질 수 있음
+- 작업 단계상 의도된 OFF/복구 상태도 단순 diff만 보면 장애처럼 보일 수 있음
+- 기준과 비교 시점의 시각·uptime 같은 변동값이 의미 없는 diff를 늘릴 수 있음
+
+이 프로젝트는 **수집 → 정규화 → 상태 판정 → 예상 변경 구분 → 우선순위 정렬 → 보고서**를 하나의 흐름으로 자동화합니다.
+
+## 핵심 설계 판단
+
+| 운영 문제 | 설계 판단 |
+|---|---|
+| 작업 전후 수십 개 명령을 수동 비교 | Snapshot 단위로 결과를 저장하고 동일 장비·명령 ID 기준으로 자동 비교 |
+| 시각·uptime 등 항상 바뀌는 값 | 변동성 높은 행을 정규화해 의미 없는 diff를 줄임 |
+| 장비 접속 실패가 명령 수만큼 반복 표시 | `device_connectivity` 한 항목으로 통합하고 하위 명령 누락 경고를 억제 |
+| Interface Down | 작업 계획에 없는 Down은 긴급 확인 대상으로 분류 |
+| LACP Selected 멤버 감소 | 대역폭·이중화 저하 가능성을 별도 finding으로 분류 |
+| OSPF Neighbor 상태 이탈 | `Full` 상태 이탈을 라우팅 위험 신호로 분리 |
+| VRRP 역할 변화 | Master/Backup·priority 변화를 별도 항목으로 표시 |
+| CPU/Memory 상태 | 고정 임계값을 코드에만 숨기지 않고 `analysis_rules.yaml`에서 관리 |
+| 계획된 장비 OFF/복구 | 작업 단계·장비·명령·요약을 기준으로 `expected_changes` 처리 |
+| 신규 위험 로그 | Down/Failure/Major Alarm 등 위험 키워드와 Warning/Error 계열을 구분 |
+| 실제 운영정보 외부 공유 위험 | 안전 진단에서는 원본 대신 단계·건수·오류 코드 중심으로 기록하고 식별자를 마스킹 |
+
+현재 기본 임계값은 CPU 50% 이상 주의 / 70% 이상 긴급, Memory FreeRatio 40% 이하 주의 / 30% 이하 긴급이며 `config/analysis_rules.yaml`에서 관리합니다.
+
+상세 판정 기준은 [변경 검증 로직](docs/CHANGE_VALIDATION_LOGIC.md)을 참고하십시오.
+
+## 동작 구조
+
+```mermaid
+flowchart LR
+    A["백본 장비"] -->|"읽기 전용 상태 명령"| B["Collector"]
+    B --> C["작업 전 Snapshot"]
+    B --> D["작업 후 Snapshot"]
+
+    C --> E["정규화 / 비교 엔진"]
+    D --> E
+    F["analysis_rules.yaml"] --> E
+
+    E --> G["상태 Finding"]
+    G --> H["긴급 / 주의 / 정보 / 변경없음"]
+    G --> I["예상 변경 / 비예상 변경"]
+
+    H --> J["GUI / Web"]
+    I --> J
+    J --> K["HTML 비교 보고서"]
+```
+
+구성요소별 책임은 [프로그램 구조](docs/ARCHITECTURE.md)에 정리되어 있습니다.
+
+## 수집 범위
+
+기본 명령 세트는 `config/commands.yaml`에서 관리합니다.
+
+| 영역 | 대표 명령 | 확인 목적 |
+|---|---|---|
+| 기본 | `display version`, `display device` | OS/부팅/섀시·모듈 상태 |
+| Interface | `display interface brief` | 포트 Up/Down 변화 |
+| LACP | `display link-aggregation summary/verbose` | 집계 링크와 Selected 멤버 변화 |
+| Switching | `display vlan`, `display stp brief` | VLAN/STP 상태 변화 |
+| Routing | `display ospf peer`, `display ip routing-table protocol ospf` | OSPF 인접·경로 상태 |
+| VRRP | `show vrrp` | Master/Backup과 가상 게이트웨이 역할 |
+| Resource | `display cpu-usage`, `display memory` | CPU/Memory 임계 상태 |
+| Hardware | `display power/fan/environment/alarm` | PSU/Fan/환경/알람 상태 |
+| Log | `display logbuffer` | 작업 시점 신규 위험 로그 |
+
+페이징 해제를 위해 세션 시작 시 `screen-length disable`을 사용할 수 있으며, 설정 변경 명령은 명령 목록에 포함하지 않습니다.
+
+## 작업 전·후 검증 흐름
+
+```text
+1. 작업 전 수집
+       ↓
+2. 기준 Snapshot 확정
+       ↓
+3. 네트워크 작업 수행
+       ↓
+4. 작업 단계별 재수집
+       ↓
+5. 기준 Snapshot과 자동 비교
+       ↓
+6. 긴급/주의 항목 우선 확인
+       ↓
+7. 예상 변경 여부 확인
+       ↓
+8. 최종 복구 Snapshot 재검증
+```
+
+장비를 의도적으로 OFF하는 단계처럼 정상적인 변화가 예상되는 경우에는 `expected_changes` 규칙을 사용해 **“변화가 있다”와 “비정상이다”를 동일시하지 않도록** 설계했습니다.
+
+## 실행 화면
+
+저장소에는 비식별 샘플 데이터로 만든 화면 예시가 포함되어 있습니다.
+
+### 장비 설정 / 수집
+
+![백본 상태 수집 화면](docs/images/settings-collection.png)
+
+### 작업 전후 비교 결과
+
+![백본 상태 비교 결과](docs/images/compare-results.png)
+
+### 작업 단계 기록
+
+![백본 작업 기록](docs/images/work-log.png)
+
+## 실제 장비 없이 검증
+
+GUI 또는 웹앱의 `샘플 검증 생성` 기능으로 실제 장비 접속 없이 Snapshot과 HTML 비교 보고서를 생성할 수 있습니다.
+
+Mock 경계에서는 실제 운영정보를 사용하지 않고 다음과 같은 흐름을 재현할 수 있습니다.
+
+- 정상 기준 상태
+- 계획된 장비 OFF
+- 장비 접속 실패의 단일 connectivity finding
+- 작업 후 접속 복구
+- 링크/라우팅/이중화 변화
+- 비교 보고서 생성
+
+실제 장비 검증과 자동 Mock 검증은 같은 증거 수준으로 표현하지 않습니다. 상세 범위는 [검증 보고서](docs/VALIDATION_REPORT.md)를 참고하십시오.
+
+## 운영 안전 경계
+
+- 장비 설정을 변경하는 명령을 실행하지 않습니다.
+- 장비 계정과 비밀번호를 저장소나 보고서에 기록하지 않습니다.
+- 실제 `config/devices.yaml`은 로컬 전용이며 Git에 포함하지 않습니다.
+- 내부 IP, 실제 장비명, 고객/사이트명, 원본 운영 로그를 공개 문서에 넣지 않습니다.
+- 진단 정보 공유 시 장비명, Hostname, IP, password, token, SNMP community 등 식별정보를 마스킹합니다.
+- 장비 접속 실패는 다른 상태를 추정해서 채우지 않고 해당 시점의 관측 제한으로 처리합니다.
+- 예상 변경 규칙은 실제 장애를 숨기는 용도가 아니라 작업 단계에서 **계획된 변화인지 확인하기 위한 보조 정보**로 사용합니다.
 
 ## 일반 사용자 다운로드
 
-GitHub Release에서는 다음 파일 하나만 다운로드하면 됩니다.
+GitHub **Releases**에서 Windows 통합 ZIP을 사용합니다.
 
 ```text
 backbone_state_tracker_<tag>_windows.zip
 ```
 
-예시:
+압축 해제 후:
 
 ```text
-backbone_state_tracker_v2026.07.08-104830_windows.zip
+GUI:  gui\BackboneStateTracker.exe
+Web:  web\start_webapp.cmd
+주소: http://127.0.0.1:8765/
 ```
 
-`Source code (zip)` / `Source code (tar.gz)`는 GitHub가 자동으로 표시하는 소스 아카이브이며 일반 사용자가 실행할 파일이 아닙니다.
+GitHub의 `Source code (zip)` / `Source code (tar.gz)`는 실행용 Windows 배포 파일이 아닙니다. Release notes의 SHA-256과 다운로드한 ZIP의 해시를 비교할 수 있습니다.
 
-ZIP 압축 해제 후:
+## 개발 및 검증
 
-- GUI: `gui\BackboneStateTracker.exe`를 더블클릭합니다.
-- 웹앱: `web\start_webapp.cmd`를 더블클릭합니다.
-- 웹앱 기본 주소: `http://127.0.0.1:8765/`
-- 웹앱 포트 변경: `web\start_webapp.cmd --port 8777`
-
-최종 사용자용 ZIP에는 CLI 실행 파일과 CLI 전용 안내를 포함하지 않습니다. SHA256 checksum은 Release notes 본문에 기록됩니다.
-
-## 빠른 실행
+소스 실행:
 
 ```powershell
-cd "<backbone_state_tracker가 들어있는 폴더>\backbone_state_tracker"
 python -m pip install -r requirements.txt
 python app.py
 ```
 
-프로그램 첫 화면인 `장비 설정`에서 백본 3/4호기 접속 정보와 계정을 입력합니다. 비밀번호는 설정 파일이나 리포트에 저장하지 않습니다.
-
-## 실제 장비 없이 확인
-
-GUI의 `샘플 검증 생성` 또는 웹앱의 `샘플 검증 생성` 버튼으로 실제 장비 접속 없이 샘플 스냅샷과 HTML 비교 리포트를 만들 수 있습니다.
-
-## 주요 파일
-
-- `config/devices.example.yaml`: 장비 설정 예시입니다. 실제 `config/devices.yaml`은 로컬 전용이며 Git에 포함하지 않습니다.
-- `config/commands.yaml`: 읽기 전용 점검 명령 목록입니다.
-- `config/mock_profiles.yaml`: 실제 장비 없이 검증하는 모의 서버 합성 프로파일입니다.
-- `outputs/snapshots/`: 수집 스냅샷과 비교 결과가 생성되는 로컬 출력 폴더입니다.
-- `RELEASE_NOTES.md`: GitHub Release notes 작성/점검 규칙입니다. 실제 공개 Release body는 GitHub Actions가 자동 생성합니다.
-- `docs/USER_GUIDE.md`: 운영자용 사용자 가이드입니다.
-- `docs/COMMAND_GUIDE.md`: 명령어별 의미와 확인 포인트입니다.
-- `docs/DIAGNOSTIC_MODE_GUIDE.md`: 모의 서버와 현장 진단 모드 사용법입니다.
-- `docs/ERROR_CODE_CATALOG.md`: `BST-*` 오류 코드 의미와 1차 조치 방향입니다.
-- `docs/DEVELOPER_GUIDE_BEGINNER.md`: 초급 개발자를 위한 구조 설명입니다.
-- `docs/VERSION_HISTORY.md`: 버전별 변경내역입니다.
-- `docs/RELEASE_CHECKLIST.md`: 사내 반입 전 검증 체크리스트입니다.
-- `docs/images/`: 사용자 가이드에 들어가는 화면 이미지입니다.
-
-## README / Release 문서 점검 규칙
-
-코드를 GitHub에 올리거나 Release를 만들기 전에는 문서가 현재 코드와 맞는지 먼저 확인합니다.
-
-1. `README.md`의 설치, 실행, 테스트, 빌드, 릴리스 파일 설명이 실제 스크립트와 맞는지 확인합니다.
-2. 릴리스 대상 변경이면 `README.md`, `RELEASE_NOTES.md`, `CHANGELOG.md`를 함께 확인합니다.
-3. 새 기능, 삭제된 기능, 바뀐 파일명, 실행 파일명, 폴더 구조, 요구사항, 제한사항이 있으면 README를 수정합니다.
-4. 실제 코드에 없는 기능은 문서에 적지 않습니다. 아직 만들지 않은 기능은 `미구현` 또는 `예정`으로 구분합니다.
-5. 예시는 `192.0.2.10`, `mock-backbone-3`, `operator` 같은 샘플 값만 사용합니다.
-6. 내부 IP, 실제 장비명, 계정, 비밀번호, 고객명, 실제 로그는 README, RELEASE_NOTES, CHANGELOG에 넣지 않습니다.
-
-Git에 커밋하는 파일과 GitHub Release에 올리는 파일은 다릅니다.
-
-- Git에 커밋: 소스 코드, 테스트, `README.md`, `RELEASE_NOTES.md`, `CHANGELOG.md`, `docs/`, `config/*.example.yaml`, 릴리스 스크립트
-- Git에 커밋하지 않음: `outputs/`, `dist/`, `build/`, `.venv/`, `config/devices.yaml`, 실제 장비 로그
-- 자동 GitHub Release asset: `backbone_state_tracker_<tag>_windows.zip` 1개
-- GitHub 자동 `Source code (zip)` / `Source code (tar.gz)`는 실행용 파일이 아닙니다.
-- SHA256 checksum은 Release notes 본문에 기록하고 별도 `.sha256` asset은 업로드하지 않습니다.
-- Windows 통합 ZIP은 GitHub Actions Windows runner 또는 Windows PC에서 만듭니다. macOS에서 바로 Windows EXE가 만들어진다고 설명하지 않습니다.
-
-## 테스트
+기본 검증:
 
 ```powershell
-cd "<backbone_state_tracker가 들어있는 폴더>\backbone_state_tracker"
 $env:PYTHONPATH=(Split-Path (Get-Location) -Parent)
 python -m unittest discover -s tests
 python app.py --smoke-check
 python webapp_launcher.py --smoke
 ```
 
-## Source ZIP 생성
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\build_release.ps1
-```
-
-Source ZIP은 `dist\`에 생성됩니다. `.git`, 런타임 출력, 로컬 `config\devices.yaml`, 캐시, build 폴더, 가상환경은 포함하지 않습니다.
-
-## Windows 통합 ZIP 생성
+Windows 통합 패키지:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 ```
 
-생성되는 ZIP 이름 예시:
-
-```text
-backbone_state_tracker_v2026.07.08-104830_windows.zip
-```
-
-통합 ZIP 내부 구조:
-
-```text
-README_START_HERE_KO.txt
-gui/
-web/
-```
-
-사내 환경으로 ZIP을 반입한 뒤에는 구조와 SHA256을 다음 명령으로 검증합니다.
+패키지 검증:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\dist\backbone_state_tracker_v2026.07.08-104830_windows.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v2026.07.08-104830_windows.zip --type windows --require-manifest
+python .\tools\verify_release_package.py <ZIP경로> --type windows --require-manifest
 ```
 
-메일 시스템에서 `.exe`, `.py`, `.ps1`이 포함된 ZIP 업로드를 차단할 수 있습니다. 이 경우 사내 승인된 파일 반입 절차를 사용합니다.
+개발 원칙은 [`DEVELOPMENT.md`](DEVELOPMENT.md), Release 운영 기준은 [`RELEASE_NOTES.md`](RELEASE_NOTES.md)를 참고하십시오.
+
+## 문서
+
+| 문서 | 용도 |
+|---|---|
+| [프로그램 구조](docs/ARCHITECTURE.md) | 수집 → Snapshot → Diff → Finding → Report 구조 |
+| [변경 검증 로직](docs/CHANGE_VALIDATION_LOGIC.md) | Interface/LACP/OSPF/VRRP/리소스 및 expected change 판정 |
+| [검증 보고서](docs/VALIDATION_REPORT.md) | 자동 검증과 운영 환경 검증의 증거 경계 |
+| [사용자 가이드](docs/USER_GUIDE.md) | 설치·수집·비교·결과 확인 |
+| [점검 명령 가이드](docs/COMMAND_GUIDE.md) | 명령별 의미와 확인 포인트 |
+| [진단 모드](docs/DIAGNOSTIC_MODE_GUIDE.md) | Mock/안전 진단 사용법 |
+| [오류 코드](docs/ERROR_CODE_CATALOG.md) | `BST-*` 오류 의미와 1차 조치 |
+| [변경 이력](CHANGELOG.md) | 버전별 상세 변경 기록 |
+
+## 현재 범위
+
+이 도구의 비교 결과는 운영자의 변경 검증을 보조하기 위한 것입니다.
+
+- 특정 네트워크 장애의 원인을 자동 확정하지 않습니다.
+- 모든 장비 OS/버전의 출력 형식을 자동으로 보장하지 않습니다.
+- `expected_changes`에 등록되었다는 이유만으로 실제 네트워크 상태를 정상으로 단정하지 않습니다.
+- CPU/Memory 임계값은 환경에 따라 조정이 필요할 수 있습니다.
+- 실제 운영 환경에서는 조직의 변경관리·보안·장비 접근 정책을 우선합니다.
