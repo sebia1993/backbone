@@ -1,12 +1,10 @@
 name: Windows 통합 패키지 릴리스
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   PYTHONPATH: ${{ github.workspace }}
@@ -15,7 +13,7 @@ env:
   PYTHONIOENCODING: "utf-8"
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: backbone-release-manual
   cancel-in-progress: false
 
 defaults:
@@ -27,17 +25,25 @@ jobs:
   release:
     name: 빌드, 검증, 릴리스 게시
     runs-on: windows-latest
-    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 45
+    permissions:
+      contents: write
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
           path: backbone_state_tracker
 
+      - name: Require current main branch
+        run: |
+          if ("${{ github.ref }}" -ne "refs/heads/main") {
+            throw "Release는 main 브랜치에서만 실행할 수 있습니다."
+          }
+
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
           cache: pip
@@ -46,7 +52,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          if ($LASTEXITCODE -ne 0) { throw "pip bootstrap failed." }
           python -m pip install -r requirements.txt
+          if ($LASTEXITCODE -ne 0) { throw "dependency installation failed." }
 
       - name: Create KST release metadata
         id: release_meta
@@ -59,9 +67,8 @@ jobs:
 
           while ($true) {
             $existingTag = git ls-remote --tags origin "refs/tags/$tag"
-            if ([string]::IsNullOrWhiteSpace($existingTag)) {
-              break
-            }
+            if ($LASTEXITCODE -ne 0) { throw "원격 태그를 확인하지 못했습니다." }
+            if ([string]::IsNullOrWhiteSpace($existingTag)) { break }
             $tag = "$baseTag-$suffix"
             $suffix += 1
           }
@@ -86,9 +93,7 @@ jobs:
         run: |
           $expectedName = "backbone_state_tracker_${{ steps.release_meta.outputs.tag }}_windows.zip"
           $zip = Get-ChildItem -LiteralPath dist -Filter $expectedName -File | Select-Object -First 1
-          if (-not $zip) {
-            throw "통합 Windows ZIP이 생성되지 않았습니다: $expectedName"
-          }
+          if (-not $zip) { throw "통합 Windows ZIP이 생성되지 않았습니다: $expectedName" }
 
           $checksum = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip.FullName).Hash.ToLowerInvariant()
           "artifact_path=$($zip.FullName)" >> $env:GITHUB_OUTPUT
@@ -107,59 +112,82 @@ jobs:
             $rangeLabel = "$previousTag 이후"
           } else {
             $commitRange = "HEAD"
-            $rangeLabel = "확인 가능한 전체 커밋"
+            $rangeLabel = "현재 기준"
           }
+          $global:LASTEXITCODE = 0
 
-          $commits = git log --pretty=format:"- %h %s" $commitRange
-          if ([string]::IsNullOrWhiteSpace($commits)) {
-            $commits = "- 커밋 항목을 찾지 못했습니다."
-          }
+          $commits = @(git log --pretty=format:"- %h %s" $commitRange)
+          if (-not $commits) { $commits = @("- 세부 커밋을 찾지 못했습니다.") }
+          $commitText = $commits -join [Environment]::NewLine
 
-          $changeSummaries = git log --pretty=format:"- %s" $commitRange
-          if ([string]::IsNullOrWhiteSpace($changeSummaries)) {
-            $changeSummaries = "- 변경 항목을 찾지 못했습니다."
+          $changedFiles = @(git diff --name-only $commitRange)
+          $areas = New-Object System.Collections.Generic.List[string]
+          function Add-Area([string] $text) {
+            if (-not $script:areas.Contains($text)) { $script:areas.Add($text) }
           }
+          foreach ($file in $changedFiles) {
+            if ($file -like "core/diff_engine.py" -or $file -like "core/analysis_rules.py" -or $file -like "config/analysis_rules.yaml") {
+              Add-Area "- 변경 판정: 작업 전·후 비교, finding 또는 예상 변경 판단이 변경되었습니다."
+            } elseif ($file -like "core/collector.py" -or $file -like "config/commands.yaml") {
+              Add-Area "- 상태 수집: 장비 수집 명령 또는 수집 동작이 변경되었습니다."
+            } elseif ($file -like "core/reporter.py" -or $file -like "core/gui.py" -or $file -eq "app.py") {
+              Add-Area "- 결과 표시: GUI 또는 비교 보고서 동작이 변경되었습니다."
+            } elseif ($file -like "tests/*") {
+              Add-Area "- 검증: 자동 회귀 테스트가 추가 또는 변경되었습니다."
+            } elseif ($file -like "docs/*" -or $file -eq "README.md") {
+              Add-Area "- 문서: 운영·검증·사용 문서가 변경되었습니다."
+            } elseif ($file -like ".github/*" -or $file -like "tools/*") {
+              Add-Area "- 배포/도구: Windows 빌드·검증 또는 Release 자동화가 변경되었습니다."
+            }
+          }
+          if ($areas.Count -eq 0) { Add-Area "- 기타: 저장소 변경 사항이 포함되어 있습니다." }
+          $areaText = $areas -join [Environment]::NewLine
 
           $notesPath = Join-Path $PWD "release_notes.md"
-          $notesLines = @(
-            "${{ steps.release_meta.outputs.tag }} 릴리스입니다.",
-            "",
-            "변경내용:",
-            $changeSummaries,
-            "",
-            "검증:",
-            '- `python -m unittest discover -s tests` 통과',
-            '- `python app.py --smoke-check` 통과',
-            '- `python webapp_launcher.py --smoke` 통과',
-            "- Windows 통합 ZIP 빌드 통과",
-            "- Windows 통합 ZIP 구조 verifier 통과",
-            "- GUI 실행 파일 smoke 검증 통과",
-            "- 웹앱 실행 파일 smoke 검증 통과",
-            "",
-            "빌드:",
-            '- `pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests -ReleaseTag ${{ steps.release_meta.outputs.tag }}` 통과',
-            "",
-            "첨부파일:",
-            "- 통합 Windows ZIP: ``${{ steps.artifact.outputs.artifact_name }}``",
-            "",
-            "실행 방법:",
-            "- GUI: ZIP 압축 해제 후 ``gui\BackboneStateTracker.exe``를 더블클릭합니다.",
-            "- 웹앱: ZIP 압축 해제 후 ``web\start_webapp.cmd``를 더블클릭합니다. 기본 주소는 ``http://127.0.0.1:8765/``입니다.",
-            "- 웹앱 포트 변경: ``web\start_webapp.cmd --port 8777``처럼 실행합니다.",
-            "",
-            "중요 안내:",
-            "- GitHub가 자동으로 표시하는 ``Source code (zip)`` / ``Source code (tar.gz)``는 소스 아카이브이며 일반 사용자 실행 파일이 아닙니다.",
-            "- 사용자 다운로드용 직접 업로드 asset은 위 통합 Windows ZIP 1개입니다.",
-            "",
-            "배포 메타데이터:",
-            "- 브랜치명: ``${{ github.ref_name }}``",
-            "- 기준 커밋 SHA: ``${{ github.sha }}``",
-            "- 통합 ZIP 파일명: ``${{ steps.artifact.outputs.artifact_name }}``",
-            "- SHA256 checksum: ``${{ steps.artifact.outputs.checksum }}``",
-            "- 변경 커밋 목록 ($rangeLabel):",
-            $commits
-          )
-          $notes = $notesLines -join [Environment]::NewLine
+          $notes = @"
+          # 백본 상태 추적기 ${{ steps.release_meta.outputs.tag }}
+
+          백본 작업 전·후 Snapshot을 수집·비교해 Interface, LACP, OSPF, VRRP, 하드웨어와 리소스 상태 변화를 확인하는 Windows 배포본입니다.
+
+          ## 이번 릴리즈
+          $areaText
+
+          ## 운영 영향
+          - 장비 설정 변경 명령을 추가하지 않습니다.
+          - 비교 결과는 변경 검증을 보조하며 장애 원인을 자동 확정하지 않습니다.
+          - `expected_changes`는 계획된 변화의 맥락을 표시할 뿐 실제 finding 근거를 제거하지 않습니다.
+          - 실제 운영망 정보는 Release asset과 notes에 포함하지 않습니다.
+
+          ## 검증 결과
+          - 기준 커밋: `${{ github.sha }}`
+          - `python -m unittest discover -s tests` 통과
+          - GUI source smoke 통과
+          - Webapp source smoke 통과
+          - Windows 통합 ZIP 빌드 통과
+          - 패키지 manifest 및 SHA-256 검증 통과
+
+          ## 다운로드
+          - 일반 사용자용: `${{ steps.artifact.outputs.artifact_name }}`
+          - SHA-256: `${{ steps.artifact.outputs.checksum }}`
+          - GUI: `gui\BackboneStateTracker.exe`
+          - 웹앱: `web\start_webapp.cmd`
+          - GitHub의 Source code ZIP/TAR는 실행용 배포 파일이 아닙니다.
+
+          ## 알려진 범위
+          - 모든 HPE/Aruba 계열 OS 버전의 출력 호환성을 자동 보장하지 않습니다.
+          - CPU/Memory 기본 임계값은 운영 환경에 따라 조정이 필요할 수 있습니다.
+          - 최종 변경 완료 판단은 실제 서비스 상태와 변경 계획을 함께 확인해야 합니다.
+
+          <details>
+          <summary>세부 커밋</summary>
+
+          비교 기준: $rangeLabel
+
+          $commitText
+
+          </details>
+          "@
+          $notes = $notes -replace "(?m)^          ", ""
           Set-Content -LiteralPath $notesPath -Value $notes -Encoding UTF8
           "notes_path=$notesPath" >> $env:GITHUB_OUTPUT
 
