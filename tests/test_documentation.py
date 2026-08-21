@@ -139,7 +139,6 @@ class DocumentationPortabilityTests(unittest.TestCase):
 
     def test_current_version_is_reflected_in_release_documents(self) -> None:
         version = f"v{APP_VERSION}"
-        date_stamp = APP_RELEASE_DATE.replace("-", "")
         expectations = {
             "README.md": (
                 f"버전: `{version}`",
@@ -175,7 +174,7 @@ class DocumentationPortabilityTests(unittest.TestCase):
                 "README_START_HERE_KO.txt",
             ),
             "docs/RELEASE_CHECKLIST.html": (
-                f"릴리스 반입 체크리스트 {version}",
+                f"운영 환경 배포 체크리스트 {version}",
                 f"문서 버전: {version}",
                 "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
             ),
@@ -203,23 +202,22 @@ class DocumentationPortabilityTests(unittest.TestCase):
 
     def test_readme_release_document_update_policy_is_tracked(self) -> None:
         expectations = {
-            "AGENTS.md": (
-                "After code changes, decide whether `README.md`, `RELEASE_NOTES.md`, or",
-                "If features are added, changed, or removed, update `README.md`",
-                "Before any push, pull request, or release",
-                "The current automatic public Release asset is one Windows",
-                "Write README steps for users who are not comfortable with GitHub",
+            "DEVELOPMENT.md": (
+                "변경 후 검증",
+                "Release 원칙",
+                "문서 구조",
+                "자동 테스트 결과를 실제 장비/운영 환경 호환성 증거로 과장하지 않습니다.",
             ),
             "README.md": (
-                "README / Release 문서 점검 규칙",
-                "Git에 커밋하는 파일과 GitHub Release에 올리는 파일은 다릅니다.",
-                "GitHub 자동 `Source code (zip)` / `Source code (tar.gz)`는 실행용 파일이 아닙니다.",
-                "macOS에서 바로 Windows EXE가 만들어진다고 설명하지 않습니다.",
+                "개발 원칙은 [`DEVELOPMENT.md`](DEVELOPMENT.md)",
+                "GitHub의 `Source code (zip)` / `Source code (tar.gz)`는 실행용 Windows 배포 파일이 아닙니다.",
+                "실제 운영망의 IP, Hostname, 계정, 원본 로그와 장비 출력은 공개 저장소에 포함하지 않습니다.",
             ),
             "RELEASE_NOTES.md": (
-                "이 파일은 GitHub Release notes를 수동으로 작성하는 파일이 아닙니다.",
-                "자동 GitHub Release notes 형식",
-                "Git 커밋 파일과 Release asset 구분",
+                "공개 Release는 **문서 수정이나 내부 정리만으로 자동 생성하지 않습니다.**",
+                "Release notes 구성",
+                "배포 산출물",
+                "Windows runner 또는 Windows 환경에서 검증합니다.",
             ),
             "CHANGELOG.md": (
                 "README/Release documentation update rule",
@@ -227,13 +225,13 @@ class DocumentationPortabilityTests(unittest.TestCase):
             ),
             "docs/RELEASE_CHECKLIST.md": (
                 "README / Release 문서 최신화 확인",
-                "`RELEASE_NOTES.md`의 자동 Release notes 형식",
+                "`RELEASE_NOTES.md`의 수동 Release notes 형식",
                 "`Source code (zip)` / `Source code (tar.gz)`가 실행용 파일이 아니라고 안내",
                 "macOS에서 직접 Windows EXE를 만든다고 설명하지 않습니다.",
             ),
             "docs/RELEASE_CHECKLIST.html": (
                 "README / Release 문서 최신화 확인",
-                "<code>RELEASE_NOTES.md</code>의 자동 Release notes 형식",
+                "<code>RELEASE_NOTES.md</code>의 수동 Release notes 형식",
                 "<code>Source code (zip)</code> / <code>Source code (tar.gz)</code>가 실행용 파일이 아니라고 안내",
                 "macOS에서 직접 Windows EXE를 만든다고 설명하지 않습니다.",
             ),
@@ -252,27 +250,24 @@ class DocumentationPortabilityTests(unittest.TestCase):
         workflow = (PROJECT_DIR / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
 
         required_fragments = [
-            "${{ steps.release_meta.outputs.tag }} 릴리스입니다.",
-            "변경내용:",
-            'git log --pretty=format:"- %s" $commitRange',
-            "검증:",
-            "- Windows 통합 ZIP 빌드 통과",
-            "- Windows 통합 ZIP 구조 verifier 통과",
-            "빌드:",
-            "첨부파일:",
-            "- 통합 Windows ZIP:",
-            "실행 방법:",
+            "# 백본 상태 추적기 ${{ steps.release_meta.outputs.tag }}",
+            "## 이번 릴리즈",
+            "## 운영 영향",
+            "## 검증 결과",
+            "## 다운로드",
+            "## 알려진 범위",
+            'git diff --name-only $commitRange',
+            'git log --pretty=format:"- %h %s" $commitRange',
+            "장비 설정 변경 명령을 추가하지 않습니다.",
+            "`expected_changes`는 계획된 변화의 맥락을 표시할 뿐 실제 finding 근거를 제거하지 않습니다.",
+            "패키지 manifest 및 SHA-256 검증 통과",
+            "${{ steps.artifact.outputs.artifact_name }}",
+            "${{ steps.artifact.outputs.checksum }}",
             "gui\\BackboneStateTracker.exe",
             "web\\start_webapp.cmd",
-            "Source code (zip)",
-            "Source code (tar.gz)",
-            "배포 메타데이터:",
-            "- 브랜치명:",
-            "- 기준 커밋 SHA:",
-            "- 통합 ZIP 파일명:",
-            "- SHA256 checksum:",
-            "- 변경 커밋 목록 ($rangeLabel):",
-            'git log --pretty=format:"- %h %s" $commitRange',
+            "Source code ZIP/TAR",
+            "<details>",
+            "<summary>세부 커밋</summary>",
         ]
 
         missing = [fragment for fragment in required_fragments if fragment not in workflow]
@@ -284,20 +279,23 @@ class DocumentationPortabilityTests(unittest.TestCase):
 
         self.assertIn("pull_request:", workflow)
         self.assertIn("contents: read", workflow)
+        self.assertIn("timeout-minutes: 45", workflow)
+        self.assertIn("cancel-in-progress: true", workflow)
+        self.assertIn("persist-credentials: false", workflow)
         self.assertIn("--type windows", workflow)
         self.assertIn("build_windows_exe.ps1 -SkipTests -ReleaseTag", workflow)
         self.assertNotIn("gh release create", workflow)
         self.assertNotIn("contents: write", workflow)
 
-    def test_release_workflow_is_main_push_only_and_uploads_one_direct_asset(self) -> None:
+    def test_release_workflow_is_manual_main_only_and_uploads_one_direct_asset(self) -> None:
         workflow = (PROJECT_DIR / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
 
-        self.assertIn("push:", workflow)
-        self.assertIn("branches:", workflow)
-        self.assertIn("- main", workflow)
-        self.assertIn("permissions:", workflow)
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("push:", workflow)
+        self.assertIn("contents: read", workflow)
         self.assertIn("contents: write", workflow)
-        self.assertIn("if: github.ref == 'refs/heads/main'", workflow)
+        self.assertIn("Require current main branch", workflow)
+        self.assertIn('refs/heads/main', workflow)
         self.assertIn("gh release create", workflow)
         self.assertEqual(1, workflow.count("#${{ steps.artifact.outputs.artifact_name }}"))
         self.assertNotIn("checksum_path", workflow)
