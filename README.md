@@ -2,6 +2,8 @@
 
 [![PR 빌드 검증](https://github.com/sebia1993/backbone/actions/workflows/pr-build.yml/badge.svg?branch=main)](https://github.com/sebia1993/backbone/actions/workflows/pr-build.yml)
 
+버전: `v0.8.57`
+
 **HPE/Aruba 계열 백본 장비의 상태를 읽기 전용 명령으로 수집하고, 작업 전 기준 스냅샷과 작업 후 스냅샷을 비교해 링크·라우팅·이중화·하드웨어·리소스 변화를 분류하는 Windows 네트워크 운영 검증 도구입니다.**
 
 단순히 `show` 명령 결과를 저장하는 데서 끝나지 않고, **작업 전후에 무엇이 달라졌는지, 그 변화가 계획된 것인지, 추가 확인이 필요한 위험 신호인지**를 운영자가 빠르게 판단할 수 있도록 설계했습니다.
@@ -169,6 +171,12 @@ GitHub **Releases**에서 Windows 통합 ZIP을 사용합니다.
 
 ```text
 backbone_state_tracker_<tag>_windows.zip
+```
+
+현재 형식 예시:
+
+```text
+backbone_state_tracker_v2026.07.08-104830_windows.zip
 ```
 
 압축 해제 후:
