@@ -1,8 +1,8 @@
-# 백본 상태 추적기 릴리스 반입 체크리스트
+# 백본 상태 추적기 운영 환경 배포 체크리스트
 
 문서 버전: v0.8.57
 작성일: 2026-06-15
-대상: 사외 개발 ZIP을 사내 환경으로 반입해 검증하는 운영자와 인수자
+대상: 폐쇄망 또는 운영 환경에 Windows 통합 ZIP을 배포·검증하는 운영자와 인수자
 
 ## 1. 수령 파일
 
@@ -87,12 +87,12 @@ python .\tools\verify_release_package.py .\dist\backbone_state_tracker_vYYYY.MM.
 - `비교 결과` 화면에서 `긴급`, `주의`, `정보`, `변경없음` 등급 카드가 상태별 색상과 선택 배경으로 구분되는지 확인합니다.
 - 변경 상세 행을 선택했을 때 `선택 변경 맥락` 패널이 등급, 장비, 명령, 유형, 라인을 표시하는지 확인합니다.
 - `작업 로그` 화면이 어두운 고정폭 로그 표면으로 표시되고 시간/오류/리포트 경로를 읽기 쉬운지 확인합니다.
-- 사용자 가이드의 `docs/images/settings-collection.png`, `docs/images/compare-results.png`, `docs/images/work-log.png`가 현재 v0.8.57 화면과 일치하는지 확인합니다.
+- 사용자 가이드의 `docs/images/settings-collection.png`, `docs/images/compare-results.png`, `docs/images/work-log.png`가 현재 화면과 일치하는지 확인합니다.
 
 ## 7. README / Release 문서 최신화 확인
 
 - `README.md`의 다운로드, GUI 실행, 웹앱 실행, 테스트, 빌드, 사용 방법이 현재 파일과 맞는지 확인합니다.
-- `RELEASE_NOTES.md`의 자동 Release notes 형식과 GitHub Release asset 설명이 현재 workflow와 맞는지 확인합니다.
+- `RELEASE_NOTES.md`의 수동 Release notes 형식과 GitHub Release asset 설명이 현재 workflow와 맞는지 확인합니다.
 - `CHANGELOG.md`에 사용자에게 보이는 변경사항이 빠지지 않았는지 확인합니다.
 - Git에 커밋할 파일과 GitHub Release에 직접 업로드할 통합 ZIP 1개가 구분되어 있는지 확인합니다.
 - Release notes에 `Source code (zip)` / `Source code (tar.gz)`가 실행용 파일이 아니라고 안내되는지 확인합니다.
@@ -100,6 +100,12 @@ python .\tools\verify_release_package.py .\dist\backbone_state_tracker_vYYYY.MM.
 - 내부 IP, 실제 장비명, 계정, 비밀번호, 실제 로그, 고객 정보가 문서에 없는지 확인합니다.
 - Windows 통합 ZIP은 GitHub Actions Windows runner 또는 Windows PC에서 검증해야 하며, macOS에서 직접 Windows EXE를 만든다고 설명하지 않습니다.
 
-## 8. 메일 업로드 차단 시
+## 8. 폐쇄망·운영 환경 배포
 
-일부 메일 시스템은 `.exe`, `.py`, `.ps1`을 포함한 ZIP을 차단할 수 있습니다. 이 경우 ZIP을 메일에 첨부하지 말고 승인된 사내 파일 반입 절차를 사용합니다.
+실행 파일이 포함된 ZIP을 운영 환경으로 전달할 때는 조직에서 승인한 소프트웨어 배포·파일 전달 절차를 사용합니다.
+
+- 전달 전 Release notes의 SHA-256을 확인합니다.
+- 전달 후 수신 환경에서 SHA-256을 다시 계산합니다.
+- 조직 보안 정책에서 허용한 경로에만 압축을 해제합니다.
+- 실제 장비 접속 전 `샘플 검증 생성`과 source/package smoke 결과를 먼저 확인합니다.
+- 실제 장비 정보는 공개 Issue/PR 또는 외부 문서에 복사하지 않습니다.
