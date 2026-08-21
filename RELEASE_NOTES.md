@@ -1,5 +1,7 @@
 # Release 운영 기준
 
+현재 앱 버전: `v0.8.57`
+
 이 문서는 백본 상태 추적기의 공개 Release를 언제 만들고, 무엇을 검증하며, Release notes에 어떤 정보를 먼저 보여줄지 정의합니다.
 
 ## Release 원칙
@@ -25,7 +27,7 @@
 일반 사용자가 직접 받는 Release asset은 Windows 통합 ZIP 하나입니다.
 
 ```text
-backbone_state_tracker_<tag>_windows.zip
+backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip
 ```
 
 ZIP에는 GUI와 로컬 웹앱 실행 환경을 포함합니다.
