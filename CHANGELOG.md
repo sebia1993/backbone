@@ -14,7 +14,7 @@
 - Locked Netmiko 4.7.0, Paramiko 4.0.0, Windows build tools, and all transitive dependencies with hashes.
 - Added Windows regression, smoke, static, dependency-security, SBOM, SHA-256, source-commit manifest, and artifact-attestation release gates.
 - Made Windows and source config packaging exact allowlists so backup keys, credentials, and alternate local inventory names fail verification.
-- Made CycloneDX verification require all 20 name/version pairs from the runtime hash lock and the app release date metadata.
+- Made CycloneDX verification require an attestation-compatible UUID `serialNumber`, all 20 name/version pairs from the runtime hash lock, and the app release date metadata.
 - Classified unknown or changed SSH host keys as `BST-SEC-002` instead of a generic timeout and kept device commands unexecuted.
 - Included the MIT `LICENSE` in the Windows binary ZIP and required it in both package verifiers.
 - Changed the public release contract to four independently verifiable assets: Windows ZIP, SHA-256 sidecar, manifest, and CycloneDX 1.6 SBOM.
