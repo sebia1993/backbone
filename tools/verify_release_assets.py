@@ -6,10 +6,15 @@ import re
 from pathlib import Path
 
 try:
+    from backbone_state_tracker.tools.stamp_sbom_identity import (
+        expected_sbom_serial_number,
+        is_rfc4122_uuid5_urn,
+    )
     from backbone_state_tracker.tools.verify_release_package import (
         verify_release_package,
     )
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
+    from stamp_sbom_identity import expected_sbom_serial_number, is_rfc4122_uuid5_urn
     from verify_release_package import verify_release_package
 
 
@@ -21,12 +26,6 @@ APP_RELEASE_DATE_LINE = re.compile(
     r'^APP_RELEASE_DATE\s*=\s*"(?P<date>\d{4}-\d{2}-\d{2})"$',
     re.MULTILINE,
 )
-CYCLONEDX_SERIAL_NUMBER = re.compile(
-    r"^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-    re.IGNORECASE,
-)
-
-
 def normalize_distribution_name(name: str) -> str:
     return re.sub(r"[-_.]+", "-", name).lower()
 
@@ -72,6 +71,8 @@ def verify_release_assets(
     sbom_path: Path,
     *,
     version: str,
+    repository: str,
+    application: str,
     source_commit: str,
     runtime_lock_path: Path | None = None,
     release_date: str | None = None,
@@ -119,8 +120,18 @@ def verify_release_assets(
     if sbom.get("bomFormat") != "CycloneDX" or sbom.get("specVersion") != "1.6":
         raise ValueError("SBOM must be CycloneDX 1.6 JSON")
     serial_number = sbom.get("serialNumber")
-    if not isinstance(serial_number, str) or CYCLONEDX_SERIAL_NUMBER.fullmatch(serial_number) is None:
-        raise ValueError("SBOM serialNumber must be a URN UUID for GitHub attestation")
+    if not is_rfc4122_uuid5_urn(serial_number):
+        raise ValueError("SBOM serialNumber must be a canonical RFC 4122 UUIDv5 URN")
+    expected_serial_number = expected_sbom_serial_number(
+        repository,
+        application,
+        expected_tag,
+        source_commit,
+    )
+    if serial_number != expected_serial_number:
+        raise ValueError(
+            "SBOM serialNumber does not match application, repository, version, and source commit"
+        )
     bom_version = sbom.get("version")
     if isinstance(bom_version, bool) or not isinstance(bom_version, int) or bom_version < 1:
         raise ValueError("SBOM top-level version must be a positive integer")
@@ -177,6 +188,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--sbom", required=True, type=Path)
     parser.add_argument("--version", required=True)
+    parser.add_argument("--repository", required=True)
+    parser.add_argument("--application", required=True)
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--release-date")
     parser.add_argument(
@@ -191,6 +204,8 @@ def main(argv: list[str] | None = None) -> int:
         args.manifest,
         args.sbom,
         version=args.version,
+        repository=args.repository,
+        application=args.application,
         source_commit=args.source_commit,
         runtime_lock_path=args.runtime_lock,
         release_date=args.release_date,

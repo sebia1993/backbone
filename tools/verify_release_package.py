@@ -106,6 +106,7 @@ SOURCE_REQUIRED = COMMON_REQUIRED | {
     "backbone_state_tracker/core/workflow.py",
     "backbone_state_tracker/tools/build_release.ps1",
     "backbone_state_tracker/tools/build_windows_exe.ps1",
+    "backbone_state_tracker/tools/stamp_sbom_identity.py",
     "backbone_state_tracker/tools/write_release_manifest.py",
     "backbone_state_tracker/tools/verify_release_package.py",
     "backbone_state_tracker/tools/verify_release_package.ps1",

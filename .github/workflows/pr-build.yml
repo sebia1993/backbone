@@ -67,7 +67,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "합성 진단 실패: $LASTEXITCODE" }
           python -m ruff check --select F app.py webapp_launcher.py core tests tools
           if ($LASTEXITCODE -ne 0) { throw "Pyflakes 검사 실패: $LASTEXITCODE" }
-          python -m ruff check --select F,I core/command_safety.py core/collector.py core/preflight.py core/mockserver/runner.py core/mockserver/ssh_server.py tests/test_collection_security.py tests/test_mock_collector_integration.py tests/test_mock_ssh_server.py tests/test_preflight.py tests/test_release_assets.py tests/test_release_package_verifier.py tools/verify_release_assets.py tools/verify_release_package.py tools/write_release_manifest.py
+          python -m ruff check --select F,I core/command_safety.py core/collector.py core/preflight.py core/mockserver/runner.py core/mockserver/ssh_server.py tests/test_collection_security.py tests/test_mock_collector_integration.py tests/test_mock_ssh_server.py tests/test_preflight.py tests/test_release_assets.py tests/test_release_package_verifier.py tools/stamp_sbom_identity.py tools/verify_release_assets.py tools/verify_release_package.py tools/write_release_manifest.py
           if ($LASTEXITCODE -ne 0) { throw "변경 경계 Ruff 검사 실패: $LASTEXITCODE" }
           python -m bandit -q -lll -r app.py webapp_launcher.py core -x tests
           if ($LASTEXITCODE -ne 0) { throw "Bandit 검사 실패: $LASTEXITCODE" }
@@ -81,8 +81,15 @@ jobs:
 
       - name: Generate CycloneDX SBOM
         run: |
-          cyclonedx-py requirements requirements-runtime.lock --spec-version 1.6 --output-format JSON --output-file dist/backbone_state_tracker_v0.9.0_sbom.cdx.json
+          cyclonedx-py requirements requirements-runtime.lock --output-reproducible --spec-version 1.6 --output-format JSON --output-file dist/backbone_state_tracker_v0.9.0_sbom.cdx.json
           if ($LASTEXITCODE -ne 0) { throw "SBOM 생성 실패: $LASTEXITCODE" }
+          python .\tools\stamp_sbom_identity.py `
+            --sbom dist/backbone_state_tracker_v0.9.0_sbom.cdx.json `
+            --repository "${{ github.repository }}" `
+            --application backbone_state_tracker `
+            --version v0.9.0 `
+            --source-commit "${{ github.sha }}"
+          if ($LASTEXITCODE -ne 0) { throw "SBOM 결정 식별자 기록 실패: $LASTEXITCODE" }
 
       - name: Verify candidate assets independently
         run: |
@@ -92,6 +99,8 @@ jobs:
             --manifest dist/backbone_state_tracker_v0.9.0_release_manifest.txt `
             --sbom dist/backbone_state_tracker_v0.9.0_sbom.cdx.json `
             --version v0.9.0 `
+            --repository "${{ github.repository }}" `
+            --application backbone_state_tracker `
             --source-commit "${{ github.sha }}"
           if ($LASTEXITCODE -ne 0) { throw "후보 자산 검증 실패: $LASTEXITCODE" }
 

@@ -42,7 +42,7 @@ backbone_state_tracker_v0.9.0_sbom.cdx.json</code></pre>
 
   <h2>4. 해시와 manifest 검증</h2>
   <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.9.0_windows.zip
-python .\tools\verify_release_assets.py --zip .\backbone_state_tracker_v0.9.0_windows.zip --checksum .\backbone_state_tracker_v0.9.0_windows.zip.sha256.txt --manifest .\backbone_state_tracker_v0.9.0_release_manifest.txt --sbom .\backbone_state_tracker_v0.9.0_sbom.cdx.json --version v0.9.0 --source-commit &lt;40자리커밋&gt;</code></pre>
+python .\tools\verify_release_assets.py --zip .\backbone_state_tracker_v0.9.0_windows.zip --checksum .\backbone_state_tracker_v0.9.0_windows.zip.sha256.txt --manifest .\backbone_state_tracker_v0.9.0_release_manifest.txt --sbom .\backbone_state_tracker_v0.9.0_sbom.cdx.json --version v0.9.0 --repository sebia1993/hpe-comware-change-validator --application backbone_state_tracker --source-commit &lt;40자리커밋&gt;</code></pre>
   <p>검증기는 통합 ZIP 존재 여부, ZIP 크기와 SHA256 일치, <code>README_START_HERE_KO.txt</code>, <code>gui/</code>, <code>web/</code> 필수 파일, GUI 실행 파일, 웹앱 실행 스크립트와 내장 런타임, 공유 가능한 설정 파일, CLI 제외, 금지 경로, 중복 엔트리, manifest 중복 Package 레코드를 확인합니다.</p>
 
   <h2>5. 실행 확인</h2>

@@ -97,7 +97,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "합성 진단 실패: $LASTEXITCODE" }
           python -m ruff check --select F app.py webapp_launcher.py core tests tools
           if ($LASTEXITCODE -ne 0) { throw "Pyflakes 검사 실패: $LASTEXITCODE" }
-          python -m ruff check --select F,I core/command_safety.py core/collector.py core/preflight.py core/mockserver/runner.py core/mockserver/ssh_server.py tests/test_collection_security.py tests/test_mock_collector_integration.py tests/test_mock_ssh_server.py tests/test_preflight.py tests/test_release_assets.py tests/test_release_package_verifier.py tools/verify_release_assets.py tools/verify_release_package.py tools/write_release_manifest.py
+          python -m ruff check --select F,I core/command_safety.py core/collector.py core/preflight.py core/mockserver/runner.py core/mockserver/ssh_server.py tests/test_collection_security.py tests/test_mock_collector_integration.py tests/test_mock_ssh_server.py tests/test_preflight.py tests/test_release_assets.py tests/test_release_package_verifier.py tools/stamp_sbom_identity.py tools/verify_release_assets.py tools/verify_release_package.py tools/write_release_manifest.py
           if ($LASTEXITCODE -ne 0) { throw "변경 경계 Ruff 검사 실패: $LASTEXITCODE" }
           python -m bandit -q -lll -r app.py webapp_launcher.py core -x tests
           if ($LASTEXITCODE -ne 0) { throw "Bandit 검사 실패: $LASTEXITCODE" }
@@ -111,12 +111,22 @@ jobs:
           pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests -ReleaseTag $env:RELEASE_TAG
           if ($LASTEXITCODE -ne 0) { throw "Windows 통합 ZIP 빌드 실패: $LASTEXITCODE" }
 
-      - name: Generate attestation-compatible CycloneDX SBOM
+      - name: Generate reproducible and attestable CycloneDX SBOM
         env:
           SBOM_PATH: ${{ steps.release_meta.outputs.sbom_path }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.release_meta.outputs.tag }}
+          SOURCE_COMMIT: ${{ github.sha }}
         run: |
-          cyclonedx-py requirements requirements-runtime.lock --spec-version 1.6 --output-format JSON --output-file $env:SBOM_PATH
+          cyclonedx-py requirements requirements-runtime.lock --output-reproducible --spec-version 1.6 --output-format JSON --output-file $env:SBOM_PATH
           if ($LASTEXITCODE -ne 0) { throw "SBOM 생성 실패: $LASTEXITCODE" }
+          python .\tools\stamp_sbom_identity.py `
+            --sbom $env:SBOM_PATH `
+            --repository $env:RELEASE_REPOSITORY `
+            --application backbone_state_tracker `
+            --version $env:RELEASE_TAG `
+            --source-commit $env:SOURCE_COMMIT
+          if ($LASTEXITCODE -ne 0) { throw "SBOM 결정 식별자 기록 실패: $LASTEXITCODE" }
 
       - name: Verify release assets independently
         env:
@@ -132,6 +142,8 @@ jobs:
             --manifest $env:MANIFEST_PATH `
             --sbom $env:SBOM_PATH `
             --version $env:RELEASE_TAG `
+            --repository "${{ github.repository }}" `
+            --application backbone_state_tracker `
             --source-commit "${{ github.sha }}"
           if ($LASTEXITCODE -ne 0) { throw "릴리스 자산 묶음 검증 실패: $LASTEXITCODE" }
 

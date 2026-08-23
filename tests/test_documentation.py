@@ -282,6 +282,9 @@ class DocumentationPortabilityTests(unittest.TestCase):
         self.assertIn("--require-hashes", workflow)
         self.assertIn("requirements-windows.lock", workflow)
         self.assertIn("sbom.cdx.json", workflow)
+        self.assertIn("--output-reproducible", workflow)
+        self.assertIn("stamp_sbom_identity.py", workflow)
+        self.assertEqual(2, workflow.count('--source-commit "${{ github.sha }}"'))
         self.assertIn("if ($LASTEXITCODE -ne 0)", workflow)
         self.assertIn("build_windows_exe.ps1 -SkipTests -ReleaseTag", workflow)
         self.assertNotIn("gh release create", workflow)
@@ -301,9 +304,11 @@ class DocumentationPortabilityTests(unittest.TestCase):
             "python -m ruff check --select F app.py webapp_launcher.py core tests tools",
             "python -m bandit -q -lll -r app.py webapp_launcher.py core -x tests",
             "python -m pip_audit -r requirements-runtime.lock --require-hashes",
+            "cyclonedx-py requirements requirements-runtime.lock --output-reproducible",
         )
         for path in workflow_paths:
-            lines = path.read_text(encoding="utf-8").splitlines()
+            workflow_text = path.read_text(encoding="utf-8")
+            lines = workflow_text.splitlines()
             for fragment in command_fragments:
                 index = next(i for i, line in enumerate(lines) if fragment in line)
                 next_line = next(line.strip() for line in lines[index + 1 :] if line.strip())
@@ -311,6 +316,11 @@ class DocumentationPortabilityTests(unittest.TestCase):
                     next_line.startswith("if ($LASTEXITCODE -ne 0)"),
                     f"{path.name}: {fragment} exit code is not checked immediately",
                 )
+            self.assertRegex(
+                workflow_text,
+                r"(?s)python \.\\tools\\stamp_sbom_identity\.py `.*?"
+                r"--source-commit [^\r\n]+\s+if \(\$LASTEXITCODE -ne 0\)",
+            )
 
         build_script = (PROJECT_DIR / "tools" / "build_windows_exe.ps1").read_text(encoding="utf-8")
         for command in (
@@ -368,6 +378,12 @@ class DocumentationPortabilityTests(unittest.TestCase):
         self.assertIn(".sha256.txt", workflow)
         self.assertIn("actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6", workflow)
         self.assertEqual(2, workflow.count("uses: actions/attest@"))
+        self.assertIn("--output-reproducible", workflow)
+        self.assertIn("stamp_sbom_identity.py", workflow)
+        self.assertIn("--application backbone_state_tracker", workflow)
+        self.assertIn("SOURCE_COMMIT: ${{ github.sha }}", workflow)
+        self.assertIn("--source-commit $env:SOURCE_COMMIT", workflow)
+        self.assertIn('--source-commit "${{ github.sha }}"', workflow)
         self.assertIn("Create or validate annotated tag", workflow)
 
     def test_release_docs_do_not_restore_cli_execution_guidance(self) -> None:

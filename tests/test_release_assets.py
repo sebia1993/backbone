@@ -3,10 +3,15 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+import uuid
 from pathlib import Path
 from zipfile import ZipFile
 
 from backbone_state_tracker.tests.test_release_package_verifier import _windows_entries
+from backbone_state_tracker.tools.stamp_sbom_identity import (
+    expected_sbom_serial_number,
+    stamp_sbom_identity,
+)
 from backbone_state_tracker.tools.verify_release_assets import verify_release_assets
 from backbone_state_tracker.tools.write_release_manifest import (
     write_package_checksum,
@@ -14,6 +19,8 @@ from backbone_state_tracker.tools.write_release_manifest import (
 )
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
+REPOSITORY = "sebia1993/hpe-comware-change-validator"
+APPLICATION = "backbone_state_tracker"
 LOCKED_COMPONENTS = {
     "bcrypt": "5.0.0",
     "cffi": "2.1.1",
@@ -38,12 +45,21 @@ LOCKED_COMPONENTS = {
 }
 
 
-def _sbom_payload(components: dict[str, str] | None = None) -> dict[str, object]:
+def _sbom_payload(
+    components: dict[str, str] | None = None,
+    *,
+    source_commit: str = "1" * 40,
+) -> dict[str, object]:
     versions = components if components is not None else LOCKED_COMPONENTS
     return {
         "bomFormat": "CycloneDX",
         "specVersion": "1.6",
-        "serialNumber": "urn:uuid:12345678-1234-5678-9abc-123456789abc",
+        "serialNumber": expected_sbom_serial_number(
+            REPOSITORY,
+            APPLICATION,
+            "v0.9.0",
+            source_commit,
+        ),
         "version": 1,
         "components": [
             {"type": "library", "name": name, "version": version}
@@ -82,6 +98,8 @@ class ReleaseAssetTests(unittest.TestCase):
                 manifest,
                 sbom,
                 version="0.9.0",
+                repository=REPOSITORY,
+                application=APPLICATION,
                 source_commit=source_commit,
                 runtime_lock_path=PROJECT_DIR / "requirements-runtime.lock",
             )
@@ -90,23 +108,99 @@ class ReleaseAssetTests(unittest.TestCase):
         self.assertEqual(summary["sbom_components"], 20)
 
     def test_incomplete_sbom_component_set_fails_closed(self) -> None:
-        payload = _sbom_payload({"netmiko": "4.7.0", "paramiko": "4.0.0"})
+        payload = _sbom_payload(
+            {"netmiko": "4.7.0", "paramiko": "4.0.0"},
+            source_commit="2" * 40,
+        )
         self._assert_invalid_sbom(payload, "component set does not match")
 
     def test_sbom_requires_positive_top_level_version(self) -> None:
-        payload = _sbom_payload()
+        payload = _sbom_payload(source_commit="2" * 40)
         del payload["version"]
         self._assert_invalid_sbom(payload, "top-level version")
 
     def test_sbom_requires_attestation_compatible_serial_number(self) -> None:
-        for serial_number in (None, "not-a-uuid"):
+        for serial_number in (None, "not-a-uuid", f"urn:uuid:{uuid.uuid4()}"):
             with self.subTest(serial_number=serial_number):
-                payload = _sbom_payload()
+                payload = _sbom_payload(source_commit="2" * 40)
                 if serial_number is None:
                     del payload["serialNumber"]
                 else:
                     payload["serialNumber"] = serial_number
-                self._assert_invalid_sbom(payload, "serialNumber must be a URN UUID")
+                self._assert_invalid_sbom(payload, "canonical RFC 4122 UUIDv5 URN")
+
+    def test_sbom_serial_number_must_match_release_source_identity(self) -> None:
+        payload = _sbom_payload(source_commit="2" * 40)
+        payload["serialNumber"] = expected_sbom_serial_number(
+            REPOSITORY,
+            APPLICATION,
+            "v0.9.0",
+            "4" * 40,
+        )
+        self._assert_invalid_sbom(payload, "does not match application, repository, version, and source commit")
+
+    def test_sbom_serial_number_rejects_wrong_release_version(self) -> None:
+        payload = _sbom_payload(source_commit="2" * 40)
+        payload["serialNumber"] = expected_sbom_serial_number(
+            REPOSITORY,
+            APPLICATION,
+            "v0.9.1",
+            "2" * 40,
+        )
+        self._assert_invalid_sbom(payload, "does not match application, repository, version, and source commit")
+
+    def test_reproducible_sbom_gets_the_same_deterministic_serial_number(self) -> None:
+        source_commit = "5" * 40
+        with tempfile.TemporaryDirectory() as temp_dir:
+            sbom = Path(temp_dir) / "sbom.cdx.json"
+            payload = _sbom_payload(source_commit=source_commit)
+            del payload["serialNumber"]
+            sbom.write_text(json.dumps(payload), encoding="utf-8")
+
+            first_serial = stamp_sbom_identity(
+                sbom,
+                repository=REPOSITORY,
+                application=APPLICATION,
+                version="v0.9.0",
+                source_commit=source_commit,
+            )
+            first_bytes = sbom.read_bytes()
+            second_serial = stamp_sbom_identity(
+                sbom,
+                repository=REPOSITORY,
+                application=APPLICATION,
+                version="v0.9.0",
+                source_commit=source_commit,
+            )
+            second_bytes = sbom.read_bytes()
+
+        self.assertEqual(first_serial, second_serial)
+        self.assertEqual(
+            first_serial,
+            expected_sbom_serial_number(REPOSITORY, APPLICATION, "v0.9.0", source_commit),
+        )
+        parsed = uuid.UUID(first_serial.removeprefix("urn:uuid:"))
+        self.assertEqual(parsed.version, 5)
+        self.assertEqual(parsed.variant, uuid.RFC_4122)
+        self.assertEqual(first_bytes, second_bytes)
+
+    def test_sbom_identity_inputs_are_normalized_before_uuid5(self) -> None:
+        mixed_case_commit = "Ab" * 20
+        normalized = expected_sbom_serial_number(
+            REPOSITORY,
+            APPLICATION,
+            "v0.9.0",
+            mixed_case_commit.lower(),
+        )
+        self.assertEqual(
+            normalized,
+            expected_sbom_serial_number(
+                f"  {REPOSITORY.upper()}  ",
+                f"  {APPLICATION.upper()}  ",
+                "  0.9.0  ",
+                f"  {mixed_case_commit}  ",
+            ),
+        )
 
     def test_asset_date_must_match_app_release_date(self) -> None:
         source_commit = "3" * 40
@@ -126,7 +220,7 @@ class ReleaseAssetTests(unittest.TestCase):
                 source_commit=source_commit,
             )
             sbom = dist / "backbone_state_tracker_v0.9.0_sbom.cdx.json"
-            sbom.write_text(json.dumps(_sbom_payload()), encoding="utf-8")
+            sbom.write_text(json.dumps(_sbom_payload(source_commit=source_commit)), encoding="utf-8")
 
             with self.assertRaisesRegex(ValueError, "APP_RELEASE_DATE 20260824"):
                 verify_release_assets(
@@ -135,6 +229,8 @@ class ReleaseAssetTests(unittest.TestCase):
                     manifest,
                     sbom,
                     version="v0.9.0",
+                    repository=REPOSITORY,
+                    application=APPLICATION,
                     source_commit=source_commit,
                     runtime_lock_path=PROJECT_DIR / "requirements-runtime.lock",
                 )
@@ -166,6 +262,8 @@ class ReleaseAssetTests(unittest.TestCase):
                     manifest,
                     sbom,
                     version="v0.9.0",
+                    repository=REPOSITORY,
+                    application=APPLICATION,
                     source_commit=source_commit,
                     runtime_lock_path=PROJECT_DIR / "requirements-runtime.lock",
                 )
