@@ -111,11 +111,11 @@ jobs:
           pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1 -SkipTests -ReleaseTag $env:RELEASE_TAG
           if ($LASTEXITCODE -ne 0) { throw "Windows 통합 ZIP 빌드 실패: $LASTEXITCODE" }
 
-      - name: Generate reproducible CycloneDX SBOM
+      - name: Generate attestation-compatible CycloneDX SBOM
         env:
           SBOM_PATH: ${{ steps.release_meta.outputs.sbom_path }}
         run: |
-          cyclonedx-py requirements requirements-runtime.lock --output-reproducible --spec-version 1.6 --output-format JSON --output-file $env:SBOM_PATH
+          cyclonedx-py requirements requirements-runtime.lock --spec-version 1.6 --output-format JSON --output-file $env:SBOM_PATH
           if ($LASTEXITCODE -ne 0) { throw "SBOM 생성 실패: $LASTEXITCODE" }
 
       - name: Verify release assets independently

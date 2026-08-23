@@ -43,6 +43,7 @@ def _sbom_payload(components: dict[str, str] | None = None) -> dict[str, object]
     return {
         "bomFormat": "CycloneDX",
         "specVersion": "1.6",
+        "serialNumber": "urn:uuid:12345678-1234-5678-9abc-123456789abc",
         "version": 1,
         "components": [
             {"type": "library", "name": name, "version": version}
@@ -96,6 +97,16 @@ class ReleaseAssetTests(unittest.TestCase):
         payload = _sbom_payload()
         del payload["version"]
         self._assert_invalid_sbom(payload, "top-level version")
+
+    def test_sbom_requires_attestation_compatible_serial_number(self) -> None:
+        for serial_number in (None, "not-a-uuid"):
+            with self.subTest(serial_number=serial_number):
+                payload = _sbom_payload()
+                if serial_number is None:
+                    del payload["serialNumber"]
+                else:
+                    payload["serialNumber"] = serial_number
+                self._assert_invalid_sbom(payload, "serialNumber must be a URN UUID")
 
     def test_asset_date_must_match_app_release_date(self) -> None:
         source_commit = "3" * 40

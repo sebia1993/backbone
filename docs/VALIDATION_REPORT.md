@@ -23,7 +23,7 @@
 | Webapp Source smoke | ✅ PR Validation | `python webapp_launcher.py --smoke` |
 | Windows 통합 ZIP 생성 | ✅ GitHub Actions | Windows runner |
 | Windows ZIP manifest/SHA 검증 | ✅ GitHub Actions | Package/asset verifier |
-| CycloneDX SBOM | ✅ GitHub Actions | CycloneDX 1.6 필수 필드와 runtime lock 20개 전체 name/version 검증 |
+| CycloneDX SBOM | ✅ GitHub Actions | CycloneDX 1.6 `serialNumber`와 runtime lock 20개 전체 name/version 검증 |
 | Build provenance/SBOM 증명 | ✅ GitHub Actions | GitHub artifact attestation |
 | 실제 장비/OS별 출력 호환성 | 별도 현장 증거 | 공개 원문은 저장하지 않음 |
 
@@ -106,7 +106,7 @@ python webapp_launcher.py --smoke
 python app.py --diagnose --self-check
 ```
 
-PR Validation에서는 hash lock으로 의존성을 설치한 Windows runner에서 회귀·smoke·합성 진단·Ruff·Bandit·의존성 감사를 실행합니다. 이어 통합 ZIP과 CycloneDX 1.6 SBOM을 만들고 `tools/verify_release_assets.py`로 ZIP 구조, SHA-256, manifest source commit, SBOM 고정 버전을 다시 확인합니다.
+PR Validation에서는 hash lock으로 의존성을 설치한 Windows runner에서 회귀·smoke·합성 진단·Ruff·Bandit·의존성 감사를 실행합니다. 이어 통합 ZIP과 CycloneDX 1.6 SBOM을 만들고 `tools/verify_release_assets.py`로 ZIP 구조, SHA-256, manifest source commit, SBOM 고정 버전과 GitHub attestation에 필요한 UUID `serialNumber`를 다시 확인합니다.
 
 공개 근거는 자동/Mock/Windows CI 범위로 제한합니다. 기존 화면 이미지는 합성 샘플을 사용했으며 v0.9.0의 새 보안 경계 화면을 별도 브라우저 캡처로 재검증한 근거는 아닙니다.
 

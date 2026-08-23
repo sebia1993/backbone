@@ -81,7 +81,7 @@ jobs:
 
       - name: Generate CycloneDX SBOM
         run: |
-          cyclonedx-py requirements requirements-runtime.lock --output-reproducible --spec-version 1.6 --output-format JSON --output-file dist/backbone_state_tracker_v0.9.0_sbom.cdx.json
+          cyclonedx-py requirements requirements-runtime.lock --spec-version 1.6 --output-format JSON --output-file dist/backbone_state_tracker_v0.9.0_sbom.cdx.json
           if ($LASTEXITCODE -ne 0) { throw "SBOM 생성 실패: $LASTEXITCODE" }
 
       - name: Verify candidate assets independently

@@ -21,6 +21,10 @@ APP_RELEASE_DATE_LINE = re.compile(
     r'^APP_RELEASE_DATE\s*=\s*"(?P<date>\d{4}-\d{2}-\d{2})"$',
     re.MULTILINE,
 )
+CYCLONEDX_SERIAL_NUMBER = re.compile(
+    r"^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
 
 
 def normalize_distribution_name(name: str) -> str:
@@ -114,6 +118,9 @@ def verify_release_assets(
         raise ValueError("SBOM root must be a JSON object")
     if sbom.get("bomFormat") != "CycloneDX" or sbom.get("specVersion") != "1.6":
         raise ValueError("SBOM must be CycloneDX 1.6 JSON")
+    serial_number = sbom.get("serialNumber")
+    if not isinstance(serial_number, str) or CYCLONEDX_SERIAL_NUMBER.fullmatch(serial_number) is None:
+        raise ValueError("SBOM serialNumber must be a URN UUID for GitHub attestation")
     bom_version = sbom.get("version")
     if isinstance(bom_version, bool) or not isinstance(bom_version, int) or bom_version < 1:
         raise ValueError("SBOM top-level version must be a positive integer")
@@ -157,6 +164,7 @@ def verify_release_assets(
         "version": expected_tag,
         "source_commit": source_commit,
         "release_date": expected_date,
+        "sbom_serial_number": serial_number,
         "sbom_components": len(components),
         "package_warnings": list(package.warnings),
     }
