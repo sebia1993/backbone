@@ -77,7 +77,7 @@ function Get-ExpectedManifestName {
     if ($PackageName -match "^(?<prefix>.+_v\d+\.\d+\.\d+_\d{8})_(source|windows_exe)\.zip$") {
         return "$($Matches["prefix"])_release_manifest.txt"
     }
-    if ($PackageName -match "^(?<prefix>.+_v\d{4}\.\d{2}\.\d{2}-\d{6}(?:-\d+)?)_windows\.zip$") {
+    if ($PackageName -match "^(?<prefix>.+_v(?:\d+\.\d+\.\d+(?:-rc\.\d+)?|\d{4}\.\d{2}\.\d{2}-\d{6}(?:-\d+)?))_windows\.zip$") {
         return "$($Matches["prefix"])_release_manifest.txt"
     }
     return $null
@@ -99,6 +99,12 @@ function Get-PackageIdentity {
         return @{
             Version = "v$($Matches["version"])"
             DateStamp = $Matches["date"]
+        }
+    }
+    if ($PackageName -match "^(?<project>.+)_v(?<version>\d+\.\d+\.\d+(?:-rc\.\d+)?)_windows\.zip$") {
+        return @{
+            Version = "v$($Matches["version"])"
+            DateStamp = $null
         }
     }
     return $null
@@ -201,7 +207,7 @@ if (-not (Test-Path -LiteralPath $sidecarPath)) {
             $errors.Add("Checksum sidecar version mismatch for ${packageName}: expected $($packageIdentity.Version), sidecar $sidecarVersion")
         }
     }
-    if ($dateStampMatch.Success -and $packageIdentity) {
+    if ($dateStampMatch.Success -and $packageIdentity -and -not [string]::IsNullOrWhiteSpace($packageIdentity.DateStamp)) {
         $sidecarDateStamp = $dateStampMatch.Groups["date"].Value
         if ($sidecarDateStamp -ne $packageIdentity.DateStamp) {
             $errors.Add("Checksum sidecar date mismatch for ${packageName}: expected $($packageIdentity.DateStamp), sidecar $sidecarDateStamp")
@@ -217,6 +223,7 @@ $commonRequired = @(
     "backbone_state_tracker/config/analysis_rules.yaml",
     "backbone_state_tracker/config/commands.yaml",
     "backbone_state_tracker/config/devices.example.yaml",
+    "backbone_state_tracker/config/known_hosts.example",
     "backbone_state_tracker/config/mock_profiles.yaml",
     "backbone_state_tracker/docs/ARCHITECTURE.md",
     "backbone_state_tracker/docs/CHANGE_VALIDATION_LOGIC.md",
@@ -245,10 +252,17 @@ $sourceRequired = $commonRequired + @(
     "backbone_state_tracker/__init__.py",
     "backbone_state_tracker/app.py",
     "backbone_state_tracker/webapp_launcher.py",
+    "backbone_state_tracker/LICENSE",
+    "backbone_state_tracker/SECURITY.md",
+    "backbone_state_tracker/DEVELOPMENT.md",
     "backbone_state_tracker/requirements.txt",
+    "backbone_state_tracker/requirements-dev.txt",
+    "backbone_state_tracker/requirements-runtime.lock",
+    "backbone_state_tracker/requirements-windows.lock",
     "backbone_state_tracker/core/__init__.py",
     "backbone_state_tracker/core/analysis_rules.py",
     "backbone_state_tracker/core/collector.py",
+    "backbone_state_tracker/core/command_safety.py",
     "backbone_state_tracker/core/config.py",
     "backbone_state_tracker/core/connectivity.py",
     "backbone_state_tracker/core/diagnostics/__init__.py",
@@ -280,8 +294,10 @@ $sourceRequired = $commonRequired + @(
     "backbone_state_tracker/tools/write_release_manifest.py",
     "backbone_state_tracker/tools/verify_release_package.py",
     "backbone_state_tracker/tools/verify_release_package.ps1",
+    "backbone_state_tracker/tools/verify_release_assets.py",
     "backbone_state_tracker/tests/test_analysis_rules.py",
     "backbone_state_tracker/tests/test_cli_output_encoding.py",
+    "backbone_state_tracker/tests/test_collection_security.py",
     "backbone_state_tracker/tests/test_diagnostics_codes.py",
     "backbone_state_tracker/tests/test_diagnostics_report.py",
     "backbone_state_tracker/tests/test_diff_engine.py",
@@ -295,6 +311,7 @@ $sourceRequired = $commonRequired + @(
     "backbone_state_tracker/tests/test_preflight.py",
     "backbone_state_tracker/tests/test_redaction.py",
     "backbone_state_tracker/tests/test_release_manifest.py",
+    "backbone_state_tracker/tests/test_release_assets.py",
     "backbone_state_tracker/tests/test_release_package_verifier.py",
     "backbone_state_tracker/tests/test_reporter.py",
     "backbone_state_tracker/tests/test_snapshot.py",
@@ -304,11 +321,13 @@ $sourceRequired = $commonRequired + @(
 $windowsRequired = @(
     "backbone_state_tracker/PACKAGE_INFO.txt",
     "backbone_state_tracker/README_START_HERE_KO.txt",
+    "backbone_state_tracker/LICENSE",
     "backbone_state_tracker/gui/BackboneStateTracker.exe",
     "backbone_state_tracker/gui/README_GUI_KO.txt",
     "backbone_state_tracker/gui/config/analysis_rules.yaml",
     "backbone_state_tracker/gui/config/commands.yaml",
     "backbone_state_tracker/gui/config/devices.example.yaml",
+    "backbone_state_tracker/gui/config/known_hosts.example",
     "backbone_state_tracker/gui/config/mock_profiles.yaml",
     "backbone_state_tracker/web/README_WEB_KO.txt",
     "backbone_state_tracker/web/start_webapp.cmd",
@@ -316,7 +335,15 @@ $windowsRequired = @(
     "backbone_state_tracker/web/config/analysis_rules.yaml",
     "backbone_state_tracker/web/config/commands.yaml",
     "backbone_state_tracker/web/config/devices.example.yaml",
+    "backbone_state_tracker/web/config/known_hosts.example",
     "backbone_state_tracker/web/config/mock_profiles.yaml"
+)
+$sourceConfigAllowed = @(
+    "backbone_state_tracker/config/analysis_rules.yaml",
+    "backbone_state_tracker/config/commands.yaml",
+    "backbone_state_tracker/config/devices.example.yaml",
+    "backbone_state_tracker/config/known_hosts.example",
+    "backbone_state_tracker/config/mock_profiles.yaml"
 )
 $required = switch ($packageType) {
     "source" { $sourceRequired }
@@ -336,13 +363,12 @@ foreach ($entry in $entries) {
 }
 
 if ($packageType -eq "windows" -or $packageType -eq "windows_exe") {
-    $windowsAllowedFiles = @(
-        "backbone_state_tracker/PACKAGE_INFO.txt",
-        "backbone_state_tracker/README_START_HERE_KO.txt"
-    )
-    $windowsAllowedPrefixes = @(
-        "backbone_state_tracker/gui/",
-        "backbone_state_tracker/web/"
+    $windowsAllowedDirectories = @(
+        "backbone_state_tracker/gui",
+        "backbone_state_tracker/gui/config",
+        "backbone_state_tracker/web",
+        "backbone_state_tracker/web/config",
+        "backbone_state_tracker/web/runtime"
     )
     $windowsForbiddenEntries = @(
         "backbone_state_tracker/BackboneStateTracker.exe",
@@ -353,16 +379,6 @@ if ($packageType -eq "windows" -or $packageType -eq "windows_exe") {
         "backbone_state_tracker/app.py",
         "backbone_state_tracker/webapp_launcher.py"
     )
-    $windowsForbiddenPatterns = @(
-        "/tests/",
-        "/tools/",
-        "/core/",
-        "/docs/",
-        "/__init__\.py$",
-        "\.sha256(?:\.txt)?$",
-        "(?:^|/)cli[^/]*\.(?:exe|cmd|bat|ps1)$"
-    )
-
     foreach ($entry in $entries) {
         $stripped = $entry.TrimEnd("/")
         if ([string]::IsNullOrWhiteSpace($stripped) -or $stripped -eq "backbone_state_tracker") {
@@ -372,25 +388,17 @@ if ($packageType -eq "windows" -or $packageType -eq "windows_exe") {
             $errors.Add("Forbidden Windows release ZIP entry found: $stripped")
             continue
         }
-        if ($windowsAllowedFiles -contains $stripped) {
+        if ($windowsRequired -contains $stripped -or $windowsAllowedDirectories -contains $stripped) {
             continue
         }
-        $hasAllowedPrefix = $false
-        foreach ($prefix in $windowsAllowedPrefixes) {
-            if ($stripped.StartsWith($prefix)) {
-                $hasAllowedPrefix = $true
-                break
-            }
-        }
-        if (-not $hasAllowedPrefix) {
-            $errors.Add("Unexpected Windows release ZIP entry found: $stripped")
-            continue
-        }
-        foreach ($pattern in $windowsForbiddenPatterns) {
-            if ($stripped -match $pattern) {
-                $errors.Add("Forbidden Windows release ZIP entry found: $stripped")
-                break
-            }
+        $errors.Add("Unexpected Windows release ZIP entry found: $stripped")
+    }
+}
+if ($packageType -eq "source") {
+    foreach ($entry in $entries) {
+        $stripped = $entry.TrimEnd("/")
+        if ($stripped.StartsWith("backbone_state_tracker/config/") -and $sourceConfigAllowed -notcontains $stripped) {
+            $errors.Add("Unexpected source config ZIP entry found: $stripped")
         }
     }
 }
@@ -413,6 +421,7 @@ $forbiddenPatterns = @(
     "/venv/",
     "/\.pytest_cache/",
     "/config/devices\.yaml$",
+    "/config/known_hosts$",
     "__pycache__",
     "\.pyc$",
     "\.spec$"
@@ -462,7 +471,10 @@ if ([string]::IsNullOrWhiteSpace($manifestName)) {
             }
             if (-not $manifestDateMatch.Success) {
                 $errors.Add("Release manifest does not contain a Date stamp line: $manifestName")
-            } elseif ($manifestDateMatch.Groups["date"].Value -ne $packageIdentity.DateStamp) {
+            } elseif (
+                -not [string]::IsNullOrWhiteSpace($packageIdentity.DateStamp) -and
+                $manifestDateMatch.Groups["date"].Value -ne $packageIdentity.DateStamp
+            ) {
                 $errors.Add("Release manifest date mismatch for ${packageName}: expected $($packageIdentity.DateStamp), manifest $($manifestDateMatch.Groups["date"].Value)")
             }
         }

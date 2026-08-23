@@ -1,8 +1,8 @@
 # 백본 변경 전·후 상태 검증
 
-[![PR 빌드 검증](https://github.com/sebia1993/backbone/actions/workflows/pr-build.yml/badge.svg?branch=main)](https://github.com/sebia1993/backbone/actions/workflows/pr-build.yml)
+[![Windows 검증](https://github.com/sebia1993/hpe-comware-change-validator/actions/workflows/pr-build.yml/badge.svg?branch=main)](https://github.com/sebia1993/hpe-comware-change-validator/actions/workflows/pr-build.yml)
 
-버전: `v0.8.57`
+버전: `v0.9.0`
 
 **HPE/Aruba 계열 백본 장비의 상태를 읽기 전용 명령으로 수집하고, 작업 전 기준 스냅샷과 작업 후 스냅샷을 비교해 링크·라우팅·이중화·하드웨어·리소스 변화를 분류하는 Windows 네트워크 운영 검증 도구입니다.**
 
@@ -15,7 +15,7 @@
 | 항목 | 내용 |
 |---|---|
 | 목적 | 백본 변경 작업 전·후 상태 검증 |
-| 수집 방식 | SSH/Telnet 경계, 읽기 전용 명령 |
+| 수집 방식 | SSH 전용, 승인된 호스트 키, 읽기 전용 명령 |
 | 주요 영역 | Interface, LACP, VLAN, STP, OSPF, VRRP, CPU, Memory, Power/Fan/Alarm, Log |
 | 비교 방식 | 기준 스냅샷과 대상 스냅샷의 구조화 비교 |
 | 결과 분류 | 긴급 / 주의 / 정보 / 변경없음 |
@@ -23,7 +23,7 @@
 | 접속 실패 | 명령별 실패로 증폭하지 않고 장비 연결 상태 하나로 정리 |
 | 결과물 | Snapshot, 비교 결과, HTML 보고서, 안전 진단 보고서 |
 | 실행 방식 | Windows GUI / 로컬 웹앱 |
-| 장비 변경 | **없음 — 설정 모드와 구성 변경 명령을 사용하지 않음** |
+| 장비 변경 | **없음 — 허용된 조회 명령만 접속 직전에 재검증** |
 | 배포 | Windows 통합 ZIP, 최종 사용자 PC에 Python 설치 불필요 |
 
 ## 해결하려 한 운영 문제
@@ -157,26 +157,34 @@ Mock 경계에서는 실제 운영정보를 사용하지 않고 다음과 같은
 
 ## 운영 안전 경계
 
-- 장비 설정을 변경하는 명령을 실행하지 않습니다.
+- 명령은 Network 연결보다 먼저 중앙 안전 경계에서 NFKC 정규화·ASCII 제한·길이 제한·단일 명령 allowlist를 모두 통과해야 합니다.
+- `display`, `show`, 제한된 페이징 제어 외 명령은 차단하며, 파이프·리디렉션·명령 연결·제어 문자·Unicode 우회 입력은 **접속 전에 실패**합니다.
+- 장비 타입은 SSH 기반 `hp_comware`만 허용합니다. Telnet이나 알 수 없는 타입으로 안전 정책을 우회하지 않습니다.
+- 별도 채널로 확인한 공개 호스트 키가 `config/known_hosts`에 없거나, 파일이 비어 있거나, 주석뿐이거나, 형식이 잘못되면 접속하지 않습니다.
+- Netmiko는 strict host-key 검증을 사용하고 `ssh-rsa` 호스트 키와 사용자 공개키 인증 알고리즘을 모두 비활성화합니다.
 - 장비 계정과 비밀번호를 저장소나 보고서에 기록하지 않습니다.
 - 실제 `config/devices.yaml`은 로컬 전용이며 Git에 포함하지 않습니다.
+- 실제 `config/known_hosts`도 로컬 신뢰 정보이므로 Git과 배포 ZIP에 포함하지 않습니다. 배포에는 설명용 `known_hosts.example`만 포함합니다.
+- Windows/source 패키징은 공유 가능한 config 5개만 명시적으로 복사·허용하며 backup key, credentials, 로컬 inventory 대체명은 검증에서 거부합니다.
 - 내부 IP, 실제 장비명, 고객/사이트명, 원본 운영 로그를 공개 문서에 넣지 않습니다.
 - 진단 정보 공유 시 장비명, Hostname, IP, password, token, SNMP community 등 식별정보를 마스킹합니다.
 - 장비 접속 실패는 다른 상태를 추정해서 채우지 않고 해당 시점의 관측 제한으로 처리합니다.
 - 예상 변경 규칙은 실제 장애를 숨기는 용도가 아니라 작업 단계에서 **계획된 변화인지 확인하기 위한 보조 정보**로 사용합니다.
+
+첫 실제 수집 전에는 [보안 정책과 호스트 키 등록 절차](SECURITY.md)를 따라 `gui\config\known_hosts`를 준비해야 합니다. `ssh-keyscan` 결과만으로 키를 신뢰하지 말고 장비 콘솔·관리 시스템 등 독립 채널의 fingerprint와 대조하십시오.
 
 ## 일반 사용자 다운로드
 
 GitHub **Releases**에서 Windows 통합 ZIP을 사용합니다.
 
 ```text
-backbone_state_tracker_<tag>_windows.zip
+backbone_state_tracker_v0.9.0_windows.zip
 ```
 
 현재 형식 예시:
 
 ```text
-backbone_state_tracker_v2026.07.08-104830_windows.zip
+backbone_state_tracker_v0.9.0_windows.zip
 ```
 
 압축 해제 후:
@@ -187,14 +195,14 @@ Web:  web\start_webapp.cmd
 주소: http://127.0.0.1:8765/
 ```
 
-GitHub의 `Source code (zip)` / `Source code (tar.gz)`는 실행용 Windows 배포 파일이 아닙니다. Release notes의 SHA-256과 다운로드한 ZIP의 해시를 비교할 수 있습니다.
+GitHub의 `Source code (zip)` / `Source code (tar.gz)`는 실행용 Windows 배포 파일이 아닙니다. ZIP, `.sha256.txt`, release manifest, CycloneDX SBOM은 서로 독립된 Release asset입니다. ZIP build provenance와 ZIP에 연결된 SBOM attestation도 함께 검증할 수 있습니다.
 
 ## 개발 및 검증
 
 소스 실행:
 
 ```powershell
-python -m pip install -r requirements.txt
+python -m pip install --require-hashes -r requirements-windows.lock
 python app.py
 ```
 
@@ -216,7 +224,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 패키지 검증:
 
 ```powershell
-python .\tools\verify_release_package.py <ZIP경로> --type windows --require-manifest
+python .\tools\verify_release_assets.py --zip <ZIP경로> --checksum <SHA파일> --manifest <매니페스트> --sbom <SBOM> --version v0.9.0 --source-commit <40자리커밋>
 ```
 
 개발 원칙은 [`DEVELOPMENT.md`](DEVELOPMENT.md), Release 운영 기준은 [`RELEASE_NOTES.md`](RELEASE_NOTES.md)를 참고하십시오.
@@ -232,6 +240,7 @@ python .\tools\verify_release_package.py <ZIP경로> --type windows --require-ma
 | [점검 명령 가이드](docs/COMMAND_GUIDE.md) | 명령별 의미와 확인 포인트 |
 | [진단 모드](docs/DIAGNOSTIC_MODE_GUIDE.md) | Mock/안전 진단 사용법 |
 | [오류 코드](docs/ERROR_CODE_CATALOG.md) | `BST-*` 오류 의미와 1차 조치 |
+| [보안 정책](SECURITY.md) | 명령 안전 경계, 호스트 키 등록, CVE 보완통제와 검토 기한 |
 | [변경 이력](CHANGELOG.md) | 버전별 상세 변경 기록 |
 
 ## 현재 범위
@@ -243,3 +252,6 @@ python .\tools\verify_release_package.py <ZIP경로> --type windows --require-ma
 - `expected_changes`에 등록되었다는 이유만으로 실제 네트워크 상태를 정상으로 단정하지 않습니다.
 - CPU/Memory 임계값은 환경에 따라 조정이 필요할 수 있습니다.
 - 실제 운영 환경에서는 조직의 변경관리·보안·장비 접근 정책을 우선합니다.
+- 화면 자료와 자동 검증 결과는 합성/Mock/CI 근거이며 실제 운영 장비 검증이나 현장 성과 수치를 뜻하지 않습니다.
+
+MIT License로 공개합니다. 자세한 조건은 [LICENSE](LICENSE)를 확인하십시오.

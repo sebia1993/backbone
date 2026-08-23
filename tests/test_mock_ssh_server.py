@@ -6,7 +6,6 @@ from pathlib import Path
 from backbone_state_tracker.core.mockserver.profiles import load_mock_profile
 from backbone_state_tracker.core.mockserver.ssh_server import SshMockServer
 
-
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 PROFILE_PATH = PROJECT_DIR / "config" / "mock_profiles.yaml"
 
@@ -21,7 +20,8 @@ class MockSshServerTests(unittest.TestCase):
         profile = load_mock_profile(PROFILE_PATH, "normal")
         with SshMockServer(profile) as server:
             client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.get_host_keys().add(server.known_hosts_name, server.host_key.get_name(), server.host_key)
+            client.set_missing_host_key_policy(paramiko.RejectPolicy())
             try:
                 client.connect(
                     server.host,

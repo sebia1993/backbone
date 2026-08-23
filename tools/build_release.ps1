@@ -9,13 +9,23 @@ $ProjectName = "backbone_state_tracker"
 $ParentDir = Split-Path $ProjectRoot -Parent
 $DistDir = Join-Path $ProjectRoot "dist"
 $VersionFile = Join-Path $ProjectRoot "core\version.py"
+$ShareableConfigPaths = @(
+    "config\analysis_rules.yaml",
+    "config\commands.yaml",
+    "config\devices.example.yaml",
+    "config\known_hosts.example",
+    "config\mock_profiles.yaml"
+)
 
 $versionText = Get-Content -LiteralPath $VersionFile -Raw
 if ($versionText -notmatch 'APP_VERSION\s*=\s*"([^"]+)"') {
     throw "Unable to read APP_VERSION from $VersionFile"
 }
 $Version = $Matches[1]
-$DateStamp = Get-Date -Format "yyyyMMdd"
+if ($versionText -notmatch 'APP_RELEASE_DATE\s*=\s*"(\d{4})-(\d{2})-(\d{2})"') {
+    throw "Unable to read APP_RELEASE_DATE from $VersionFile"
+}
+$DateStamp = "$($Matches[1])$($Matches[2])$($Matches[3])"
 $ZipName = "${ProjectName}_v${Version}_${DateStamp}_source.zip"
 $ZipPath = Join-Path $DistDir $ZipName
 
@@ -31,7 +41,9 @@ function Invoke-Validation {
         Push-Location $ProjectRoot
         try {
             python -m unittest discover -s tests
+            if ($LASTEXITCODE -ne 0) { throw "Unit tests failed with exit code $LASTEXITCODE" }
             python app.py --smoke-check
+            if ($LASTEXITCODE -ne 0) { throw "GUI smoke check failed with exit code $LASTEXITCODE" }
         } finally {
             Pop-Location
         }
@@ -55,7 +67,11 @@ function Test-ExcludedPath {
         }
     }
 
-    if (-not $IsDirectory -and $normalized -eq "config\devices.yaml") {
+    if ($normalized -eq "config") {
+        return $false
+    }
+
+    if ($normalized.StartsWith("config\") -and $ShareableConfigPaths -notcontains $normalized) {
         return $true
     }
 
@@ -171,6 +187,7 @@ try {
 - dist
 - build
 - 내부 장비 정보가 들어갈 수 있는 로컬 config\devices.yaml
+- 로컬에서 승인한 SSH 공개 호스트 키 config\known_hosts
 - Python 캐시와 가상환경
 
 검증 방법:
@@ -198,6 +215,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $PowerShellVerifierSource = Join-Path $ProjectRoot "tools\verify_release_package.ps1"
+$PowerShellExecutable = (Get-Process -Id $PID).Path
+& $PowerShellExecutable -NoLogo -NoProfile -ExecutionPolicy Bypass -File $PowerShellVerifierSource -Package $ZipPath -Type source -RequireManifest
+if ($LASTEXITCODE -ne 0) {
+    throw "PowerShell release package verification failed with exit code $LASTEXITCODE"
+}
 $PowerShellVerifierTarget = Join-Path $DistDir "${ProjectName}_v${Version}_${DateStamp}_verify_release_package.ps1"
 Copy-Item -LiteralPath $PowerShellVerifierSource -Destination $PowerShellVerifierTarget -Force
 Update-LatestReleaseArtifacts -ProjectName $ProjectName -Version $Version -DateStamp $DateStamp -DistDir $DistDir

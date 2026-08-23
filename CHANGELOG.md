@@ -2,12 +2,23 @@
 
 ## Unreleased
 
-- Added a local webapp runtime path that can be packaged and started from `web/start_webapp.cmd` with a smoke check.
-- Changed the public GitHub Release contract to upload one Windows integrated ZIP containing only `gui/` and `web/` user runtimes.
-- Excluded CLI executables, CLI-specific guidance, and `.sha256` sidecar assets from the final user-facing Release ZIP/upload flow while keeping SHA256 in Release notes.
-- Added a tracked README/Release documentation update rule so README, RELEASE_NOTES, and CHANGELOG are checked before GitHub push or Release work.
-- Added `RELEASE_NOTES.md` as the repository checklist for automated GitHub Release notes format, release assets, and sensitive-information exclusions.
-- Clarified that Windows EXE ZIP validation belongs to GitHub Actions Windows runner or a Windows workstation, not local macOS packaging.
+- 현재 예정된 변경이 없습니다.
+
+## v0.9.0 - 2026-08-24
+
+- Added one central fail-closed command canonicalization boundary immediately before any `ConnectHandler` call.
+- Restricted collection to `hp_comware` over SSH and rejected chained, redirected, piped, non-ASCII, control-character, overlong, and unknown commands before connection.
+- Required a parseable local `known_hosts` file with at least one approved key and enabled strict host-key verification.
+- Disabled `ssh-rsa` host keys and user public-key authentication algorithms as a compensating control for CVE-2026-44405, with a documented 2026-09-30 review deadline.
+- Replaced RSA-based mock SSH host keys and permissive client setup with ECDSA and explicit reject policy, removing the two CodeQL host-key data flows.
+- Locked Netmiko 4.7.0, Paramiko 4.0.0, Windows build tools, and all transitive dependencies with hashes.
+- Added Windows regression, smoke, static, dependency-security, SBOM, SHA-256, source-commit manifest, and artifact-attestation release gates.
+- Made Windows and source config packaging exact allowlists so backup keys, credentials, and alternate local inventory names fail verification.
+- Made CycloneDX verification require all 20 name/version pairs from the runtime hash lock and the app release date metadata.
+- Classified unknown or changed SSH host keys as `BST-SEC-002` instead of a generic timeout and kept device commands unexecuted.
+- Included the MIT `LICENSE` in the Windows binary ZIP and required it in both package verifiers.
+- Changed the public release contract to four independently verifiable assets: Windows ZIP, SHA-256 sidecar, manifest, and CycloneDX 1.6 SBOM.
+- Added MIT license, Korean security/release guidance, and explicit synthetic/CI evidence limitations.
 
 ## v0.8.57 - 2026-06-15
 

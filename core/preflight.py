@@ -1,25 +1,14 @@
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 
+from .command_safety import (
+    SUPPORTED_DEVICE_TYPES,
+    CommandSafetyError,
+    canonicalize_command,
+)
 from .models import CommandSpec, Device
 
-
-WRITE_COMMAND_PATTERNS = (
-    re.compile(r"(?i)\b(system-view|configure terminal|conf t)\b"),
-    re.compile(
-        r"(?i)^\s*(save|reboot|delete|format|reset|undo|shutdown|interface|vlan|ospf|"
-        r"ip\s+route|snmp-agent|local-user|acl|line|user-interface)\b"
-    ),
-)
-COMMAND_CHAIN_PATTERN = re.compile(r"(;|&&|\|\|)")
-READ_ONLY_PREFIXES = (
-    "display ",
-    "show ",
-    "screen-length disable",
-    "terminal length ",
-)
 DOCUMENTATION_HOST_PREFIXES = ("192.0.2.", "198.51.100.", "203.0.113.")
 
 
@@ -85,8 +74,16 @@ def validate_devices(devices: list[Device], result: PreflightResult) -> None:
             result.add("error", "device", "장비 IP/호스트에 공백이 있습니다.", f"device={name or '-'} host={host}")
         if not 1 <= int(device.port) <= 65535:
             result.add("error", "device", "장비 포트 범위가 올바르지 않습니다.", f"{name or host}: {device.port}")
-        if not device.device_type.strip():
+        device_type = device.device_type.strip().lower()
+        if not device_type:
             result.add("error", "device", "장비 타입이 비어 있습니다.", f"device={name or host or '-'}")
+        elif device_type not in SUPPORTED_DEVICE_TYPES:
+            result.add(
+                "error",
+                "device",
+                "지원하지 않는 장비 타입입니다.",
+                f"{name or host or '-'}: SSH 전용 hp_comware만 허용",
+            )
         if host.startswith(DOCUMENTATION_HOST_PREFIXES) or host.endswith(".example.com"):
             result.add("warning", "device", "예시용 주소가 설정되어 있습니다.", f"{name or host}: {host}")
         if name:
@@ -132,16 +129,15 @@ def validate_commands(commands: list[CommandSpec], result: PreflightResult) -> N
 
 
 def validate_command_safety(command: CommandSpec, result: PreflightResult) -> None:
-    command_text = " ".join(command.command.strip().split())
-    lowered = command_text.lower()
-    for pattern in WRITE_COMMAND_PATTERNS:
-        if pattern.search(command_text):
-            result.add("error", "command", "변경성 명령으로 보이는 항목이 있습니다.", f"{command.id}: {command_text}")
-            return
-    if COMMAND_CHAIN_PATTERN.search(command_text):
-        result.add("warning", "command", "명령 체이닝 문자가 포함되어 있습니다.", f"{command.id}: {command_text}")
-    if not lowered.startswith(READ_ONLY_PREFIXES):
-        result.add("warning", "command", "읽기 전용 여부를 확인해야 하는 명령입니다.", f"{command.id}: {command_text}")
+    try:
+        canonicalize_command(command.command)
+    except CommandSafetyError as exc:
+        result.add(
+            "error",
+            "command",
+            "읽기 전용 안전 경계를 통과하지 못한 명령이 있습니다.",
+            f"{command.id}: {exc}",
+        )
 
 
 def preflight_summary_text(result: PreflightResult) -> str:

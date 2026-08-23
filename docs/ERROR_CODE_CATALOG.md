@@ -1,7 +1,7 @@
 # 백본 상태 추적기 오류 코드 카탈로그
 
-문서 버전: v0.8.57  
-작성일: 2026-06-15  
+문서 버전: v0.9.0
+작성일: 2026-08-24
 대상: 현장 운영자, 외부 개발자, 장애 분석 담당자
 
 이 문서는 원본 장비 로그 없이 오류 코드만으로 원인 범위를 좁히기 위한 기준입니다. 외부로 문의할 때는 실제 IP, 호스트명, 장비명, 계정, 원본 명령 출력을 보내지 말고 `diagnostic_ticket.txt`의 코드와 단계만 전달합니다.
@@ -15,8 +15,8 @@ BST-AREA-NNN
 | 구간 | 의미 |
 | --- | --- |
 | `BST-CFG-1xxx` | 설정 파일, 대상 장비, 명령 정의 |
-| `BST-SEC-2xxx` | 민감정보, 마스킹, 외부 반출 안전성 |
-| `BST-CON-3xxx` | SSH/Telnet/TCP 접속 |
+| `BST-SEC-0xx/2xx` | 수집 안전 경계, 민감정보, 마스킹, 외부 반출 안전성 |
+| `BST-CON-3xxx` | SSH/TCP 접속 (`BST-CON-303`은 레거시/Mock 전용) |
 | `BST-COL-4xxx` | 명령 실행, 수집 타임아웃, 부분 수집 |
 | `BST-DIF-5xxx` | 스냅샷 비교와 기준 스냅샷 |
 | `BST-REP-6xxx` | 안전 리포트 생성 |
@@ -32,12 +32,14 @@ BST-AREA-NNN
 | `BST-CFG-102` | `COMMAND_CONFIG_MISSING` | 긴급 | config | 명령 설정 파일이 없습니다. | 반입 ZIP에 `config/commands.yaml`이 포함됐는지 확인합니다. |
 | `BST-CFG-121` | `UNSAFE_COMMAND_BLOCKED` | 긴급 | config | 쓰기/변경 가능성이 있는 명령이 차단됐습니다. | 명령 목록에서 해당 명령을 제거하고 읽기 전용 명령만 사용합니다. |
 | `BST-CFG-122` | `ANALYSIS_RULES_INVALID` | 긴급 | config | 분석 규칙 파일을 읽거나 해석할 수 없습니다. | `config/analysis_rules.yaml` 형식과 포함 여부를 확인합니다. |
+| `BST-SEC-001` | `COLLECTION_BOUNDARY_BLOCKED` | 긴급 | security | 명령, 장비 타입 또는 SSH 호스트 키가 중앙 안전 경계를 통과하지 못했습니다. | 명령 allowlist와 `SECURITY.md`의 known_hosts 등록 절차를 확인하며 정책을 낮추지 않습니다. |
+| `BST-SEC-002` | `SSH_HOST_KEY_REJECTED` | 긴급 | security | SSH 서버 키가 미등록 상태이거나 승인된 키와 일치하지 않아 연결을 차단했습니다. | 키를 자동 교체하지 말고 별도 채널의 fingerprint와 변경 사유를 확인합니다. |
 | `BST-SEC-201` | `SECRET_REDACTED` | 정보 | security | 민감정보가 저장 전 마스킹됐습니다. | 정상 동작입니다. 생성된 안전 리포트만 공유합니다. |
 | `BST-SEC-211` | `DEVICE_ALIAS_APPLIED` | 정보 | security | 장비, 호스트, 주소 값이 alias로 치환됐습니다. | 외부 문의 시 alias만 전달하고 실제 매핑은 내부에만 둡니다. |
 | `BST-CON-301` | `TCP_TIMEOUT` | 긴급 | connection | TCP 연결 시간이 초과됐습니다. | 장비 전원, 관리망, 방화벽, 포트 번호를 현장에서 확인합니다. |
 | `BST-CON-302` | `SSH_AUTH_FAILED` | 긴급 | connection | SSH 인증에 실패했습니다. | 계정, 암호, SSH 권한, 장비 로그인 정책을 확인합니다. |
-| `BST-CON-303` | `TELNET_LOGIN_FAILED` | 긴급 | connection | Telnet 로그인에 실패했습니다. | 계정, 암호, Telnet 접근 정책, 접속 방식을 확인합니다. |
-| `BST-CON-304` | `CONNECTION_REFUSED` | 긴급 | connection | 원격 포트가 연결을 거부했습니다. | SSH/Telnet 서비스 활성화와 포트 번호를 확인합니다. |
+| `BST-CON-303` | `TELNET_LOGIN_FAILED` | 긴급 | connection | 레거시/Mock Telnet 로그인에 실패했습니다. | v0.9.0 실제 수집은 SSH 전용이므로 이 코드가 실제 수집에서 보이면 패키지 버전을 확인합니다. |
+| `BST-CON-304` | `CONNECTION_REFUSED` | 긴급 | connection | 원격 포트가 연결을 거부했습니다. | SSH 서비스 활성화와 포트 번호를 확인합니다. |
 | `BST-COL-401` | `COMMAND_TIMEOUT` | 주의 | collection | 명령이 제한시간 안에 응답하지 않았습니다. | 장비 부하, 명령 실행 시간, timeout 값을 확인합니다. |
 | `BST-COL-411` | `DEVICE_PARTIAL_COLLECTION` | 주의 | collection | 일부 명령만 수집됐습니다. | 실패한 명령 코드와 장비 상태를 확인한 뒤 재진단합니다. |
 | `BST-DIF-501` | `BASELINE_NOT_FOUND` | 주의 | diff | 비교 기준 스냅샷이 없습니다. | 작업 전 기준 스냅샷을 먼저 생성합니다. |
@@ -51,7 +53,7 @@ BST-AREA-NNN
 ## 외부 문의 예시
 
 ```text
-앱: 백본 상태 추적기 v0.8.57
+앱: 백본 상태 추적기 v0.9.0
 코드: BST-CON-301
 단계: network
 장비 alias: DEV-001

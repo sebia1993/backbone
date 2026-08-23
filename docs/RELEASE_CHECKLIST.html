@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>백본 상태 추적기 운영 환경 배포 체크리스트 v0.8.57</title>
+  <title>백본 상태 추적기 운영 환경 배포 체크리스트 v0.9.0</title>
   <style>
     body { font-family: "Malgun Gothic", Arial, sans-serif; margin: 32px; color: #1f2933; line-height: 1.6; }
     h1, h2 { color: #102a43; }
@@ -12,38 +12,43 @@
 </head>
 <body>
   <h1>백본 상태 추적기 운영 환경 배포 체크리스트</h1>
-  <p>문서 버전: v0.8.57<br>작성일: 2026-06-15<br>대상: 폐쇄망 또는 운영 환경에 Windows 통합 ZIP을 배포·검증하는 운영자와 인수자</p>
+  <p>문서 버전: v0.9.0<br>작성일: 2026-08-24<br>대상: 폐쇄망 또는 운영 환경에 Windows 통합 ZIP을 배포·검증하는 운영자와 인수자</p>
 
   <h2>1. 수령 파일</h2>
-  <pre><code>backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip</code></pre>
-  <p>GitHub가 자동으로 표시하는 <code>Source code (zip)</code> / <code>Source code (tar.gz)</code>는 소스 아카이브이며 일반 사용자가 실행할 파일이 아닙니다. SHA256 checksum은 Release notes 본문에서 확인합니다.</p>
+  <pre><code>backbone_state_tracker_v0.9.0_windows.zip
+backbone_state_tracker_v0.9.0_windows.zip.sha256.txt
+backbone_state_tracker_v0.9.0_release_manifest.txt
+backbone_state_tracker_v0.9.0_sbom.cdx.json</code></pre>
+  <p>GitHub가 자동으로 표시하는 <code>Source code (zip)</code> / <code>Source code (tar.gz)</code>는 소스 아카이브이며 일반 사용자가 실행할 파일이 아닙니다. 네 자산을 함께 검증하고 ZIP build provenance와 ZIP 대상 SBOM attestation도 확인합니다.</p>
 
   <h2>2. ZIP 내부 필수 확인</h2>
   <ul>
-    <li><code>README_START_HERE_KO.txt</code>, <code>PACKAGE_INFO.txt</code></li>
+    <li><code>README_START_HERE_KO.txt</code>, <code>PACKAGE_INFO.txt</code>, <code>LICENSE</code> (MIT 허가 고지)</li>
     <li><code>gui/BackboneStateTracker.exe</code>, <code>gui/README_GUI_KO.txt</code></li>
-    <li><code>gui/config/commands.yaml</code>, <code>gui/config/devices.example.yaml</code></li>
+    <li><code>gui/config/commands.yaml</code>, <code>gui/config/devices.example.yaml</code>, <code>gui/config/known_hosts.example</code></li>
     <li><code>web/start_webapp.cmd</code>, <code>web/runtime/BackboneWebApp.exe</code>, <code>web/README_WEB_KO.txt</code></li>
-    <li><code>web/config/commands.yaml</code>, <code>web/config/devices.example.yaml</code></li>
+    <li><code>web/config/commands.yaml</code>, <code>web/config/devices.example.yaml</code>, <code>web/config/known_hosts.example</code></li>
   </ul>
 
   <h2>3. 포함되면 안 되는 항목</h2>
   <ul>
     <li><code>.git/</code>, <code>outputs/</code>, <code>raw/</code>, <code>dist/</code>, <code>build/</code></li>
     <li><code>.venv/</code>, <code>venv/</code>, <code>.pytest_cache/</code></li>
-    <li><code>config/devices.yaml</code>, <code>__pycache__/</code>, <code>.pyc</code>, <code>.spec</code></li>
+    <li><code>config/devices.yaml</code>, <code>config/known_hosts</code>, <code>known_hosts.backup</code>, <code>credentials.yaml</code>, <code>devices.local.yaml</code> 등 allowlist 밖의 config 파일</li>
+    <li><code>__pycache__/</code>, <code>.pyc</code>, <code>.spec</code></li>
     <li>루트의 <code>BackboneStateTracker.exe</code>, <code>RUN_FIRST.txt</code>, CLI 실행 파일 또는 CLI 전용 안내 파일</li>
     <li>별도 <code>.sha256</code> 파일, 소스 <code>app.py</code>, <code>core/</code>, <code>tests/</code>, <code>tools/</code>, <code>docs/</code></li>
   </ul>
 
   <h2>4. 해시와 manifest 검증</h2>
-  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip --type windows --require-manifest</code></pre>
+  <pre><code>Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.9.0_windows.zip
+python .\tools\verify_release_assets.py --zip .\backbone_state_tracker_v0.9.0_windows.zip --checksum .\backbone_state_tracker_v0.9.0_windows.zip.sha256.txt --manifest .\backbone_state_tracker_v0.9.0_release_manifest.txt --sbom .\backbone_state_tracker_v0.9.0_sbom.cdx.json --version v0.9.0 --source-commit &lt;40자리커밋&gt;</code></pre>
   <p>검증기는 통합 ZIP 존재 여부, ZIP 크기와 SHA256 일치, <code>README_START_HERE_KO.txt</code>, <code>gui/</code>, <code>web/</code> 필수 파일, GUI 실행 파일, 웹앱 실행 스크립트와 내장 런타임, 공유 가능한 설정 파일, CLI 제외, 금지 경로, 중복 엔트리, manifest 중복 Package 레코드를 확인합니다.</p>
 
   <h2>5. 실행 확인</h2>
   <ul>
     <li>통합 ZIP을 별도 폴더에 해제하고 <code>README_START_HERE_KO.txt</code>를 확인합니다.</li>
+    <li>별도 채널로 확인한 fingerprint와 일치하는 키만 <code>gui\config\known_hosts</code>에 등록합니다. <code>known_hosts.example</code>의 주석만 복사하면 수집은 차단됩니다.</li>
     <li>GUI는 <code>gui\BackboneStateTracker.exe</code>를 실행합니다.</li>
     <li>첫 화면이 <code>장비 설정</code>이고 좌측 메뉴가 <code>장비 설정</code>, <code>비교 결과</code>, <code>작업 로그</code> 순서인지 확인합니다.</li>
     <li><code>샘플 검증 생성</code>으로 실제 장비 접속 없이 리포트 생성이 되는지 확인합니다.</li>
@@ -58,7 +63,7 @@ python .\tools\verify_release_package.py .\dist\backbone_state_tracker_vYYYY.MM.
     <li><code>비교 결과</code> 화면에서 <code>긴급</code>, <code>주의</code>, <code>정보</code>, <code>변경없음</code> 등급 카드가 상태별 색상과 선택 배경으로 구분되는지 확인합니다.</li>
     <li>변경 상세 행을 선택했을 때 <code>선택 변경 맥락</code> 패널이 등급, 장비, 명령, 유형, 라인을 표시하는지 확인합니다.</li>
     <li><code>작업 로그</code> 화면이 어두운 고정폭 로그 표면으로 표시되고 시간/오류/리포트 경로를 읽기 쉬운지 확인합니다.</li>
-    <li>사용자 가이드의 <code>docs/images/settings-collection.png</code>, <code>docs/images/compare-results.png</code>, <code>docs/images/work-log.png</code>가 현재 v0.8.57 화면과 일치하는지 확인합니다.</li>
+    <li><code>docs/images/settings-collection.png</code>, <code>docs/images/compare-results.png</code>, <code>docs/images/work-log.png</code>는 비식별 합성 UI 자료입니다. v0.9.0 보안 릴리스에서 브라우저 기반 시각 재검증을 수행한 근거로 사용하지 않습니다.</li>
   </ul>
 
   <h2>7. README / Release 문서 최신화 확인</h2>
@@ -66,7 +71,7 @@ python .\tools\verify_release_package.py .\dist\backbone_state_tracker_vYYYY.MM.
     <li><code>README.md</code>의 다운로드, GUI 실행, 웹앱 실행, 테스트, 빌드, 사용 방법이 현재 파일과 맞는지 확인합니다.</li>
     <li><code>RELEASE_NOTES.md</code>의 수동 Release notes 형식과 GitHub Release asset 설명이 현재 workflow와 맞는지 확인합니다.</li>
     <li><code>CHANGELOG.md</code>에 사용자에게 보이는 변경사항이 빠지지 않았는지 확인합니다.</li>
-    <li>Git에 커밋할 파일과 GitHub Release에 직접 업로드할 통합 ZIP 1개가 구분되어 있는지 확인합니다.</li>
+    <li>Git에 커밋할 파일과 GitHub Release에 직접 업로드할 ZIP/SHA/manifest/SBOM 4개가 구분되어 있는지 확인합니다.</li>
     <li>Release notes에 <code>Source code (zip)</code> / <code>Source code (tar.gz)</code>가 실행용 파일이 아니라고 안내되는지 확인합니다.</li>
     <li>CLI 실행 방법이 README, Release notes, ZIP 안내서에 남아 있지 않은지 확인합니다.</li>
     <li>내부 IP, 실제 장비명, 계정, 비밀번호, 실제 로그, 고객 정보가 문서에 없는지 확인합니다.</li>
@@ -81,6 +86,7 @@ python .\tools\verify_release_package.py .\dist\backbone_state_tracker_vYYYY.MM.
     <li>조직 보안 정책에서 허용한 경로에만 압축을 해제합니다.</li>
     <li>실제 장비 접속 전 <code>샘플 검증 생성</code>과 source/package smoke 결과를 먼저 확인합니다.</li>
     <li>실제 장비 정보는 공개 Issue/PR 또는 외부 문서에 복사하지 않습니다.</li>
+    <li><code>gh attestation verify</code>로 다운로드한 ZIP의 저장소와 workflow provenance를 확인합니다.</li>
   </ul>
 </body>
 </html>

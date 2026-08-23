@@ -172,7 +172,7 @@ class ReportWriter:
     def _write_xlsx(self, path: Path, summary: DiffSummary) -> bool:
         try:
             from openpyxl import Workbook
-            from openpyxl.styles import Alignment, Font, PatternFill
+            from openpyxl.styles import Alignment, PatternFill
         except ImportError:  # pragma: no cover
             return False
 

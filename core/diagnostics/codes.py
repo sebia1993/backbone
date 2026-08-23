@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-
 CODE_PATTERN = re.compile(r"^BST-[A-Z]{3,4}-\d{3}$")
 SEVERITY_LABELS = {
     "Critical": "긴급",
@@ -76,6 +75,22 @@ _CODE_LIST = (
         "config/analysis_rules.yaml 형식과 포함 여부를 확인한 뒤 패키지를 다시 검증하세요.",
     ),
     DiagnosticCode(
+        "BST-SEC-001",
+        "COLLECTION_BOUNDARY_BLOCKED",
+        "Critical",
+        "security",
+        "명령, 장비 타입 또는 SSH 호스트 키 파일이 중앙 안전 경계를 통과하지 못했습니다.",
+        "명령 allowlist와 SECURITY.md의 known_hosts 등록 절차를 확인하며 정책을 낮추지 마세요.",
+    ),
+    DiagnosticCode(
+        "BST-SEC-002",
+        "SSH_HOST_KEY_REJECTED",
+        "Critical",
+        "security",
+        "SSH 서버 키가 등록되지 않았거나 승인된 키와 일치하지 않아 연결을 차단했습니다.",
+        "자동 교체하지 말고 장비 콘솔 또는 보안 담당자의 fingerprint와 변경 사유를 확인하세요.",
+    ),
+    DiagnosticCode(
         "BST-SEC-201",
         "SECRET_REDACTED",
         "Info",
@@ -112,8 +127,8 @@ _CODE_LIST = (
         "TELNET_LOGIN_FAILED",
         "Critical",
         "connection",
-        "Telnet 로그인에 실패했습니다.",
-        "계정, 암호, Telnet 접근 정책, 선택한 접속 방식을 확인하세요.",
+        "레거시/Mock Telnet 로그인에 실패했습니다.",
+        "v0.9.0 실제 수집은 SSH 전용입니다. 이 코드가 실제 수집에서 보이면 패키지 버전을 확인하세요.",
     ),
     DiagnosticCode(
         "BST-CON-304",
@@ -121,7 +136,7 @@ _CODE_LIST = (
         "Critical",
         "connection",
         "원격 포트가 연결을 거부했습니다.",
-        "SSH/Telnet 서비스 활성화 여부와 설정된 포트 번호를 확인하세요.",
+        "SSH 서비스 활성화 여부와 설정된 포트 번호를 확인하세요.",
     ),
     DiagnosticCode(
         "BST-COL-401",

@@ -13,14 +13,22 @@ $ParentDir = Split-Path $ProjectRoot -Parent
 $DistDir = Join-Path $ProjectRoot "dist"
 $VersionFile = Join-Path $ProjectRoot "core\version.py"
 
+$SourceCommit = (git -C $ProjectRoot rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or $SourceCommit -notmatch '^[0-9a-f]{40}$') {
+    throw "Unable to resolve the source commit for release provenance."
+}
+
 $versionText = Get-Content -LiteralPath $VersionFile -Raw
 if ($versionText -notmatch 'APP_VERSION\s*=\s*"([^"]+)"') {
     throw "Unable to read APP_VERSION from $VersionFile"
 }
 $Version = $Matches[1]
-$DateStamp = Get-Date -Format "yyyyMMdd"
+if ($versionText -notmatch 'APP_RELEASE_DATE\s*=\s*"(\d{4})-(\d{2})-(\d{2})"') {
+    throw "Unable to read APP_RELEASE_DATE from $VersionFile"
+}
+$DateStamp = "$($Matches[1])$($Matches[2])$($Matches[3])"
 if ([string]::IsNullOrWhiteSpace($ReleaseTag)) {
-    $ReleaseTag = Get-Date -Format "'v'yyyy.MM.dd-HHmmss"
+    $ReleaseTag = "v$Version"
 }
 $ZipName = "${ProjectName}_${ReleaseTag}_windows.zip"
 $ZipPath = Join-Path $DistDir $ZipName
@@ -37,8 +45,11 @@ function Invoke-SourceValidation {
         Push-Location $ProjectRoot
         try {
             python -m unittest discover -s tests
+            if ($LASTEXITCODE -ne 0) { throw "Unit tests failed with exit code $LASTEXITCODE" }
             python app.py --smoke-check
+            if ($LASTEXITCODE -ne 0) { throw "GUI smoke check failed with exit code $LASTEXITCODE" }
             python webapp_launcher.py --smoke
+            if ($LASTEXITCODE -ne 0) { throw "Webapp smoke check failed with exit code $LASTEXITCODE" }
         } finally {
             Pop-Location
         }
@@ -47,34 +58,23 @@ function Invoke-SourceValidation {
     }
 }
 
-function Copy-DirectoryContent {
-    param(
-        [string]$Source,
-        [string]$Destination
-    )
-
-    if (-not (Test-Path -LiteralPath $Source)) {
-        return
-    }
-
-    New-Item -ItemType Directory -Force -Path $Destination | Out-Null
-    Get-ChildItem -LiteralPath $Source -Force | ForEach-Object {
-        $target = Join-Path $Destination $_.Name
-        if ($_.PSIsContainer) {
-            Copy-DirectoryContent -Source $_.FullName -Destination $target
-        } else {
-            Copy-Item -LiteralPath $_.FullName -Destination $target -Force
-        }
-    }
-}
-
 function Copy-ShareableConfig {
     param([string]$Destination)
 
-    Copy-DirectoryContent -Source (Join-Path $ProjectRoot "config") -Destination $Destination
-    $localDevicesConfig = Join-Path $Destination "devices.yaml"
-    if (Test-Path -LiteralPath $localDevicesConfig) {
-        Remove-Item -LiteralPath $localDevicesConfig -Force
+    $shareableNames = @(
+        "analysis_rules.yaml",
+        "commands.yaml",
+        "devices.example.yaml",
+        "known_hosts.example",
+        "mock_profiles.yaml"
+    )
+    New-Item -ItemType Directory -Force -Path $Destination | Out-Null
+    foreach ($name in $shareableNames) {
+        $source = Join-Path (Join-Path $ProjectRoot "config") $name
+        if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
+            throw "Required shareable config is missing: $source"
+        }
+        Copy-Item -LiteralPath $source -Destination (Join-Path $Destination $name) -Force
     }
 }
 
@@ -107,8 +107,8 @@ function Update-LatestReleaseArtifacts {
         "태그 = $ReleaseTag",
         "생성 시각 = $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")",
         "",
-        "GitHub Release에는 사용자 다운로드용 통합 Windows ZIP 1개만 업로드합니다.",
-        "SHA256 값은 GitHub Release notes 본문에 기록합니다.",
+        "GitHub Release에는 Windows ZIP, SHA-256 sidecar, manifest, SBOM을 독립 asset으로 업로드합니다.",
+        "ZIP의 GitHub artifact attestation도 함께 검증합니다.",
         "",
         "산출물:"
     )
@@ -203,6 +203,9 @@ function Invoke-PyInstallerBuild {
             --workpath $WorkPath `
             --specpath $SpecPath `
             $EntryPoint
+        if ($LASTEXITCODE -ne 0) {
+            throw "$Name PyInstaller build failed with exit code $LASTEXITCODE"
+        }
     } finally {
         Pop-Location
     }
@@ -219,6 +222,7 @@ if (-not $SkipTests) {
 }
 
 python -m PyInstaller --version | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "PyInstaller is not available." }
 
 New-Item -ItemType Directory -Force -Path $DistDir | Out-Null
 if (Test-Path -LiteralPath $ZipPath) {
@@ -258,6 +262,7 @@ try {
     New-Item -ItemType Directory -Force -Path $WebRuntimeRoot | Out-Null
     Copy-Item -LiteralPath $GuiExePath -Destination (Join-Path $GuiRoot "${GuiExeName}.exe") -Force
     Copy-Item -LiteralPath $WebExePath -Destination (Join-Path $WebRuntimeRoot "${WebExeName}.exe") -Force
+    Copy-Item -LiteralPath (Join-Path $ProjectRoot "LICENSE") -Destination (Join-Path $PayloadRoot "LICENSE") -Force
     Copy-ShareableConfig -Destination (Join-Path $GuiRoot "config")
     Copy-ShareableConfig -Destination (Join-Path $WebRoot "config")
 
@@ -275,11 +280,13 @@ set "APP_DIR=%~dp0"
 앱 버전: v$Version
 
 1. 다운로드할 파일
-- GitHub Release에서 ${ProjectName}_${ReleaseTag}_windows.zip 하나만 다운로드하면 됩니다.
+- GitHub Release에서 ${ProjectName}_${ReleaseTag}_windows.zip, SHA-256 sidecar, release manifest, CycloneDX SBOM을 함께 받습니다.
 - GitHub가 자동으로 표시하는 Source code (zip)와 Source code (tar.gz)는 소스 아카이브이며 일반 사용자가 실행할 파일이 아닙니다.
 
 2. GUI 실행 방법
 - ZIP을 원하는 폴더에 압축 해제합니다.
+- 보안 담당자 또는 장비 콘솔에서 별도 채널로 확인한 fingerprint와 일치하는 키만 gui\config\known_hosts에 등록합니다.
+- gui\config\known_hosts가 없거나 비어 있거나 주석뿐이거나 형식이 잘못되면 실제 장비 접속 전에 수집이 차단됩니다.
 - gui\${GuiExeName}.exe를 더블클릭합니다.
 - 첫 화면 장비 설정에서 장비 정보와 계정을 입력합니다.
 
@@ -293,9 +300,10 @@ set "APP_DIR=%~dp0"
 - 외부 공개용 서버가 아니라 로컬 PC 확인용 웹앱입니다. 기본값인 127.0.0.1 사용을 권장합니다.
 
 5. 포함/제외 기준
-- 이 ZIP에는 GUI와 웹앱만 포함합니다.
+- 사용자 실행물은 GUI와 웹앱이며, 시작 안내와 MIT LICENSE를 함께 포함합니다.
+- 루트 LICENSE에 이 배포본의 MIT 허가 고지를 포함합니다.
 - CLI 실행 파일과 CLI 실행 안내는 최종 사용자용 ZIP에 포함하지 않습니다.
-- SHA256 checksum은 GitHub Release notes 본문에서 확인합니다.
+- 실제 known_hosts와 devices.yaml은 배포 ZIP에 포함하지 않습니다. known_hosts.example은 형식 안내입니다.
 "@
     Set-Content -LiteralPath (Join-Path $PayloadRoot "README_START_HERE_KO.txt") -Value $readmeStartText -Encoding UTF8
 
@@ -306,6 +314,8 @@ GUI 실행 안내
 - Python 설치 없이 더블클릭으로 실행합니다.
 - 설정 예시는 gui\config\devices.example.yaml을 참고합니다.
 - 실제 장비 정보가 들어간 devices.yaml은 배포 ZIP에 포함하지 않습니다.
+- 별도 채널로 확인한 호스트 키를 gui\config\known_hosts에 등록해야 실제 수집을 시작할 수 있습니다.
+- gui\config\known_hosts.example은 설명용이며 신뢰 키를 포함하지 않습니다.
 "@
     Set-Content -LiteralPath (Join-Path $GuiRoot "README_GUI_KO.txt") -Value $guiReadmeText -Encoding UTF8
 
@@ -328,6 +338,7 @@ GUI 실행 안내
 
 포함 항목:
 - README_START_HERE_KO.txt
+- LICENSE
 - gui\${GuiExeName}.exe
 - gui\config 공유 설정 예시
 - web\start_webapp.cmd
@@ -338,13 +349,14 @@ GUI 실행 안내
 - CLI 실행 파일과 CLI 전용 안내
 - 실행 중 생성되는 outputs 등 런타임 산출물
 - 내부 장비 정보가 들어갈 수 있는 로컬 config\devices.yaml
+- 로컬에서 승인한 SSH 공개 호스트 키 config\known_hosts
 - 소스 저장소 메타데이터와 빌드 작업 폴더
 
 검증:
 - GUI smoke check
 - 웹앱 smoke check
 - 통합 ZIP 구조 verifier
-- SHA256 checksum은 GitHub Release notes에 기록
+- ZIP/SHA-256/manifest/SBOM 독립 검증과 GitHub artifact attestation
 "@
     Set-Content -LiteralPath (Join-Path $PayloadRoot "PACKAGE_INFO.txt") -Value $packageInfoText -Encoding UTF8
 
@@ -359,7 +371,7 @@ GUI 실행 안내
 }
 
 $ManifestTool = Join-Path $ProjectRoot "tools\write_release_manifest.py"
-python $ManifestTool --project-name $ProjectName --version $Version --date-stamp $DateStamp --dist-dir $DistDir --package $ZipPath --release-tag $ReleaseTag
+python $ManifestTool --project-name $ProjectName --version $Version --date-stamp $DateStamp --dist-dir $DistDir --package $ZipPath --release-tag $ReleaseTag --source-commit $SourceCommit
 if ($LASTEXITCODE -ne 0) {
     throw "Release manifest generation failed with exit code $LASTEXITCODE"
 }
@@ -371,6 +383,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $PowerShellVerifierSource = Join-Path $ProjectRoot "tools\verify_release_package.ps1"
+$PowerShellExecutable = (Get-Process -Id $PID).Path
+& $PowerShellExecutable -NoLogo -NoProfile -ExecutionPolicy Bypass -File $PowerShellVerifierSource -Package $ZipPath -Type windows -RequireManifest
+if ($LASTEXITCODE -ne 0) {
+    throw "PowerShell release package verification failed with exit code $LASTEXITCODE"
+}
 $PowerShellVerifierTarget = Join-Path $DistDir "${ProjectName}_${ReleaseTag}_verify_release_package.ps1"
 Copy-Item -LiteralPath $PowerShellVerifierSource -Destination $PowerShellVerifierTarget -Force
 Update-LatestReleaseArtifacts -ProjectName $ProjectName -ReleaseTag $ReleaseTag -DistDir $DistDir

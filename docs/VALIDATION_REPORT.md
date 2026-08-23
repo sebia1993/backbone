@@ -15,11 +15,16 @@
 | Interface/LACP/OSPF/VRRP 판정 | ✅ 자동 검증 | Analysis/Diff 테스트 |
 | CPU/Memory 임계값 판정 | ✅ 자동 검증 | Analysis rule 테스트 |
 | Expected Change 구분 | ✅ 자동 검증 | Rule/Diff 테스트 |
-| Mock SSH/Telnet 경계 | ✅ 자동 검증 | `core/mockserver/`, 테스트 |
+| 중앙 명령 fail-closed 경계 | ✅ 자동 검증 | `tests/test_collection_security.py` |
+| known_hosts 선파싱/0회 접속 | ✅ 자동 검증 | 없음·주석-only·malformed 회귀 테스트 |
+| strict SSH/ssh-rsa 차단 | ✅ 자동 검증 | ConnectHandler 인자 계약 테스트 |
+| Mock SSH/Telnet 경계 | ✅ 자동 검증 | ECDSA SSH + 명시적 RejectPolicy, Telnet mock |
 | GUI Source smoke | ✅ PR Validation | `python app.py --smoke-check` |
 | Webapp Source smoke | ✅ PR Validation | `python webapp_launcher.py --smoke` |
 | Windows 통합 ZIP 생성 | ✅ GitHub Actions | Windows runner |
-| Windows ZIP manifest/SHA 검증 | ✅ GitHub Actions | Package verifier |
+| Windows ZIP manifest/SHA 검증 | ✅ GitHub Actions | Package/asset verifier |
+| CycloneDX SBOM | ✅ GitHub Actions | CycloneDX 1.6 필수 필드와 runtime lock 20개 전체 name/version 검증 |
+| Build provenance/SBOM 증명 | ✅ GitHub Actions | GitHub artifact attestation |
 | 실제 장비/OS별 출력 호환성 | 별도 현장 증거 | 공개 원문은 저장하지 않음 |
 
 > 자동 테스트와 Mock 결과가 실제 백본 장비에서의 운영 검증을 대체한다고 표현하지 않습니다.
@@ -32,6 +37,10 @@
 |---|---|
 | 장비 접속 | 허용된 방식으로 세션 수립 또는 명확한 connectivity failure |
 | 명령 allowlist | `commands.yaml`에 정의된 상태 조회 범위만 실행 |
+| 명령 중앙 재검증 | NFKC/ASCII/길이/메타문자/전체 allowlist 검사가 모든 접속 전에 완료됨 |
+| 장비 타입 | SSH 기반 `hp_comware` 외 입력은 접속 전에 실패 |
+| 호스트 키 | parseable `known_hosts`에 유효 키가 없으면 접속 전에 실패 |
+| SSH 알고리즘 | strict host-key와 `ssh-rsa` key/pubkey 차단 인자를 강제 |
 | 페이징 처리 | 긴 출력이 중간에서 잘리지 않도록 session setup 수행 |
 | 명령 실패 | 실패한 명령의 상태와 오류가 다른 정상 결과를 오염시키지 않음 |
 | 장비 전체 접속 실패 | 하위 명령 실패를 중복 finding으로 증폭하지 않음 |
@@ -97,7 +106,9 @@ python webapp_launcher.py --smoke
 python app.py --diagnose --self-check
 ```
 
-PR Validation에서는 Windows runner에서 위 검증 후 통합 Windows ZIP을 생성하고 `tools/verify_release_package.py`로 패키지 구조와 SHA-256을 다시 확인합니다.
+PR Validation에서는 hash lock으로 의존성을 설치한 Windows runner에서 회귀·smoke·합성 진단·Ruff·Bandit·의존성 감사를 실행합니다. 이어 통합 ZIP과 CycloneDX 1.6 SBOM을 만들고 `tools/verify_release_assets.py`로 ZIP 구조, SHA-256, manifest source commit, SBOM 고정 버전을 다시 확인합니다.
+
+공개 근거는 자동/Mock/Windows CI 범위로 제한합니다. 기존 화면 이미지는 합성 샘플을 사용했으며 v0.9.0의 새 보안 경계 화면을 별도 브라우저 캡처로 재검증한 근거는 아닙니다.
 
 ## 운영 환경 검증 체크리스트
 

@@ -1,7 +1,7 @@
 # 백본 상태 추적기 초급 개발자 가이드
 
-문서 버전: v0.8.57
-작성일: 2026-06-15
+문서 버전: v0.9.0
+작성일: 2026-08-24
 대상: Python과 Windows 배포를 처음 유지보수하는 개발자
 
 ## 1. 프로젝트 목적
@@ -30,7 +30,7 @@
 
 ```powershell
 cd "<folder-that-contains-backbone_state_tracker>\backbone_state_tracker"
-python -m pip install -r requirements.txt
+python -m pip install --require-hashes -r requirements-windows.lock
 $env:PYTHONPATH=(Split-Path (Get-Location) -Parent)
 python app.py
 ```
