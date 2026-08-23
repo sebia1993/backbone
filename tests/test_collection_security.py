@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import sys
 import tempfile
-import types
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import paramiko
 from backbone_state_tracker.core.collector import CollectionError, SnapshotCollector
 from backbone_state_tracker.core.command_safety import (
     CommandSafetyError,
@@ -28,18 +27,7 @@ class _FakeConnection:
         self.disconnected = True
 
 
-def _netmiko_modules(connect_handler: Mock) -> dict[str, types.ModuleType]:
-    module = types.ModuleType("netmiko")
-    module.ConnectHandler = connect_handler  # type: ignore[attr-defined]
-    exceptions = types.ModuleType("netmiko.exceptions")
-    exceptions.NetMikoAuthenticationException = type("NetMikoAuthenticationException", (Exception,), {})
-    exceptions.NetMikoTimeoutException = type("NetMikoTimeoutException", (Exception,), {})
-    return {"netmiko": module, "netmiko.exceptions": exceptions}
-
-
 def _write_valid_known_hosts(path: Path) -> None:
-    import paramiko
-
     key = paramiko.ECDSAKey.generate(bits=256)
     path.write_text(f"example {key.get_name()} {key.get_base64()}\n", encoding="utf-8")
 
@@ -65,7 +53,7 @@ class CollectionSecurityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             known_hosts = Path(temp_dir) / "known_hosts"
             _write_valid_known_hosts(known_hosts)
-            with patch.dict(sys.modules, _netmiko_modules(connect_handler)):
+            with patch("netmiko.ConnectHandler", connect_handler):
                 with self.assertRaisesRegex(CollectionError, "BST-SEC-001"):
                     SnapshotCollector(known_hosts_file=known_hosts).collect(
                         [self.device],
@@ -80,7 +68,7 @@ class CollectionSecurityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             known_hosts = Path(temp_dir) / "known_hosts"
             known_hosts.write_text("# fingerprints must be approved out of band\n\n", encoding="utf-8")
-            with patch.dict(sys.modules, _netmiko_modules(connect_handler)):
+            with patch("netmiko.ConnectHandler", connect_handler):
                 with self.assertRaisesRegex(CollectionError, "호스트 키 엔트리가 없습니다"):
                     SnapshotCollector(known_hosts_file=known_hosts).collect(
                         [self.device],
@@ -95,7 +83,7 @@ class CollectionSecurityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             known_hosts = Path(temp_dir) / "known_hosts"
             known_hosts.write_text("example ssh-ed25519 not-base64!\n", encoding="utf-8")
-            with patch.dict(sys.modules, _netmiko_modules(connect_handler)):
+            with patch("netmiko.ConnectHandler", connect_handler):
                 with self.assertRaisesRegex(CollectionError, "호스트 키 파일을 해석할 수 없습니다"):
                     SnapshotCollector(known_hosts_file=known_hosts).collect(
                         [self.device],
@@ -114,7 +102,7 @@ class CollectionSecurityTests(unittest.TestCase):
                     _write_valid_known_hosts(known_hosts)
                     with known_hosts.open("a", encoding="utf-8") as handle:
                         handle.write(f"{malformed_line}\n")
-                    with patch.dict(sys.modules, _netmiko_modules(connect_handler)):
+                    with patch("netmiko.ConnectHandler", connect_handler):
                         with self.assertRaisesRegex(CollectionError, "올바른 known_hosts 엔트리가 아닙니다"):
                             SnapshotCollector(known_hosts_file=known_hosts).collect(
                                 [self.device],
@@ -131,7 +119,7 @@ class CollectionSecurityTests(unittest.TestCase):
             _write_valid_known_hosts(known_hosts)
             with known_hosts.open("a", encoding="utf-8") as handle:
                 handle.write("example ssh-ed25519 AAAA\n")
-            with patch.dict(sys.modules, _netmiko_modules(connect_handler)):
+            with patch("netmiko.ConnectHandler", connect_handler):
                 with self.assertRaisesRegex(CollectionError, "호스트 키 파일을 해석할 수 없습니다"):
                     SnapshotCollector(known_hosts_file=known_hosts).collect(
                         [self.device],
@@ -145,7 +133,7 @@ class CollectionSecurityTests(unittest.TestCase):
         connect_handler = Mock()
         with tempfile.TemporaryDirectory() as temp_dir:
             missing = Path(temp_dir) / "missing-known-hosts"
-            with patch.dict(sys.modules, _netmiko_modules(connect_handler)):
+            with patch("netmiko.ConnectHandler", connect_handler):
                 with self.assertRaisesRegex(CollectionError, "호스트 키 파일이 없습니다"):
                     SnapshotCollector(known_hosts_file=missing).collect(
                         [self.device],
@@ -165,7 +153,7 @@ class CollectionSecurityTests(unittest.TestCase):
                 host="192.0.2.4",
                 device_type="hp_comware_telnet",
             )
-            with patch.dict(sys.modules, _netmiko_modules(connect_handler)):
+            with patch("netmiko.ConnectHandler", connect_handler):
                 with self.assertRaisesRegex(CollectionError, "SSH 전용"):
                     SnapshotCollector(known_hosts_file=known_hosts).collect(
                         [telnet_device],
@@ -181,7 +169,7 @@ class CollectionSecurityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             known_hosts = Path(temp_dir) / "known_hosts"
             _write_valid_known_hosts(known_hosts)
-            with patch.dict(sys.modules, _netmiko_modules(connect_handler)):
+            with patch("netmiko.ConnectHandler", connect_handler):
                 results = SnapshotCollector(known_hosts_file=known_hosts).collect(
                     [self.device],
                     [CommandSpec(id="clock", command="  display   clock  ")],
