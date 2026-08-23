@@ -224,7 +224,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 패키지 검증:
 
 ```powershell
-python .\tools\verify_release_assets.py --zip <ZIP경로> --checksum <SHA파일> --manifest <매니페스트> --sbom <SBOM> --version v0.9.0 --source-commit <40자리커밋>
+python .\tools\verify_release_assets.py --zip <ZIP경로> --checksum <SHA파일> --manifest <매니페스트> --sbom <SBOM> --version v0.9.0 --repository sebia1993/hpe-comware-change-validator --application backbone_state_tracker --source-commit <40자리커밋>
 ```
 
 개발 원칙은 [`DEVELOPMENT.md`](DEVELOPMENT.md), Release 운영 기준은 [`RELEASE_NOTES.md`](RELEASE_NOTES.md)를 참고하십시오.

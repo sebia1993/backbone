@@ -58,7 +58,7 @@ GitHub가 자동으로 표시하는 `Source code (zip)` / `Source code (tar.gz)`
 
 ```powershell
 Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.9.0_windows.zip
-python .\tools\verify_release_assets.py --zip .\backbone_state_tracker_v0.9.0_windows.zip --checksum .\backbone_state_tracker_v0.9.0_windows.zip.sha256.txt --manifest .\backbone_state_tracker_v0.9.0_release_manifest.txt --sbom .\backbone_state_tracker_v0.9.0_sbom.cdx.json --version v0.9.0 --source-commit <40자리커밋>
+python .\tools\verify_release_assets.py --zip .\backbone_state_tracker_v0.9.0_windows.zip --checksum .\backbone_state_tracker_v0.9.0_windows.zip.sha256.txt --manifest .\backbone_state_tracker_v0.9.0_release_manifest.txt --sbom .\backbone_state_tracker_v0.9.0_sbom.cdx.json --version v0.9.0 --repository sebia1993/hpe-comware-change-validator --application backbone_state_tracker --source-commit <40자리커밋>
 ```
 
 검증기는 다음을 확인합니다.

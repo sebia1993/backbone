@@ -130,6 +130,7 @@ def _source_entries() -> dict[str, str]:
             "backbone_state_tracker/core/workflow.py": "workflow",
             "backbone_state_tracker/tools/build_release.ps1": "source build",
             "backbone_state_tracker/tools/build_windows_exe.ps1": "exe build",
+            "backbone_state_tracker/tools/stamp_sbom_identity.py": "SBOM identity tool",
             "backbone_state_tracker/tools/write_release_manifest.py": "manifest tool",
             "backbone_state_tracker/tools/verify_release_package.py": "verifier",
             "backbone_state_tracker/tools/verify_release_package.ps1": "powershell verifier",
