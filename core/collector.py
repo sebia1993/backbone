@@ -1,16 +1,30 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from pathlib import Path
 from typing import Optional
 
+from .command_safety import (
+    SSH_DISABLED_ALGORITHMS,
+    CommandSafetyError,
+    canonicalize_commands,
+    require_known_hosts_file,
+    validate_collection_devices,
+)
 from .connectivity import make_connectivity_result, sanitize_connection_error
 from .models import CommandResult, CommandSpec, Device
-
 
 ProgressCallback = Callable[[str], None]
 COMMAND_TIMEOUT_CODE = "BST-COL-401"
 PARTIAL_COLLECTION_CODE = "BST-COL-411"
 COMMAND_TIMEOUT_HINTS = ("timeout", "timed out", "read_timeout", "netmikotimeout")
+HOST_KEY_ERROR_HINTS = (
+    "host key for server",
+    "host key does not match",
+    "does not match the host key",
+    "not found in known_hosts",
+    "known_hosts",
+)
 
 
 class CollectionError(RuntimeError):
@@ -34,10 +48,28 @@ def format_command_failure_message(exc: Exception) -> str:
     return f"{code} {reason} detail={safe_error}"
 
 
+def is_host_key_validation_error(exc: Exception) -> bool:
+    messages: list[str] = []
+    current: BaseException | None = exc
+    seen: set[int] = set()
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        messages.append(f"{type(current).__name__}: {current}".lower())
+        current = current.__cause__ or current.__context__
+    combined = " ".join(messages)
+    return any(hint in combined for hint in HOST_KEY_ERROR_HINTS)
+
+
 class SnapshotCollector:
-    def __init__(self, timeout: int = 30, progress: Optional[ProgressCallback] = None) -> None:
+    def __init__(
+        self,
+        timeout: int = 30,
+        progress: Optional[ProgressCallback] = None,
+        known_hosts_file: str | Path | None = None,
+    ) -> None:
         self.timeout = timeout
         self.progress = progress or (lambda message: None)
+        self.known_hosts_file = known_hosts_file
 
     def collect(
         self,
@@ -47,8 +79,18 @@ class SnapshotCollector:
         password: str,
     ) -> dict[str, list[CommandResult]]:
         try:
+            validate_collection_devices(devices)
+            safe_commands = canonicalize_commands(commands)
+            known_hosts_file = require_known_hosts_file(self.known_hosts_file)
+        except CommandSafetyError as exc:
+            raise CollectionError(f"BST-SEC-001 안전 경계에서 수집을 차단했습니다: {exc}") from exc
+
+        try:
             from netmiko import ConnectHandler
-            from netmiko.exceptions import NetMikoAuthenticationException, NetMikoTimeoutException
+            from netmiko.exceptions import (
+                NetMikoAuthenticationException,
+                NetMikoTimeoutException,
+            )
         except ImportError as exc:  # pragma: no cover
             raise CollectionError("netmiko is required. Install it with: python -m pip install netmiko") from exc
 
@@ -60,7 +102,7 @@ class SnapshotCollector:
             all_results[device.name] = device_results
             try:
                 connection = ConnectHandler(
-                    device_type=device.device_type,
+                    device_type="hp_comware",
                     host=device.host,
                     port=device.port,
                     username=username,
@@ -70,10 +112,17 @@ class SnapshotCollector:
                     auth_timeout=self.timeout,
                     banner_timeout=self.timeout,
                     fast_cli=False,
+                    use_keys=False,
+                    allow_agent=False,
+                    ssh_strict=True,
+                    system_host_keys=False,
+                    alt_host_keys=True,
+                    alt_key_file=str(known_hosts_file),
+                    disabled_algorithms={key: list(values) for key, values in SSH_DISABLED_ALGORITHMS.items()},
                 )
                 device_results.append(make_connectivity_result(device, True))
                 failed_command_count = 0
-                for command in commands:
+                for command in safe_commands:
                     result = CommandResult.started(device, command)
                     self.progress(f"[{device.name}] run: {command.command}")
                     try:
@@ -103,11 +152,19 @@ class SnapshotCollector:
                 device_results.append(make_connectivity_result(device, False, "authentication", str(exc)))
                 self.progress(f"[{device.name}] authentication failed")
             except NetMikoTimeoutException as exc:
-                device_results.append(make_connectivity_result(device, False, "timeout", str(exc)))
-                self.progress(f"[{device.name}] connection timeout")
+                if is_host_key_validation_error(exc):
+                    device_results.append(make_connectivity_result(device, False, "host-key", str(exc)))
+                    self.progress(f"[{device.name}] SSH host key rejected (BST-SEC-002)")
+                else:
+                    device_results.append(make_connectivity_result(device, False, "timeout", str(exc)))
+                    self.progress(f"[{device.name}] connection timeout")
             except Exception as exc:
-                device_results.append(make_connectivity_result(device, False, "connection", str(exc)))
-                self.progress(f"[{device.name}] connection failed")
+                if is_host_key_validation_error(exc):
+                    device_results.append(make_connectivity_result(device, False, "host-key", str(exc)))
+                    self.progress(f"[{device.name}] SSH host key rejected (BST-SEC-002)")
+                else:
+                    device_results.append(make_connectivity_result(device, False, "connection", str(exc)))
+                    self.progress(f"[{device.name}] connection failed")
             finally:
                 if connection is not None:
                     try:

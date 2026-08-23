@@ -25,7 +25,7 @@
 <main>
   <header>
     <h1>백본 상태 추적기 오류 코드 카탈로그</h1>
-    <div class="meta">문서 버전: v0.8.57 | 작성일: 2026-06-15</div>
+    <div class="meta">문서 버전: v0.9.0 | 작성일: 2026-08-24</div>
     <p>원본 장비 로그 없이 오류 코드만으로 원인 범위를 좁히기 위한 기준입니다.</p>
   </header>
   <section>
@@ -34,8 +34,8 @@
     <table>
       <tr><th>구간</th><th>의미</th></tr>
       <tr><td><code>BST-CFG-1xxx</code></td><td>설정 파일, 대상 장비, 명령 정의</td></tr>
-      <tr><td><code>BST-SEC-2xxx</code></td><td>민감정보, 마스킹, 외부 반출 안전성</td></tr>
-      <tr><td><code>BST-CON-3xxx</code></td><td>SSH/Telnet/TCP 접속</td></tr>
+      <tr><td><code>BST-SEC-0xx/2xx</code></td><td>수집 안전 경계, 민감정보, 마스킹, 외부 반출 안전성</td></tr>
+      <tr><td><code>BST-CON-3xxx</code></td><td>SSH/TCP 접속 (<code>BST-CON-303</code>은 레거시/Mock 전용)</td></tr>
       <tr><td><code>BST-COL-4xxx</code></td><td>명령 실행, 수집 타임아웃, 부분 수집</td></tr>
       <tr><td><code>BST-DIF-5xxx</code></td><td>스냅샷 비교와 기준 스냅샷</td></tr>
       <tr><td><code>BST-REP-6xxx</code></td><td>안전 리포트 생성</td></tr>
@@ -52,12 +52,14 @@
       <tr><td><code>BST-CFG-102</code></td><td><code>COMMAND_CONFIG_MISSING</code></td><td class="critical">긴급</td><td>config</td><td>명령 설정 파일이 없습니다.</td><td>반입 ZIP에 <code>config/commands.yaml</code>이 포함됐는지 확인합니다.</td></tr>
       <tr><td><code>BST-CFG-121</code></td><td><code>UNSAFE_COMMAND_BLOCKED</code></td><td class="critical">긴급</td><td>config</td><td>쓰기/변경 가능성이 있는 명령이 차단됐습니다.</td><td>명령 목록에서 해당 명령을 제거합니다.</td></tr>
       <tr><td><code>BST-CFG-122</code></td><td><code>ANALYSIS_RULES_INVALID</code></td><td class="critical">긴급</td><td>config</td><td>분석 규칙 파일을 읽거나 해석할 수 없습니다.</td><td><code>config/analysis_rules.yaml</code> 형식과 포함 여부를 확인합니다.</td></tr>
+      <tr><td><code>BST-SEC-001</code></td><td><code>COLLECTION_BOUNDARY_BLOCKED</code></td><td class="critical">긴급</td><td>security</td><td>명령, 장비 타입 또는 SSH 호스트 키가 중앙 안전 경계를 통과하지 못했습니다.</td><td>명령 allowlist와 <code>SECURITY.md</code>의 known_hosts 등록 절차를 확인하며 정책을 낮추지 않습니다.</td></tr>
+      <tr><td><code>BST-SEC-002</code></td><td><code>SSH_HOST_KEY_REJECTED</code></td><td class="critical">긴급</td><td>security</td><td>SSH 서버 키가 미등록 상태이거나 승인된 키와 일치하지 않아 연결을 차단했습니다.</td><td>키를 자동 교체하지 말고 별도 채널의 fingerprint와 변경 사유를 확인합니다.</td></tr>
       <tr><td><code>BST-SEC-201</code></td><td><code>SECRET_REDACTED</code></td><td class="info">정보</td><td>security</td><td>민감정보가 저장 전 마스킹됐습니다.</td><td>생성된 안전 리포트만 공유합니다.</td></tr>
       <tr><td><code>BST-SEC-211</code></td><td><code>DEVICE_ALIAS_APPLIED</code></td><td class="info">정보</td><td>security</td><td>장비, 호스트, 주소 값이 alias로 치환됐습니다.</td><td>외부 문의 시 alias만 전달합니다.</td></tr>
       <tr><td><code>BST-CON-301</code></td><td><code>TCP_TIMEOUT</code></td><td class="critical">긴급</td><td>connection</td><td>TCP 연결 시간이 초과됐습니다.</td><td>장비 전원, 관리망, 방화벽, 포트 번호를 확인합니다.</td></tr>
       <tr><td><code>BST-CON-302</code></td><td><code>SSH_AUTH_FAILED</code></td><td class="critical">긴급</td><td>connection</td><td>SSH 인증에 실패했습니다.</td><td>계정, 암호, SSH 권한, 로그인 정책을 확인합니다.</td></tr>
-      <tr><td><code>BST-CON-303</code></td><td><code>TELNET_LOGIN_FAILED</code></td><td class="critical">긴급</td><td>connection</td><td>Telnet 로그인에 실패했습니다.</td><td>계정, 암호, Telnet 접근 정책을 확인합니다.</td></tr>
-      <tr><td><code>BST-CON-304</code></td><td><code>CONNECTION_REFUSED</code></td><td class="critical">긴급</td><td>connection</td><td>원격 포트가 연결을 거부했습니다.</td><td>SSH/Telnet 서비스 활성화와 포트 번호를 확인합니다.</td></tr>
+      <tr><td><code>BST-CON-303</code></td><td><code>TELNET_LOGIN_FAILED</code></td><td class="critical">긴급</td><td>connection</td><td>레거시/Mock Telnet 로그인에 실패했습니다.</td><td>v0.9.0 실제 수집은 SSH 전용이므로 이 코드가 실제 수집에서 보이면 패키지 버전을 확인합니다.</td></tr>
+      <tr><td><code>BST-CON-304</code></td><td><code>CONNECTION_REFUSED</code></td><td class="critical">긴급</td><td>connection</td><td>원격 포트가 연결을 거부했습니다.</td><td>SSH 서비스 활성화와 포트 번호를 확인합니다.</td></tr>
       <tr><td><code>BST-COL-401</code></td><td><code>COMMAND_TIMEOUT</code></td><td class="warning">주의</td><td>collection</td><td>명령이 제한시간 안에 응답하지 않았습니다.</td><td>장비 부하와 timeout 값을 확인합니다.</td></tr>
       <tr><td><code>BST-COL-411</code></td><td><code>DEVICE_PARTIAL_COLLECTION</code></td><td class="warning">주의</td><td>collection</td><td>일부 명령만 수집됐습니다.</td><td>실패한 명령 코드와 장비 상태를 확인합니다.</td></tr>
       <tr><td><code>BST-DIF-501</code></td><td><code>BASELINE_NOT_FOUND</code></td><td class="warning">주의</td><td>diff</td><td>비교 기준 스냅샷이 없습니다.</td><td>작업 전 기준 스냅샷을 먼저 생성합니다.</td></tr>
@@ -71,7 +73,7 @@
   </section>
   <section>
     <h2>외부 문의 예시</h2>
-    <pre>앱: 백본 상태 추적기 v0.8.57
+    <pre>앱: 백본 상태 추적기 v0.9.0
 코드: BST-CON-301
 단계: network
 장비 alias: DEV-001

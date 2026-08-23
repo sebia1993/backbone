@@ -23,7 +23,7 @@ PACKAGE_PREFIX = re.compile(
     r"^(?P<prefix>.+_v(?P<version>\d+\.\d+\.\d+)_(?P<date>\d{8}))_(source|windows_exe)\.zip$"
 )
 TAGGED_WINDOWS_PACKAGE_PREFIX = re.compile(
-    r"^(?P<prefix>.+_(?P<tag>v\d{4}\.\d{2}\.\d{2}-\d{6}(?:-\d+)?))_windows\.zip$"
+    r"^(?P<prefix>.+_(?P<tag>v(?:\d+\.\d+\.\d+(?:-rc\.\d+)?|\d{4}\.\d{2}\.\d{2}-\d{6}(?:-\d+)?)))_windows\.zip$"
 )
 PACKAGE_ROOT = "backbone_state_tracker/"
 PACKAGE_ROOT_NAME = "backbone_state_tracker"
@@ -37,6 +37,7 @@ COMMON_REQUIRED = {
     "backbone_state_tracker/config/analysis_rules.yaml",
     "backbone_state_tracker/config/commands.yaml",
     "backbone_state_tracker/config/devices.example.yaml",
+    "backbone_state_tracker/config/known_hosts.example",
     "backbone_state_tracker/config/mock_profiles.yaml",
     "backbone_state_tracker/docs/ARCHITECTURE.md",
     "backbone_state_tracker/docs/CHANGE_VALIDATION_LOGIC.md",
@@ -66,10 +67,17 @@ SOURCE_REQUIRED = COMMON_REQUIRED | {
     "backbone_state_tracker/__init__.py",
     "backbone_state_tracker/app.py",
     "backbone_state_tracker/webapp_launcher.py",
+    "backbone_state_tracker/LICENSE",
+    "backbone_state_tracker/SECURITY.md",
+    "backbone_state_tracker/DEVELOPMENT.md",
     "backbone_state_tracker/requirements.txt",
+    "backbone_state_tracker/requirements-dev.txt",
+    "backbone_state_tracker/requirements-runtime.lock",
+    "backbone_state_tracker/requirements-windows.lock",
     "backbone_state_tracker/core/__init__.py",
     "backbone_state_tracker/core/analysis_rules.py",
     "backbone_state_tracker/core/collector.py",
+    "backbone_state_tracker/core/command_safety.py",
     "backbone_state_tracker/core/config.py",
     "backbone_state_tracker/core/connectivity.py",
     "backbone_state_tracker/core/diagnostics/__init__.py",
@@ -101,8 +109,10 @@ SOURCE_REQUIRED = COMMON_REQUIRED | {
     "backbone_state_tracker/tools/write_release_manifest.py",
     "backbone_state_tracker/tools/verify_release_package.py",
     "backbone_state_tracker/tools/verify_release_package.ps1",
+    "backbone_state_tracker/tools/verify_release_assets.py",
     "backbone_state_tracker/tests/test_analysis_rules.py",
     "backbone_state_tracker/tests/test_cli_output_encoding.py",
+    "backbone_state_tracker/tests/test_collection_security.py",
     "backbone_state_tracker/tests/test_diagnostics_codes.py",
     "backbone_state_tracker/tests/test_diagnostics_report.py",
     "backbone_state_tracker/tests/test_diff_engine.py",
@@ -116,6 +126,7 @@ SOURCE_REQUIRED = COMMON_REQUIRED | {
     "backbone_state_tracker/tests/test_preflight.py",
     "backbone_state_tracker/tests/test_redaction.py",
     "backbone_state_tracker/tests/test_release_manifest.py",
+    "backbone_state_tracker/tests/test_release_assets.py",
     "backbone_state_tracker/tests/test_release_package_verifier.py",
     "backbone_state_tracker/tests/test_reporter.py",
     "backbone_state_tracker/tests/test_snapshot.py",
@@ -126,11 +137,13 @@ SOURCE_REQUIRED = COMMON_REQUIRED | {
 WINDOWS_REQUIRED = {
     "backbone_state_tracker/PACKAGE_INFO.txt",
     "backbone_state_tracker/README_START_HERE_KO.txt",
+    "backbone_state_tracker/LICENSE",
     "backbone_state_tracker/gui/BackboneStateTracker.exe",
     "backbone_state_tracker/gui/README_GUI_KO.txt",
     "backbone_state_tracker/gui/config/analysis_rules.yaml",
     "backbone_state_tracker/gui/config/commands.yaml",
     "backbone_state_tracker/gui/config/devices.example.yaml",
+    "backbone_state_tracker/gui/config/known_hosts.example",
     "backbone_state_tracker/gui/config/mock_profiles.yaml",
     "backbone_state_tracker/web/README_WEB_KO.txt",
     "backbone_state_tracker/web/start_webapp.cmd",
@@ -138,19 +151,26 @@ WINDOWS_REQUIRED = {
     "backbone_state_tracker/web/config/analysis_rules.yaml",
     "backbone_state_tracker/web/config/commands.yaml",
     "backbone_state_tracker/web/config/devices.example.yaml",
+    "backbone_state_tracker/web/config/known_hosts.example",
     "backbone_state_tracker/web/config/mock_profiles.yaml",
 }
 
 WINDOWS_EXE_REQUIRED = WINDOWS_REQUIRED
 
-WINDOWS_ALLOWED_PREFIXES = (
-    "backbone_state_tracker/gui/",
-    "backbone_state_tracker/web/",
-)
+SOURCE_CONFIG_ALLOWED = {
+    "backbone_state_tracker/config/analysis_rules.yaml",
+    "backbone_state_tracker/config/commands.yaml",
+    "backbone_state_tracker/config/devices.example.yaml",
+    "backbone_state_tracker/config/known_hosts.example",
+    "backbone_state_tracker/config/mock_profiles.yaml",
+}
 
-WINDOWS_ALLOWED_FILES = {
-    "backbone_state_tracker/PACKAGE_INFO.txt",
-    "backbone_state_tracker/README_START_HERE_KO.txt",
+WINDOWS_ALLOWED_DIRECTORIES = {
+    "backbone_state_tracker/gui",
+    "backbone_state_tracker/gui/config",
+    "backbone_state_tracker/web",
+    "backbone_state_tracker/web/config",
+    "backbone_state_tracker/web/runtime",
 }
 
 WINDOWS_FORBIDDEN_ENTRIES = {
@@ -162,19 +182,6 @@ WINDOWS_FORBIDDEN_ENTRIES = {
     "backbone_state_tracker/app.py",
     "backbone_state_tracker/webapp_launcher.py",
 }
-
-WINDOWS_FORBIDDEN_PATTERNS = [
-    re.compile(pattern)
-    for pattern in (
-        r"/tests/",
-        r"/tools/",
-        r"/core/",
-        r"/docs/",
-        r"/__init__\.py$",
-        r"\.sha256(?:\.txt)?$",
-        r"(?:^|/)cli[^/]*\.(?:exe|cmd|bat|ps1)$",
-    )
-]
 
 FORBIDDEN_PATTERNS = [
     re.compile(pattern)
@@ -188,6 +195,7 @@ FORBIDDEN_PATTERNS = [
         r"/venv/",
         r"/\.pytest_cache/",
         r"/config/devices\.yaml$",
+        r"/config/known_hosts$",
         r"__pycache__",
         r"\.pyc$",
         r"\.spec$",
@@ -222,11 +230,14 @@ def version_label(version: str) -> str:
     return version if version.startswith("v") else f"v{version}"
 
 
-def package_identity(package_path: Path) -> tuple[str, str] | None:
+def package_identity(package_path: Path) -> tuple[str, str | None] | None:
     match = PACKAGE_PREFIX.match(package_path.name)
-    if not match:
-        return None
-    return version_label(match.group("version")), match.group("date")
+    if match:
+        return version_label(match.group("version")), match.group("date")
+    tagged_match = TAGGED_WINDOWS_PACKAGE_PREFIX.match(package_path.name)
+    if tagged_match and re.fullmatch(r"v\d+\.\d+\.\d+(?:-rc\.\d+)?", tagged_match.group("tag")):
+        return tagged_match.group("tag"), None
+    return None
 
 
 def parse_checksum_sidecar(
@@ -349,16 +360,21 @@ def windows_release_contract_errors(names: set[str], package_type: str) -> list[
         if stripped in WINDOWS_FORBIDDEN_ENTRIES:
             errors.append(f"Forbidden Windows release ZIP entry found: {stripped}")
             continue
-        if stripped in WINDOWS_ALLOWED_FILES:
-            continue
-        if any(stripped.startswith(prefix) for prefix in WINDOWS_ALLOWED_PREFIXES):
-            for pattern in WINDOWS_FORBIDDEN_PATTERNS:
-                if pattern.search(stripped):
-                    errors.append(f"Forbidden Windows release ZIP entry found: {stripped}")
-                    break
+        if stripped in WINDOWS_REQUIRED or stripped in WINDOWS_ALLOWED_DIRECTORIES:
             continue
         errors.append(f"Unexpected Windows release ZIP entry found: {stripped}")
     return errors
+
+
+def source_config_contract_errors(names: set[str], package_type: str) -> list[str]:
+    if package_type != "source":
+        return []
+    return [
+        f"Unexpected source config ZIP entry found: {name.rstrip('/')}"
+        for name in sorted(names)
+        if name.rstrip('/').startswith("backbone_state_tracker/config/")
+        and name.rstrip('/') not in SOURCE_CONFIG_ALLOWED
+    ]
 
 
 def expected_manifest_path(package_path: Path) -> Path | None:
@@ -450,6 +466,7 @@ def verify_release_package(
         missing = sorted(required_entries - names)
         errors.extend(f"Missing required ZIP entry: {entry}" for entry in missing)
         errors.extend(windows_release_contract_errors(names, resolved_type))
+        errors.extend(source_config_contract_errors(names, resolved_type))
 
         for name in sorted(names):
             for pattern in FORBIDDEN_PATTERNS:

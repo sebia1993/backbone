@@ -1,8 +1,17 @@
 from __future__ import annotations
 
+import re
 import unittest
+from pathlib import Path
 
-from backbone_state_tracker.core.diagnostics.codes import explain_code, get_code, list_codes, validate_catalog
+from backbone_state_tracker.core.diagnostics.codes import (
+    explain_code,
+    get_code,
+    list_codes,
+    validate_catalog,
+)
+
+PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 
 class DiagnosticCodeTests(unittest.TestCase):
@@ -30,6 +39,20 @@ class DiagnosticCodeTests(unittest.TestCase):
 
         self.assertIsNotNone(item)
         self.assertEqual("SECRET_REDACTED", item.name)
+
+    def test_collection_boundary_and_host_key_codes_are_explainable(self) -> None:
+        self.assertIn("COLLECTION_BOUNDARY_BLOCKED", explain_code("BST-SEC-001"))
+        self.assertIn("SSH_HOST_KEY_REJECTED", explain_code("BST-SEC-002"))
+
+    def test_markdown_and_html_catalogs_match_runtime_registry(self) -> None:
+        expected = [item.code for item in list_codes()]
+        markdown = (PROJECT_DIR / "docs" / "ERROR_CODE_CATALOG.md").read_text(encoding="utf-8")
+        html = (PROJECT_DIR / "docs" / "ERROR_CODE_CATALOG.html").read_text(encoding="utf-8")
+        markdown_codes = re.findall(r"^\| `(BST-[A-Z]{3,4}-\d{3})` \|", markdown, re.MULTILINE)
+        html_codes = re.findall(r"<tr><td><code>(BST-[A-Z]{3,4}-\d{3})</code></td>", html)
+
+        self.assertEqual(expected, markdown_codes)
+        self.assertEqual(expected, html_codes)
 
 
 if __name__ == "__main__":

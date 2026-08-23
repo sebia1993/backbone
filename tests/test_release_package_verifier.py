@@ -11,8 +11,8 @@ from backbone_state_tracker.tools.verify_release_package import (
     COMMON_REQUIRED,
     FORBIDDEN_PATTERNS,
     SOURCE_REQUIRED,
-    WINDOWS_REQUIRED,
     WINDOWS_EXE_REQUIRED,
+    WINDOWS_REQUIRED,
     verify_release_package,
 )
 from backbone_state_tracker.tools.write_release_manifest import (
@@ -20,7 +20,6 @@ from backbone_state_tracker.tools.write_release_manifest import (
     write_package_checksum,
     write_release_manifest,
 )
-
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 CORE_ENTRY_PREFIX = "backbone_state_tracker/core/"
@@ -58,6 +57,7 @@ def _common_entries() -> dict[str, str]:
         "backbone_state_tracker/config/analysis_rules.yaml": "analysis rules",
         "backbone_state_tracker/config/commands.yaml": "commands",
         "backbone_state_tracker/config/devices.example.yaml": "devices example",
+        "backbone_state_tracker/config/known_hosts.example": "known hosts example",
         "backbone_state_tracker/config/mock_profiles.yaml": "mock profiles",
         "backbone_state_tracker/docs/ARCHITECTURE.md": "architecture",
         "backbone_state_tracker/docs/CHANGE_VALIDATION_LOGIC.md": "change validation logic",
@@ -91,10 +91,17 @@ def _source_entries() -> dict[str, str]:
             "backbone_state_tracker/__init__.py": "package init",
             "backbone_state_tracker/app.py": "app",
             "backbone_state_tracker/webapp_launcher.py": "webapp launcher",
+            "backbone_state_tracker/LICENSE": "MIT license",
+            "backbone_state_tracker/SECURITY.md": "security policy",
+            "backbone_state_tracker/DEVELOPMENT.md": "development policy",
             "backbone_state_tracker/requirements.txt": "requirements",
+            "backbone_state_tracker/requirements-dev.txt": "development requirements",
+            "backbone_state_tracker/requirements-runtime.lock": "runtime lock",
+            "backbone_state_tracker/requirements-windows.lock": "windows lock",
             "backbone_state_tracker/core/__init__.py": "core init",
             "backbone_state_tracker/core/analysis_rules.py": "analysis rules",
             "backbone_state_tracker/core/collector.py": "collector",
+            "backbone_state_tracker/core/command_safety.py": "command safety",
             "backbone_state_tracker/core/config.py": "config",
             "backbone_state_tracker/core/connectivity.py": "connectivity",
             "backbone_state_tracker/core/diagnostics/__init__.py": "diagnostics init",
@@ -126,8 +133,10 @@ def _source_entries() -> dict[str, str]:
             "backbone_state_tracker/tools/write_release_manifest.py": "manifest tool",
             "backbone_state_tracker/tools/verify_release_package.py": "verifier",
             "backbone_state_tracker/tools/verify_release_package.ps1": "powershell verifier",
+            "backbone_state_tracker/tools/verify_release_assets.py": "asset verifier",
             "backbone_state_tracker/tests/test_analysis_rules.py": "analysis rules tests",
             "backbone_state_tracker/tests/test_cli_output_encoding.py": "cli output encoding tests",
+            "backbone_state_tracker/tests/test_collection_security.py": "collection security tests",
             "backbone_state_tracker/tests/test_diagnostics_codes.py": "diagnostic code tests",
             "backbone_state_tracker/tests/test_diagnostics_report.py": "diagnostic report tests",
             "backbone_state_tracker/tests/test_diff_engine.py": "diff engine tests",
@@ -141,6 +150,7 @@ def _source_entries() -> dict[str, str]:
             "backbone_state_tracker/tests/test_preflight.py": "preflight tests",
             "backbone_state_tracker/tests/test_redaction.py": "redaction tests",
             "backbone_state_tracker/tests/test_release_manifest.py": "manifest tests",
+            "backbone_state_tracker/tests/test_release_assets.py": "release asset tests",
             "backbone_state_tracker/tests/test_release_package_verifier.py": "verifier tests",
             "backbone_state_tracker/tests/test_reporter.py": "reporter tests",
             "backbone_state_tracker/tests/test_snapshot.py": "snapshot tests",
@@ -155,11 +165,13 @@ def _windows_entries() -> dict[str, str | bytes]:
     return {
         "backbone_state_tracker/PACKAGE_INFO.txt": "package",
         "backbone_state_tracker/README_START_HERE_KO.txt": "start here",
+        "backbone_state_tracker/LICENSE": "MIT license",
         "backbone_state_tracker/gui/BackboneStateTracker.exe": b"fake gui executable payload",
         "backbone_state_tracker/gui/README_GUI_KO.txt": "gui guide",
         "backbone_state_tracker/gui/config/analysis_rules.yaml": "analysis rules",
         "backbone_state_tracker/gui/config/commands.yaml": "commands",
         "backbone_state_tracker/gui/config/devices.example.yaml": "devices example",
+        "backbone_state_tracker/gui/config/known_hosts.example": "known hosts example",
         "backbone_state_tracker/gui/config/mock_profiles.yaml": "mock profiles",
         "backbone_state_tracker/web/README_WEB_KO.txt": "web guide",
         "backbone_state_tracker/web/start_webapp.cmd": "start webapp",
@@ -167,6 +179,7 @@ def _windows_entries() -> dict[str, str | bytes]:
         "backbone_state_tracker/web/config/analysis_rules.yaml": "analysis rules",
         "backbone_state_tracker/web/config/commands.yaml": "commands",
         "backbone_state_tracker/web/config/devices.example.yaml": "devices example",
+        "backbone_state_tracker/web/config/known_hosts.example": "known hosts example",
         "backbone_state_tracker/web/config/mock_profiles.yaml": "mock profiles",
     }
 
@@ -193,21 +206,27 @@ def _tool_entries(entries: set[str] | dict[str, str]) -> set[str]:
 
 class ReleasePackageVerifierTests(unittest.TestCase):
     def test_common_required_config_entries_match_current_shareable_config_files(self) -> None:
-        excluded = {"devices.yaml"}
+        shareable_names = {
+            "analysis_rules.yaml",
+            "commands.yaml",
+            "devices.example.yaml",
+            "known_hosts.example",
+            "mock_profiles.yaml",
+        }
         expected = {
-            f"{CONFIG_ENTRY_PREFIX}{path.name}"
-            for path in sorted(PROJECT_DIR.joinpath("config").glob("*"))
-            if path.is_file() and path.name not in excluded
+            f"{CONFIG_ENTRY_PREFIX}{name}"
+            for name in shareable_names
         }
         powershell_text = (PROJECT_DIR / "tools" / "verify_release_package.ps1").read_text(encoding="utf-8")
 
         windows_expected = {
-            entry
+            f"{base}/{name}"
             for base in ("backbone_state_tracker/gui/config", "backbone_state_tracker/web/config")
-            for entry in (f"{base}/{path.name}" for path in sorted(PROJECT_DIR.joinpath("config").glob("*")))
-            if Path(entry).name not in excluded
+            for name in shareable_names
         }
 
+        for name in shareable_names:
+            self.assertTrue(PROJECT_DIR.joinpath("config", name).is_file(), name)
         self.assertEqual(expected, _config_entries(COMMON_REQUIRED))
         self.assertEqual(expected, _config_entries(SOURCE_REQUIRED))
         self.assertEqual(windows_expected, _config_entries(WINDOWS_REQUIRED))
@@ -362,6 +381,88 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             self.assertFalse(result.ok)
             self.assertTrue(any("Forbidden ZIP entry" in error for error in result.errors))
 
+    def test_forbidden_local_known_hosts_file_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.9.0_windows.zip"
+            entries = _windows_entries()
+            entries["backbone_state_tracker/gui/config/known_hosts"] = "real trusted host key"
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.9.0", date_stamp="20260824")
+            write_release_manifest(
+                "backbone_state_tracker",
+                "0.9.0",
+                "20260824",
+                dist,
+                release_tag="v0.9.0",
+            )
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("Forbidden ZIP entry" in error for error in result.errors))
+
+    def test_windows_config_allowlist_rejects_backup_keys_and_credentials(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.9.0_windows.zip"
+            entries = _windows_entries()
+            entries["backbone_state_tracker/gui/config/known_hosts.backup"] = "trusted internal key"
+            entries["backbone_state_tracker/gui/config/credentials.yaml"] = "password: internal"
+            entries["backbone_state_tracker/web/config/devices.local.yaml"] = "host: 10.0.0.1"
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.9.0", date_stamp="20260824")
+            write_release_manifest(
+                "backbone_state_tracker",
+                "0.9.0",
+                "20260824",
+                dist,
+                release_tag="v0.9.0",
+            )
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            for name in ("known_hosts.backup", "credentials.yaml", "devices.local.yaml"):
+                self.assertTrue(any(name in error for error in result.errors), name)
+
+    def test_source_config_allowlist_rejects_backup_keys_and_credentials(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.9.0_20260824_source.zip"
+            entries = _source_entries()
+            entries["backbone_state_tracker/config/known_hosts.backup"] = "trusted internal key"
+            entries["backbone_state_tracker/config/credentials.yaml"] = "password: internal"
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.9.0", date_stamp="20260824")
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            for name in ("known_hosts.backup", "credentials.yaml"):
+                self.assertTrue(any(name in error for error in result.errors), name)
+
+    def test_windows_package_requires_mit_license(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            package = dist / "backbone_state_tracker_v0.9.0_windows.zip"
+            entries = _windows_entries()
+            del entries["backbone_state_tracker/LICENSE"]
+            _write_zip(package, entries)
+            write_package_checksum(package, "0.9.0", date_stamp="20260824")
+            write_release_manifest(
+                "backbone_state_tracker",
+                "0.9.0",
+                "20260824",
+                dist,
+                release_tag="v0.9.0",
+            )
+
+            result = verify_release_package(package)
+
+            self.assertFalse(result.ok)
+            self.assertTrue(any("backbone_state_tracker/LICENSE" in error for error in result.errors))
+
     def test_forbidden_patterns_match_release_exclusion_policy(self) -> None:
         expected = {
             r"/\.git/",
@@ -373,6 +474,7 @@ class ReleasePackageVerifierTests(unittest.TestCase):
             r"/venv/",
             r"/\.pytest_cache/",
             r"/config/devices\.yaml$",
+            r"/config/known_hosts$",
             r"__pycache__",
             r"\.pyc$",
             r"\.spec$",

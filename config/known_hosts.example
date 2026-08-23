@@ -1,0 +1,4 @@
+# 실제 장비 키를 넣지 않은 형식 안내 파일입니다.
+# config/known_hosts를 별도로 만들고, 보안 담당자나 콘솔에서 확인한
+# SHA256 fingerprint와 일치하는 공개 호스트 키만 OpenSSH known_hosts 형식으로 등록하세요.
+# 비표준 포트는 [hostname-or-ip]:port 형식을 사용합니다.

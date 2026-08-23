@@ -7,12 +7,12 @@ import re
 from pathlib import Path
 from typing import Iterable
 
-
 CHUNK_SIZE = 1024 * 1024
 PACKAGE_IDENTITY = re.compile(r"^.+_v\d+\.\d+\.\d+_(?P<date>\d{8})_(source|windows_exe)\.zip$")
 TAGGED_WINDOWS_PACKAGE_IDENTITY = re.compile(
     r"^.+_v(?P<year>\d{4})\.(?P<month>\d{2})\.(?P<day>\d{2})-\d{6}(?:-\d+)?_windows\.zip$"
 )
+SEMVER_WINDOWS_PACKAGE_IDENTITY = re.compile(r"^.+_v\d+\.\d+\.\d+(?:-rc\.\d+)?_windows\.zip$")
 
 
 def _version_label(version: str) -> str:
@@ -54,6 +54,7 @@ def write_package_checksum(
     package_path: Path,
     version: str,
     generated_at: str | None = None,
+    date_stamp: str | None = None,
 ) -> Path:
     package_path = Path(package_path)
     if not package_path.is_file():
@@ -65,7 +66,7 @@ def write_package_checksum(
         f"SHA256 ({record['name']}) = {record['sha256']}",
         f"Size = {record['size_bytes']} bytes",
         f"Version = {_version_label(version)}",
-        f"Date stamp = {package_date_stamp(package_path) or 'unknown'}",
+        f"Date stamp = {date_stamp or package_date_stamp(package_path) or dt.date.today().strftime('%Y%m%d')}",
         f"Generated = {generated_at or _now_text()}",
         "",
         "PowerShell 검증:",
@@ -95,6 +96,7 @@ def write_release_manifest(
     package_paths: Iterable[Path] | None = None,
     generated_at: str | None = None,
     release_tag: str | None = None,
+    source_commit: str | None = None,
 ) -> Path:
     dist_dir = Path(dist_dir)
     if package_paths is None:
@@ -117,6 +119,7 @@ def write_release_manifest(
         f"Version = {_version_label(version)}",
         f"Date stamp = {date_stamp}",
         f"Generated = {generated}",
+        f"Source commit = {source_commit or 'unknown'}",
         "",
         "Packages",
     ]
@@ -154,15 +157,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dist-dir", required=True, type=Path)
     parser.add_argument("--package", required=True, type=Path)
     parser.add_argument("--release-tag")
+    parser.add_argument("--source-commit")
     args = parser.parse_args(argv)
 
-    checksum_path = write_package_checksum(args.package, args.version)
+    checksum_path = write_package_checksum(args.package, args.version, date_stamp=args.date_stamp)
     manifest_path = write_release_manifest(
         args.project_name,
         args.version,
         args.date_stamp,
         args.dist_dir,
         release_tag=args.release_tag,
+        source_commit=args.source_commit,
     )
     print(f"Checksum 파일: {checksum_path}")
     print(f"릴리스 매니페스트: {manifest_path}")

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from pathlib import Path
 import re
 import unittest
+from pathlib import Path
 
 from backbone_state_tracker.core.config import load_commands
 from backbone_state_tracker.core.version import APP_RELEASE_DATE, APP_VERSION
-
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 
@@ -142,12 +141,13 @@ class DocumentationPortabilityTests(unittest.TestCase):
         expectations = {
             "README.md": (
                 f"버전: `{version}`",
-                "backbone_state_tracker_<tag>_windows.zip",
-                "backbone_state_tracker_v2026.07.08-104830_windows.zip",
+                "backbone_state_tracker_v0.9.0_windows.zip",
+                "hpe-comware-change-validator/actions/workflows/pr-build.yml",
             ),
             "RELEASE_NOTES.md": (
                 f"현재 앱 버전: `{version}`",
-                "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
+                "backbone_state_tracker_v0.9.0_windows.zip",
+                "backbone_state_tracker_v0.9.0_sbom.cdx.json",
             ),
             "CHANGELOG.md": (f"## {version} - {APP_RELEASE_DATE}",),
             "docs/COMMAND_GUIDE.md": (f"문서 버전: {version}",),
@@ -162,7 +162,7 @@ class DocumentationPortabilityTests(unittest.TestCase):
             ),
             "docs/USER_GUIDE.md": (
                 f"문서 버전: {version}",
-                "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
+                "backbone_state_tracker_v0.9.0_windows.zip",
             ),
             "docs/USER_GUIDE.html": (
                 f"사용자 가이드 {version}",
@@ -170,24 +170,24 @@ class DocumentationPortabilityTests(unittest.TestCase):
             ),
             "docs/RELEASE_CHECKLIST.md": (
                 f"문서 버전: {version}",
-                "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
+                "backbone_state_tracker_v0.9.0_windows.zip",
                 "README_START_HERE_KO.txt",
             ),
             "docs/RELEASE_CHECKLIST.html": (
                 f"운영 환경 배포 체크리스트 {version}",
                 f"문서 버전: {version}",
-                "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
+                "backbone_state_tracker_v0.9.0_windows.zip",
             ),
             "docs/VERSION_HISTORY.md": (
                 f"문서 버전: {version}",
                 f"### {version} - {APP_RELEASE_DATE}",
-                "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
+                "backbone_state_tracker_v0.9.0_windows.zip",
             ),
             "docs/VERSION_HISTORY.html": (
                 f"버전별 변경내역 {version}",
                 f"문서 버전: {version}",
                 f"<h3>{version} - {APP_RELEASE_DATE}</h3>",
-                "backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip",
+                "backbone_state_tracker_v0.9.0_windows.zip",
             ),
         }
 
@@ -220,8 +220,9 @@ class DocumentationPortabilityTests(unittest.TestCase):
                 "Windows runner 또는 Windows 환경에서 검증합니다.",
             ),
             "CHANGELOG.md": (
-                "README/Release documentation update rule",
-                "RELEASE_NOTES.md",
+                "## v0.9.0 - 2026-08-24",
+                "central fail-closed command canonicalization boundary",
+                "CycloneDX 1.6 SBOM",
             ),
             "docs/RELEASE_CHECKLIST.md": (
                 "README / Release 문서 최신화 확인",
@@ -250,29 +251,24 @@ class DocumentationPortabilityTests(unittest.TestCase):
         workflow = (PROJECT_DIR / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
 
         required_fragments = [
-            "# 백본 상태 추적기 ${{ steps.release_meta.outputs.tag }}",
+            "# HPE Comware 변경 검증기 $env:RELEASE_TAG",
             "## 이번 릴리즈",
-            "## 운영 영향",
             "## 검증 결과",
             "## 다운로드",
-            "## 알려진 범위",
-            'git diff --name-only $commitRange',
-            'git log --pretty=format:"- %h %s" $commitRange',
-            "장비 설정 변경 명령을 추가하지 않습니다.",
-            "`expected_changes`는 계획된 변화의 맥락을 표시할 뿐 실제 finding 근거를 제거하지 않습니다.",
-            "패키지 manifest 및 SHA-256 검증 통과",
-            "${{ steps.artifact.outputs.artifact_name }}",
-            "${{ steps.artifact.outputs.checksum }}",
-            "gui\\BackboneStateTracker.exe",
-            "web\\start_webapp.cmd",
-            "Source code ZIP/TAR",
-            "<details>",
-            "<summary>세부 커밋</summary>",
+            "## 운영 영향과 한계",
+            "읽기 전용 명령을 실행 직전 중앙 경계에서 정규화",
+            "승인된 SSH 호스트 키만 허용",
+            "SHA-256 sidecar, 릴리스 manifest, CycloneDX 1.6 SBOM",
+            "steps.provenance.outputs.attestation-url",
+            "steps.sbom_attestation.outputs.attestation-url",
+            "실제 운영 장비 호환성이나 현장 성과를 주장하지 않습니다.",
         ]
 
         missing = [fragment for fragment in required_fragments if fragment not in workflow]
 
         self.assertEqual([], missing)
+        notes_block = workflow.split('          @"', 1)[1].split('          "@', 1)[0]
+        self.assertNotIn("`", notes_block, "PowerShell expandable here-string must not escape Markdown values or lines")
 
     def test_pr_workflow_builds_but_does_not_create_release(self) -> None:
         workflow = (PROJECT_DIR / ".github" / "workflows" / "pr-build.yml").read_text(encoding="utf-8")
@@ -282,12 +278,80 @@ class DocumentationPortabilityTests(unittest.TestCase):
         self.assertIn("timeout-minutes: 45", workflow)
         self.assertIn("cancel-in-progress: true", workflow)
         self.assertIn("persist-credentials: false", workflow)
-        self.assertIn("--type windows", workflow)
+        self.assertIn("verify_release_assets.py", workflow)
+        self.assertIn("--require-hashes", workflow)
+        self.assertIn("requirements-windows.lock", workflow)
+        self.assertIn("sbom.cdx.json", workflow)
+        self.assertIn("if ($LASTEXITCODE -ne 0)", workflow)
         self.assertIn("build_windows_exe.ps1 -SkipTests -ReleaseTag", workflow)
         self.assertNotIn("gh release create", workflow)
         self.assertNotIn("contents: write", workflow)
 
-    def test_release_workflow_is_manual_main_only_and_uploads_one_direct_asset(self) -> None:
+    def test_powershell_native_checks_cannot_be_overwritten_by_a_later_command(self) -> None:
+        workflow_paths = (
+            PROJECT_DIR / ".github" / "workflows" / "pr-build.yml",
+            PROJECT_DIR / ".github" / "workflows" / "release.yml",
+        )
+        command_fragments = (
+            "python -m compileall app.py webapp_launcher.py core tests tools",
+            "python -m unittest discover -s tests",
+            "python app.py --smoke-check",
+            "python webapp_launcher.py --smoke",
+            "python app.py --diagnose --self-check",
+            "python -m ruff check --select F app.py webapp_launcher.py core tests tools",
+            "python -m bandit -q -lll -r app.py webapp_launcher.py core -x tests",
+            "python -m pip_audit -r requirements-runtime.lock --require-hashes",
+        )
+        for path in workflow_paths:
+            lines = path.read_text(encoding="utf-8").splitlines()
+            for fragment in command_fragments:
+                index = next(i for i, line in enumerate(lines) if fragment in line)
+                next_line = next(line.strip() for line in lines[index + 1 :] if line.strip())
+                self.assertTrue(
+                    next_line.startswith("if ($LASTEXITCODE -ne 0)"),
+                    f"{path.name}: {fragment} exit code is not checked immediately",
+                )
+
+        build_script = (PROJECT_DIR / "tools" / "build_windows_exe.ps1").read_text(encoding="utf-8")
+        for command in (
+            "python -m unittest discover -s tests",
+            "python app.py --smoke-check",
+            "python webapp_launcher.py --smoke",
+            "python -m PyInstaller --version | Out-Null",
+            "python $VerifierTool $ZipPath --type windows --require-manifest",
+            "& $PowerShellExecutable -NoLogo -NoProfile -ExecutionPolicy Bypass -File $PowerShellVerifierSource -Package $ZipPath -Type windows -RequireManifest",
+        ):
+            self.assertRegex(
+                build_script,
+                re.escape(command) + r"\s+if \(\$LASTEXITCODE -ne 0\)",
+            )
+        self.assertRegex(
+            build_script,
+            r"(?s)python -m PyInstaller `.*?\$EntryPoint\s+if \(\$LASTEXITCODE -ne 0\)",
+        )
+
+    def test_release_builders_use_exact_config_allowlists(self) -> None:
+        windows_build = (PROJECT_DIR / "tools" / "build_windows_exe.ps1").read_text(encoding="utf-8")
+        source_build = (PROJECT_DIR / "tools" / "build_release.ps1").read_text(encoding="utf-8")
+        shareable_names = (
+            "analysis_rules.yaml",
+            "commands.yaml",
+            "devices.example.yaml",
+            "known_hosts.example",
+            "mock_profiles.yaml",
+        )
+
+        self.assertNotIn("Copy-DirectoryContent", windows_build)
+        for script in (windows_build, source_build):
+            self.assertIn("APP_RELEASE_DATE", script)
+            self.assertNotIn('$DateStamp = Get-Date -Format "yyyyMMdd"', script)
+        for name in shareable_names:
+            self.assertIn(f'"{name}"', windows_build)
+            self.assertIn(f'"config\\{name}"', source_build)
+        for forbidden in ("known_hosts.backup", "credentials.yaml", "devices.local.yaml"):
+            self.assertNotIn(f'"{forbidden}"', windows_build)
+
+    def test_release_workflow_is_manual_main_only_and_uploads_four_verified_assets(self) -> None:
         workflow = (PROJECT_DIR / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
 
         self.assertIn("workflow_dispatch:", workflow)
@@ -296,11 +360,15 @@ class DocumentationPortabilityTests(unittest.TestCase):
         self.assertIn("contents: write", workflow)
         self.assertIn("Require current main branch", workflow)
         self.assertIn('refs/heads/main', workflow)
+        self.assertLess(workflow.index("Check out repository"), workflow.index("Require current main branch"))
         self.assertIn("gh release create", workflow)
-        self.assertEqual(1, workflow.count("#${{ steps.artifact.outputs.artifact_name }}"))
-        self.assertNotIn("checksum_path", workflow)
-        self.assertNotIn("checksum_name", workflow)
-        self.assertNotIn(".sha256", workflow)
+        self.assertIn("checksum_path", workflow)
+        self.assertIn("manifest_path", workflow)
+        self.assertIn("sbom_path", workflow)
+        self.assertIn(".sha256.txt", workflow)
+        self.assertIn("actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6", workflow)
+        self.assertEqual(2, workflow.count("uses: actions/attest@"))
+        self.assertIn("Create or validate annotated tag", workflow)
 
     def test_release_docs_do_not_restore_cli_execution_guidance(self) -> None:
         checked_paths = [

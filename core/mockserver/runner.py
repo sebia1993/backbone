@@ -4,10 +4,10 @@ import argparse
 import socket
 from pathlib import Path
 
+from ..paths import resource_root
 from .profiles import MockProfile, load_mock_profile
 from .ssh_server import SshMockServer, run_ssh_server_forever
 from .telnet_server import TelnetMockServer, run_telnet_server_forever
-from ..paths import resource_root
 
 
 def default_profile_path() -> Path:
@@ -65,7 +65,8 @@ def _self_check_ssh(profile: MockProfile, host: str, port: int) -> int:
         raise RuntimeError("모의 SSH 자체 점검에는 paramiko가 필요합니다.") from exc
     with SshMockServer(profile, host=host, port=port) as server:
         client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.get_host_keys().add(server.known_hosts_name, server.host_key.get_name(), server.host_key)
+        client.set_missing_host_key_policy(paramiko.RejectPolicy())
         try:
             client.connect(
                 server.host,

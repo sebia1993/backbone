@@ -1,7 +1,7 @@
 # 백본 상태 추적기 사용자 가이드
 
-문서 버전: v0.8.57
-작성일: 2026-06-15
+문서 버전: v0.9.0
+작성일: 2026-08-24
 대상: 백본 3/4호기 상태 점검 및 휴전 작업 검증 담당자
 
 ## 1. 핵심 흐름
@@ -22,6 +22,7 @@ v0.8.52부터 프로그램 공통 테마는 HPE Aruba AirWave 계열 운영 콘�
 ![장비 설정과 상태 수집](images/settings-collection.png)
 
 - 계정에는 SSH 접속 계정을 입력합니다. 암호는 저장하지 않습니다.
+- 첫 실제 수집 전에 [보안 정책](../SECURITY.md)에 따라 별도 채널로 fingerprint를 확인하고 `config/known_hosts`를 만듭니다. 파일 없음·주석-only·형식 오류·미등록 키는 접속 전에 차단됩니다.
 - 대상 장비에는 백본3/4호기의 IP, 포트, 장비 타입을 입력합니다.
 - 추가 점검 대상이 있으면 `장비 추가`를 눌러 새 행에 장비명, IP/호스트, 포트를 입력합니다.
 - 장비명과 IP/호스트가 모두 비어 있는 추가 행은 저장과 수집 대상에서 제외됩니다.
@@ -89,10 +90,12 @@ v0.8.52부터 프로그램 공통 테마는 HPE Aruba AirWave 계열 운영 콘�
 Windows 통합 ZIP 예시:
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip
-python .\tools\verify_release_package.py .\dist\backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip --type windows --require-manifest
+Get-FileHash -Algorithm SHA256 .\backbone_state_tracker_v0.9.0_windows.zip
+python .\tools\verify_release_package.py .\dist\backbone_state_tracker_v0.9.0_windows.zip --type windows --require-manifest
 ```
 
-GitHub Release에서는 `backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip` 하나만 다운로드하면 됩니다. `Source code (zip)` / `Source code (tar.gz)`는 실행용 파일이 아닙니다.
+GitHub Release에서는 Windows ZIP과 같은 이름의 SHA-256 sidecar, release manifest, CycloneDX SBOM을 함께 받습니다. `Source code (zip)` / `Source code (tar.gz)`는 실행용 파일이 아닙니다.
+
+압축 해제 뒤 실제 수집 전 `gui\config\known_hosts`를 직접 준비합니다. 배포 ZIP의 `known_hosts.example`은 형식 안내일 뿐 승인된 실제 키를 포함하지 않습니다.
 
 사내 메일이 `.exe`, `.py`, `.ps1` 포함 ZIP을 차단할 수 있습니다. 이 경우 승인된 내부 파일 반입 절차를 사용하세요.

@@ -1,10 +1,18 @@
 # 백본 상태 추적기 버전별 변경내역
 
-문서 버전: v0.8.57
-작성일: 2026-06-15
+문서 버전: v0.9.0
+작성일: 2026-08-24
 대상: 운영자, 인수자, 초급 유지보수 담당자
 
 ## 1. 최신 버전
+
+### v0.9.0 - 2026-08-24
+
+- 장비 연결 직전의 중앙 안전 경계에서 모든 명령을 정규화하고 읽기 전용 allowlist를 벗어나면 접속 전에 차단합니다.
+- 유효한 `known_hosts` 엔트리와 strict SSH host-key 검증을 의무화하고 `ssh-rsa` key/pubkey 알고리즘을 차단했습니다.
+- Netmiko 4.7.0/Paramiko 4.0.0 및 전이 의존성을 해시 잠금하고 Windows 보안·패키지 검증을 보강했습니다.
+- ZIP, SHA-256, source-commit manifest, CycloneDX 1.6 SBOM을 제공하고 ZIP build provenance와 ZIP 대상 SBOM attestation을 게시하도록 정식 릴리스 계약을 바꿨습니다.
+- 자동·Mock·Windows CI 결과와 실제 장비 검증의 증거 경계를 문서화했습니다.
 
 ### v0.8.57 - 2026-06-15
 
@@ -58,6 +66,7 @@
 
 | 버전 | 날짜 | 주요 내용 |
 | --- | --- | --- |
+| v0.9.0 | 2026-08-24 | 중앙 fail-closed 명령 경계, strict host-key, hash lock, SBOM·provenance를 적용했습니다. |
 | v0.8.57 | 2026-06-15 | 모의 SSH/Telnet, 진단 자체 점검, 안전 리포트, 오류 코드 카탈로그, EXE 검증을 보강했습니다. |
 | v0.8.56 | 2026-06-15 | UI 현대화 전 문제 원인과 설계 대응 요약을 문서화했습니다. |
 | v0.8.55 | 2026-06-15 | 사용자 가이드 화면 캡처, 디자인 토큰 문서, 릴리스 반입 체크리스트를 마감했습니다. |
@@ -225,20 +234,23 @@
 ## 3. 현재 GitHub Release 산출물 이름
 
 ```text
-backbone_state_tracker_vYYYY.MM.DD-HHMMSS_windows.zip
+backbone_state_tracker_v0.9.0_windows.zip
+backbone_state_tracker_v0.9.0_windows.zip.sha256.txt
+backbone_state_tracker_v0.9.0_release_manifest.txt
+backbone_state_tracker_v0.9.0_sbom.cdx.json
 ```
 
-GitHub Release에 직접 업로드하는 사용자 다운로드 파일은 통합 Windows ZIP 1개입니다. `Source code (zip)` / `Source code (tar.gz)`는 GitHub가 자동으로 표시하는 소스 아카이브이며 실행용 파일이 아닙니다. SHA256 checksum은 Release notes 본문에 기록됩니다.
+GitHub Release에는 Windows ZIP, SHA-256 sidecar, source-commit manifest, CycloneDX SBOM 네 자산을 직접 업로드합니다. `Source code (zip)` / `Source code (tar.gz)`는 GitHub가 자동으로 표시하는 소스 아카이브이며 실행용 파일이 아닙니다.
 
 ## 4. 릴리스 검증 기준
 
 - 통합 ZIP 파일명과 release manifest의 태그가 일치해야 합니다.
-- ZIP SHA256 checksum이 Release notes 본문 값과 일치해야 합니다.
+- ZIP SHA256 checksum이 sidecar와 manifest에 모두 일치해야 합니다.
 - ZIP 내부는 `backbone_state_tracker/` 루트 아래에 있어야 합니다.
-- `config/devices.yaml`, `outputs/`, `raw/`, `dist/`, `build/`, `.venv/`, `venv/`, `.pytest_cache/`, `.git`, `__pycache__`는 포함하지 않습니다.
+- `config/devices.yaml`, 실제 `config/known_hosts`, `outputs/`, `raw/`, `dist/`, `build/`, `.venv/`, `venv/`, `.pytest_cache/`, `.git`, `__pycache__`는 포함하지 않습니다.
 - 사용자용 통합 ZIP에는 `README_START_HERE_KO.txt`, `gui/`, `web/`가 포함되어야 합니다.
 - GUI 실행 파일과 웹앱 실행 스크립트, 웹앱 내장 런타임이 포함되어야 합니다.
-- CLI 실행 파일, CLI 전용 안내, 별도 `.sha256` asset은 사용자용 통합 ZIP/Release 업로드에서 제외해야 합니다.
+- CLI 실행 파일과 CLI 전용 안내는 사용자용 통합 ZIP에서 제외하고, SHA-256은 ZIP 밖의 독립 Release asset으로 제공합니다.
 - Source ZIP에는 현재 `tests/*.py` 회귀 테스트 파일 전체가 포함되어야 합니다.
 - Source ZIP에는 현재 `core/*.py` 런타임 모듈 전체와 `requirements.txt`가 포함되어야 합니다.
 - Source ZIP에는 현재 `tools/*.py`와 `tools/*.ps1` 릴리스 도구 전체가 포함되어야 합니다.

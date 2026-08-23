@@ -44,6 +44,7 @@ COMMANDS_PATH = CONFIG_DIR / "commands.yaml"
 DEVICES_PATH = CONFIG_DIR / "devices.yaml"
 DEVICES_EXAMPLE_PATH = CONFIG_DIR / "devices.example.yaml"
 ANALYSIS_RULES_PATH = CONFIG_DIR / "analysis_rules.yaml"
+KNOWN_HOSTS_PATH = CONFIG_DIR / "known_hosts"
 
 
 PALETTE = {
@@ -1463,7 +1464,11 @@ class BackboneStateTrackerApp(tk.Tk):
         def worker() -> None:
             try:
                 self.thread_log(f"[{stage.name}] 상태 수집을 시작합니다.")
-                collector = SnapshotCollector(timeout=timeout, progress=self.thread_log)
+                collector = SnapshotCollector(
+                    timeout=timeout,
+                    progress=self.thread_log,
+                    known_hosts_file=KNOWN_HOSTS_PATH,
+                )
                 results = collector.collect(devices, commands, username, password)
                 snapshot_dir = self.snapshot_store.write_snapshot(
                     stage.name,
@@ -1482,7 +1487,7 @@ class BackboneStateTrackerApp(tk.Tk):
                     self.thread_log("[작업 전] 자동 비교 기준으로 지정했습니다.")
                     self._safe_after(0, lambda: self._finish_baseline_collect(snapshot_dir))
             except Exception:
-                self.thread_log(traceback.format_exc())
+                self.thread_log(redact_sensitive_text(traceback.format_exc()))
                 self._safe_after(0, lambda: self._set_failed_status("수집 실패"))
 
         threading.Thread(target=worker, daemon=True).start()
@@ -1622,7 +1627,7 @@ class BackboneStateTrackerApp(tk.Tk):
                     ),
                 )
             except Exception:
-                self.thread_log(traceback.format_exc())
+                self.thread_log(redact_sensitive_text(traceback.format_exc()))
                 self._safe_after(0, lambda: self._set_failed_status("비교 실패"))
 
         self.log(f"선택 항목을 비교합니다: {base_name} -> {target_name}")
@@ -1638,7 +1643,7 @@ class BackboneStateTrackerApp(tk.Tk):
         try:
             result = create_mock_validation_artifacts(self.snapshot_store)
         except Exception:
-            self.log(traceback.format_exc())
+            self.log(redact_sensitive_text(traceback.format_exc()))
             self._set_failed_status("샘플 생성 실패")
             return
 
@@ -1741,7 +1746,7 @@ class BackboneStateTrackerApp(tk.Tk):
                 os.startfile(self.latest_share_bundle)
                 return
             except Exception:
-                self.log(traceback.format_exc())
+                self.log(redact_sensitive_text(traceback.format_exc()))
         messagebox.showinfo("공유 ZIP 없음", "먼저 비교 리포트를 생성한 뒤 공유 ZIP을 열 수 있습니다.")
 
     def open_outputs(self) -> None:
@@ -1783,7 +1788,7 @@ class BackboneStateTrackerApp(tk.Tk):
         try:
             result = run_self_check()
         except Exception as exc:
-            self.log(traceback.format_exc())
+            self.log(redact_sensitive_text(traceback.format_exc()))
             messagebox.showerror("진단 실패", f"진단 자체 점검을 완료하지 못했습니다:\n{exc}")
             return
 

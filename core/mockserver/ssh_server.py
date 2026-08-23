@@ -29,9 +29,21 @@ class SshMockServer:
     def address(self) -> tuple[str, int]:
         return self.host, self.port
 
+    @property
+    def host_key(self) -> Any:
+        if self._host_key is None:
+            raise RuntimeError("모의 SSH 서버가 시작되지 않았습니다.")
+        return self._host_key
+
+    @property
+    def known_hosts_name(self) -> str:
+        if self.port == 22:
+            return self.host
+        return f"[{self.host}]:{self.port}"
+
     def start(self) -> "SshMockServer":
         paramiko = _paramiko()
-        self._host_key = paramiko.RSAKey.generate(2048)
+        self._host_key = paramiko.ECDSAKey.generate(bits=256)
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._sock.bind((self.host, self.requested_port))
@@ -92,6 +104,8 @@ class SshMockServer:
                 return
             if server.shell_event.is_set():
                 _serve_shell(channel, self.profile)
+        except (EOFError, OSError, paramiko.SSHException):
+            return
         finally:
             transport.close()
 

@@ -5,8 +5,12 @@ build/
 logs/
 *.spec
 
-# Local device inventory can contain internal IPs or hostnames.
-config/devices.yaml
+# Local inventory, credentials, and trust files can expose internal data.
+config/devices*.yaml
+!config/devices.example.yaml
+config/known_hosts*
+!config/known_hosts.example
+config/credentials*.yaml
 
 # Python cache and local environments
 __pycache__/
@@ -22,4 +26,3 @@ venv/
 .vscode/
 Thumbs.db
 Desktop.ini
-

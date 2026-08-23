@@ -5,7 +5,6 @@ from datetime import datetime
 from .models import CommandResult, Device
 from .redaction import redact_sensitive_text
 
-
 DEVICE_CONNECTIVITY_COMMAND_ID = "device_connectivity"
 DEVICE_CONNECTIVITY_COMMAND = "connect"
 DEVICE_CONNECTIVITY_DESCRIPTION = "Device connection status"
@@ -16,6 +15,7 @@ LEGACY_CONNECTION_FAILURE_IDS = {"authentication_failed", "timeout_failed", "con
 # 접속 실패는 원본 예외 메시지보다 코드가 중요합니다. 운영자가 외부에
 # BST-CON-* 코드만 전달해도 원인 범위를 좁힐 수 있게 reason을 표준 코드로 바꿉니다.
 CONNECTION_REASON_CODES = {
+    "host-key": "BST-SEC-002",
     "timeout": "BST-CON-301",
     "authentication": "BST-CON-302",
     "auth": "BST-CON-302",

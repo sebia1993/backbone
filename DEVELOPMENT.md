@@ -19,7 +19,9 @@
 
 운영 명령은 `config/commands.yaml`에서 관리합니다.
 
-현재 명령 세트는 상태 조회와 세션 페이징 제어만 사용합니다. 설정 모드 진입 또는 구성 변경 명령을 추가하지 않습니다.
+현재 명령 세트는 상태 조회와 세션 페이징 제어만 사용합니다. 설정 모드 진입 또는 구성 변경 명령을 추가하지 않습니다. `core/command_safety.py`가 전체 명령을 접속 전에 중앙 재검증하며, 이 호출 순서를 우회하는 별도 `ConnectHandler` 경로를 만들지 않습니다.
+
+실제 수집은 `hp_comware` SSH, parseable `known_hosts`, strict host-key 검증, `ssh-rsa` key/pubkey 차단을 함께 요구합니다. 로컬 `config/known_hosts`는 신뢰 자료이므로 Git·fixture·배포 ZIP에 넣지 않습니다.
 
 실제 장비 테스트는 조직 정책과 승인 범위 안에서만 수행하며, 자동 테스트는 실제 운영 장비 접속을 요구하지 않아야 합니다.
 
@@ -38,6 +40,7 @@
 | 영역 | 책임 |
 |---|---|
 | `core/collector.py` | 장비 접속과 읽기 전용 명령 수집 |
+| `core/command_safety.py` | 중앙 명령 정규화, 장비 타입, known_hosts, SSH 알고리즘 정책 |
 | `core/connectivity.py` | 장비 연결 상태를 명령별 실패와 분리 |
 | `core/snapshot.py` | 수집 결과 Snapshot 저장/복원 |
 | `core/diff_engine.py` | 기준/대상 Snapshot 정규화와 비교 |
@@ -69,6 +72,7 @@
 
 ```powershell
 $env:PYTHONPATH=(Split-Path (Get-Location) -Parent)
+python -m pip install --require-hashes -r requirements-windows.lock
 python -m unittest discover -s tests
 python app.py --smoke-check
 python webapp_launcher.py --smoke
@@ -86,13 +90,14 @@ Windows 패키지에 영향을 주는 경우:
 powershell -ExecutionPolicy Bypass -File .\tools\build_windows_exe.ps1
 ```
 
-생성 ZIP은 반드시 `tools/verify_release_package.py`로 다시 검증합니다.
+생성 ZIP, SHA-256 sidecar, manifest, CycloneDX SBOM은 반드시 `tools/verify_release_assets.py`로 함께 검증합니다.
 
 ## Release 원칙
 
 - 문서/주석 정리만으로 새 Release를 만들지 않습니다.
 - 사용자 동작, 수집 명령, 비교 의미, 패키지 구조에 영향을 주는 변경을 의미 있는 단위로 묶습니다.
 - 기존 태그와 Release 자산을 덮어쓰지 않습니다.
+- 정식 버전은 annotated SemVer tag를 사용하고 네 asset을 함께 검증하며, ZIP build provenance와 SBOM attestation을 게시합니다.
 - Windows 실행 패키지는 Windows runner 또는 Windows 환경에서 검증합니다.
 - 자동 테스트 결과를 실제 장비/운영 환경 호환성 증거로 과장하지 않습니다.
 - Release asset에는 실제 운영정보를 포함하지 않습니다.
